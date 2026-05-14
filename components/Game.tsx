@@ -317,6 +317,7 @@ export default function Game({
           <WikiArticle
             currentArticle={myArticle}
             endArticle={room.endArticle}
+            language={room.language ?? "id"}
             onNavigate={handleNavigate}
           />
         </div>

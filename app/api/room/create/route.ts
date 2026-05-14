@@ -23,7 +23,11 @@ import type { Room } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  let body: { username?: unknown; clientId?: unknown };
+  let body: {
+    username?: unknown;
+    clientId?: unknown;
+    language?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -34,6 +38,8 @@ export async function POST(request: NextRequest) {
     typeof body.username === "string" ? body.username.trim() : "";
   const clientId =
     typeof body.clientId === "string" ? body.clientId.trim() : "";
+  const language: "id" | "en" =
+    body.language === "en" ? "en" : "id"; // default & whitelist
 
   if (!username) return errorResponse("username wajib diisi.");
   if (username.length > MAX_USERNAME_LENGTH) {
@@ -57,6 +63,7 @@ export async function POST(request: NextRequest) {
     id: roomId,
     hostClientId: clientId,
     status: "lobby",
+    language,
     startArticle: "",
     endArticle: "",
     players: [createPlayer(clientId, username, true)],

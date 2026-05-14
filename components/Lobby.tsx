@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { avatarColor, initials } from "@/lib/avatar";
-import type { Room } from "@/lib/types";
-import { searchArticles } from "@/lib/wikipedia";
+import type { Room, WikiLanguage } from "@/lib/types";
+import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
 
 interface LobbyProps {
   room: Room;
@@ -22,6 +22,9 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
 
   const [startArticle, setStartArticle] = useState(room.startArticle);
   const [endArticle, setEndArticle] = useState(room.endArticle);
+  const [language, setLanguage] = useState<WikiLanguage>(
+    room.language ?? "id",
+  );
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState<
     "idle" | "shared" | "copied"
@@ -34,30 +37,42 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
   const lastSyncedRef = useRef({
     start: room.startArticle,
     end: room.endArticle,
+    language: room.language ?? ("id" as WikiLanguage),
   });
   useEffect(() => {
+    const serverLang = room.language ?? "id";
     if (
       room.startArticle !== lastSyncedRef.current.start ||
-      room.endArticle !== lastSyncedRef.current.end
+      room.endArticle !== lastSyncedRef.current.end ||
+      serverLang !== lastSyncedRef.current.language
     ) {
       setStartArticle(room.startArticle);
       setEndArticle(room.endArticle);
+      setLanguage(serverLang);
       lastSyncedRef.current = {
         start: room.startArticle,
         end: room.endArticle,
+        language: serverLang,
       };
     }
-  }, [room.startArticle, room.endArticle]);
+  }, [room.startArticle, room.endArticle, room.language]);
 
   // ------- Save articles (host only) — debounced -------
   const saveTimer = useRef<number | null>(null);
 
   const saveArticles = useCallback(
-    async (start: string, end: string) => {
+    async (
+      start: string,
+      end: string,
+      lang: WikiLanguage,
+    ) => {
       if (!isHost) return;
       const s = start.trim();
       const e = end.trim();
-      if (!s || !e || s === e) return;
+      // Bisa save kalau salah satu artikel terisi DAN beda. Bahasa boleh
+      // di-save sendirian (tanpa artikel valid) — biar toggle responsif.
+      const articlesValid = !!s && !!e && s !== e;
+      if (!articlesValid && lang === lastSyncedRef.current.language) return;
 
       try {
         const res = await fetch("/api/room/set-articles", {
@@ -68,14 +83,19 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             clientId: currentClientId,
             startArticle: s,
             endArticle: e,
+            language: lang,
           }),
         });
         if (!res.ok) {
           const data: { error?: string } = await res.json().catch(() => ({}));
-          setError(data.error ?? "Gagal menyimpan artikel.");
+          // Saat ganti bahasa tapi artikel belum valid, server akan tolak;
+          // jangan tampilkan error ke user.
+          if (articlesValid) {
+            setError(data.error ?? "Gagal menyimpan artikel.");
+          }
         } else {
           setError(null);
-          lastSyncedRef.current = { start: s, end: e };
+          lastSyncedRef.current = { start: s, end: e, language: lang };
         }
       } catch {
         setError("Tidak bisa terhubung ke server.");
@@ -84,10 +104,14 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     [isHost, room.id, currentClientId],
   );
 
-  function scheduleSave(start: string, end: string) {
+  function scheduleSave(
+    start: string,
+    end: string,
+    lang: WikiLanguage,
+  ) {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      void saveArticles(start, end);
+      void saveArticles(start, end, lang);
     }, SAVE_DEBOUNCE_MS);
   }
 
@@ -105,7 +129,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
       saveTimer.current = null;
-      await saveArticles(startArticle, endArticle);
+      await saveArticles(startArticle, endArticle, language);
     }
 
     try {
@@ -308,25 +332,44 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
 
           {isHost ? (
             <div className="flex flex-col gap-4">
+              <LanguageToggle
+                value={language}
+                onChange={(next) => {
+                  setLanguage(next);
+                  // Ganti bahasa biasanya invalidasi pilihan artikel sebelumnya.
+                  // Bersihkan supaya host pilih ulang dari Wikipedia bahasa baru.
+                  setStartArticle("");
+                  setEndArticle("");
+                  scheduleSave("", "", next);
+                }}
+                disabled={starting}
+              />
+
               <ArticleAutocomplete
                 id="start-article"
                 label="Artikel awal"
-                placeholder="Contoh: Nasi Goreng"
+                placeholder={
+                  language === "en" ? "e.g. Fried Rice" : "Contoh: Nasi Goreng"
+                }
                 value={startArticle}
+                language={language}
                 onChange={(next) => {
                   setStartArticle(next);
-                  scheduleSave(next, endArticle);
+                  scheduleSave(next, endArticle, language);
                 }}
                 disabled={starting}
               />
               <ArticleAutocomplete
                 id="end-article"
                 label="Artikel tujuan"
-                placeholder="Contoh: Soekarno"
+                placeholder={
+                  language === "en" ? "e.g. Sukarno" : "Contoh: Soekarno"
+                }
                 value={endArticle}
+                language={language}
                 onChange={(next) => {
                   setEndArticle(next);
-                  scheduleSave(startArticle, next);
+                  scheduleSave(startArticle, next, language);
                 }}
                 disabled={starting}
               />
@@ -335,8 +378,8 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                   className="text-charcoal-text/70"
                   style={{ fontSize: "14px" }}
                 >
-                  Pilih dua artikel berbeda yang ada di Wikipedia Bahasa
-                  Indonesia.
+                  Pilih dua artikel berbeda yang ada di Wikipedia{" "}
+                  {language === "en" ? "English" : "Bahasa Indonesia"}.
                 </p>
               )}
               {articlesValid && (
@@ -344,11 +387,14 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
               )}
             </div>
           ) : (
-            <ArticlePreview
-              start={room.startArticle}
-              end={room.endArticle}
-              empty="Host belum memilih artikel."
-            />
+            <>
+              <LanguagePill language={room.language ?? "id"} />
+              <ArticlePreview
+                start={room.startArticle}
+                end={room.endArticle}
+                empty="Host belum memilih artikel."
+              />
+            </>
           )}
         </section>
 
@@ -462,6 +508,92 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
 // ============================================================
 // Sub-components
 // ============================================================
+
+function LanguageToggle({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: WikiLanguage;
+  onChange: (next: WikiLanguage) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span
+        className="font-bold text-charcoal-text"
+        style={{ fontSize: "var(--text-body)" }}
+      >
+        Bahasa Wikipedia
+      </span>
+      <div
+        className="grid grid-cols-2 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
+        style={{ borderRadius: "var(--radius-input)" }}
+        role="radiogroup"
+        aria-label="Bahasa Wikipedia"
+      >
+        {LANGUAGE_OPTIONS.map((opt) => {
+          const active = opt.value === value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(opt.value)}
+              disabled={disabled}
+              className="flex items-center justify-center gap-2 transition disabled:opacity-60"
+              style={{
+                padding: "10px 14px",
+                borderRadius: "var(--radius-button)",
+                background: active
+                  ? "var(--color-charcoal-text)"
+                  : "transparent",
+                color: active
+                  ? "var(--color-pure-white)"
+                  : "var(--color-charcoal-text)",
+                fontWeight: 700,
+                fontSize: "14px",
+              }}
+            >
+              <span aria-hidden style={{ fontSize: 18 }}>
+                {opt.flag}
+              </span>
+              <span>{opt.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LanguagePill({ language }: { language: WikiLanguage }) {
+  const opt = LANGUAGE_OPTIONS.find((o) => o.value === language);
+  if (!opt) return null;
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="font-bold uppercase text-charcoal-text/60"
+        style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+      >
+        Bahasa
+      </span>
+      <span
+        className="chunky-sm bg-paper-white px-2 py-1 font-bold text-charcoal-text"
+        style={{
+          borderRadius: "var(--radius-button)",
+          fontSize: "13px",
+        }}
+      >
+        <span aria-hidden style={{ marginRight: 4 }}>
+          {opt.flag}
+        </span>
+        {opt.label}
+      </span>
+    </div>
+  );
+}
 
 function PlayerSlot({
   username,
@@ -620,6 +752,7 @@ interface ArticleAutocompleteProps {
   label: string;
   placeholder: string;
   value: string;
+  language: WikiLanguage;
   onChange: (next: string) => void;
   disabled?: boolean;
 }
@@ -629,6 +762,7 @@ function ArticleAutocomplete({
   label,
   placeholder,
   value,
+  language,
   onChange,
   disabled,
 }: ArticleAutocompleteProps) {
@@ -651,7 +785,9 @@ function ArticleAutocomplete({
     setSearching(true);
     const myReqId = ++reqIdRef.current;
     debounceRef.current = window.setTimeout(async () => {
-      const result = await searchArticles(q).catch(() => [] as string[]);
+      const result = await searchArticles(q, language).catch(
+        () => [] as string[],
+      );
       if (myReqId !== reqIdRef.current) return;
       setSuggestions(result);
       setSearching(false);
@@ -660,7 +796,7 @@ function ArticleAutocomplete({
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [value]);
+  }, [value, language]);
 
   const showSuggestions =
     open && (searching || suggestions.length > 0) && !disabled;

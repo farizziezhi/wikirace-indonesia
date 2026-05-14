@@ -27,12 +27,24 @@ export interface Player {
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
+/**
+ * Bahasa Wikipedia yang dipakai untuk room ini.
+ * - "id" → id.wikipedia.org
+ * - "en" → en.wikipedia.org
+ */
+export type WikiLanguage = "id" | "en";
+
 export interface Room {
   /** 6 karakter, e.g. "ABC123" */
   id: string;
   /** Ably clientId host */
   hostClientId: string;
   status: RoomStatus;
+  /**
+   * Bahasa Wikipedia. Optional untuk backward compat — room yang dibuat
+   * sebelum field ini ada akan diperlakukan sebagai "id".
+   */
+  language?: WikiLanguage;
   /** Judul artikel Wikipedia awal */
   startArticle: string;
   /** Judul artikel Wikipedia tujuan */

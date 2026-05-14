@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import type { WikiLanguage } from "@/lib/types";
 import { extractArticleTitle, fetchArticleHtml } from "@/lib/wikipedia";
 
 interface WikiArticleProps {
@@ -9,6 +10,8 @@ interface WikiArticleProps {
   currentArticle: string;
   /** Judul artikel tujuan — ditampilkan sebagai badge konteks di header. */
   endArticle: string;
+  /** Bahasa Wikipedia (id / en). */
+  language: WikiLanguage;
   /**
    * Dipanggil saat pemain klik link artikel valid di dalam konten.
    * Parent (Game.tsx) bertanggung jawab POST /api/room/navigate.
@@ -28,6 +31,7 @@ interface WikiArticleProps {
 export default function WikiArticle({
   currentArticle,
   endArticle,
+  language,
   onNavigate,
 }: WikiArticleProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,7 +39,7 @@ export default function WikiArticle({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch HTML artikel setiap kali currentArticle berubah.
+  // Fetch HTML artikel setiap kali currentArticle / language berubah.
   useEffect(() => {
     let cancelled = false;
 
@@ -44,7 +48,7 @@ export default function WikiArticle({
     // PENTING: jangan setHtml(null) di sini. Biarkan konten lama terlihat
     // sambil fetch berjalan — kunci agar tidak ada flash kosong.
 
-    fetchArticleHtml(currentArticle)
+    fetchArticleHtml(currentArticle, language)
       .then((result) => {
         if (cancelled) return;
         if (!result) {
@@ -66,7 +70,7 @@ export default function WikiArticle({
     return () => {
       cancelled = true;
     };
-  }, [currentArticle]);
+  }, [currentArticle, language]);
 
   // Scroll ke atas page setiap kali konten artikel benar-benar diganti.
   useEffect(() => {
@@ -99,7 +103,7 @@ export default function WikiArticle({
       }
 
       const href = anchor.getAttribute("href") ?? "";
-      const articleTitle = extractArticleTitle(href);
+      const articleTitle = extractArticleTitle(href, language);
 
       event.preventDefault();
       event.stopPropagation();
@@ -110,7 +114,7 @@ export default function WikiArticle({
 
     node.addEventListener("click", handleClick);
     return () => node.removeEventListener("click", handleClick);
-  }, [onNavigate]);
+  }, [onNavigate, language]);
 
   // Saat first load (belum ada konten apa pun), tampilkan spinner besar.
   const isFirstLoad = loading && html === null && error === null;

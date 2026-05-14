@@ -8,7 +8,8 @@ import {
   getSavedUsername,
   saveUsername,
 } from "@/lib/client-id";
-import type { Room } from "@/lib/types";
+import type { Room, WikiLanguage } from "@/lib/types";
+import { LANGUAGE_OPTIONS } from "@/lib/wikipedia";
 
 const MAX_USERNAME_LENGTH = 20;
 
@@ -20,6 +21,7 @@ export default function HomePage() {
 
   const [username, setUsername] = useState("");
   const [roomCode, setRoomCode] = useState("");
+  const [language, setLanguage] = useState<WikiLanguage>("id");
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("idle");
@@ -88,6 +90,7 @@ export default function HomePage() {
         body: JSON.stringify({
           username: trimmedUsername,
           clientId: clientIdRef.current,
+          language,
         }),
       });
 
@@ -307,6 +310,57 @@ export default function HomePage() {
               {username.length}/{MAX_USERNAME_LENGTH} karakter
             </span>
           </div>
+
+          {/* Pilihan bahasa — hanya muncul saat tidak diundang ke room
+              tertentu. Untuk join, bahasa ditentukan host. */}
+          {!invitedTo && (
+            <div className="flex flex-col gap-2">
+              <span
+                className="font-bold text-charcoal-text"
+                style={{ fontSize: "var(--text-body)" }}
+              >
+                Bahasa Wikipedia
+              </span>
+              <div
+                className="grid grid-cols-2 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
+                style={{ borderRadius: "var(--radius-input)" }}
+                role="radiogroup"
+                aria-label="Bahasa Wikipedia"
+              >
+                {LANGUAGE_OPTIONS.map((opt) => {
+                  const active = opt.value === language;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setLanguage(opt.value)}
+                      disabled={busy}
+                      className="flex items-center justify-center gap-2 transition disabled:opacity-60"
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "var(--radius-button)",
+                        background: active
+                          ? "var(--color-charcoal-text)"
+                          : "transparent",
+                        color: active
+                          ? "var(--color-pure-white)"
+                          : "var(--color-charcoal-text)",
+                        fontWeight: 700,
+                        fontSize: "14px",
+                      }}
+                    >
+                      <span aria-hidden style={{ fontSize: 18 }}>
+                        {opt.flag}
+                      </span>
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Tombol Buat */}
           <button

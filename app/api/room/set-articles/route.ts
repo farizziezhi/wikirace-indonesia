@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     clientId?: unknown;
     startArticle?: unknown;
     endArticle?: unknown;
+    language?: unknown;
   };
   try {
     body = await request.json();
@@ -32,6 +33,13 @@ export async function POST(request: NextRequest) {
     typeof body.startArticle === "string" ? body.startArticle.trim() : "";
   const endArticle =
     typeof body.endArticle === "string" ? body.endArticle.trim() : "";
+  // Whitelist & opsional — kalau body tidak kirim language, biarkan tetap.
+  const language: "id" | "en" | undefined =
+    body.language === "id"
+      ? "id"
+      : body.language === "en"
+        ? "en"
+        : undefined;
 
   if (!roomId) return errorResponse("roomId wajib diisi.");
   if (!clientId) return errorResponse("clientId wajib diisi.");
@@ -58,6 +66,9 @@ export async function POST(request: NextRequest) {
 
   room.startArticle = startArticle;
   room.endArticle = endArticle;
+  if (language !== undefined) {
+    room.language = language;
+  }
   await setRoom(room);
 
   await publishRoomEvent(roomId, "room_updated", { room });

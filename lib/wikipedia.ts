@@ -1,50 +1,94 @@
 /**
- * Helper Wikipedia API (Bahasa Indonesia).
- * Endpoint utama: https://id.wikipedia.org/w/api.php
+ * Helper Wikipedia API.
+ * Mendukung dua bahasa: Bahasa Indonesia (`id`) dan English (`en`).
  */
 
-const API_BASE = "https://id.wikipedia.org/w/api.php";
-export const WIKI_BASE = "https://id.wikipedia.org";
+import type { WikiLanguage } from "./types";
+
+/** Pemain default kalau belum di-set. */
+export const DEFAULT_LANGUAGE: WikiLanguage = "id";
+
+/** Daftar bahasa yang didukung beserta metadata UI. */
+export const LANGUAGE_OPTIONS: Array<{
+  value: WikiLanguage;
+  label: string;
+  flag: string;
+  baseUrl: string;
+}> = [
+  {
+    value: "id",
+    label: "Bahasa Indonesia",
+    flag: "🇮🇩",
+    baseUrl: "https://id.wikipedia.org",
+  },
+  {
+    value: "en",
+    label: "English",
+    flag: "🇬🇧",
+    baseUrl: "https://en.wikipedia.org",
+  },
+];
+
+const LANG_BY_VALUE = new Map<WikiLanguage, (typeof LANGUAGE_OPTIONS)[number]>(
+  LANGUAGE_OPTIONS.map((o) => [o.value, o]),
+);
+
+/** Resolve bahasa → base URL Wikipedia (fallback ke id). */
+function getLangConfig(lang: WikiLanguage | undefined) {
+  return (
+    (lang && LANG_BY_VALUE.get(lang)) ??
+    LANG_BY_VALUE.get(DEFAULT_LANGUAGE)!
+  );
+}
 
 /**
- * Daftar prefix namespace yang BUKAN artikel utama.
- * Setiap link dengan prefix ini akan diabaikan saat intercept klik.
- * Mendukung varian tanpa "Pembicaraan_" / "Talk:".
+ * Daftar prefix namespace yang BUKAN artikel utama, baik untuk
+ * Wikipedia ID maupun EN. Setiap link dengan prefix ini akan
+ * diabaikan saat intercept klik.
  */
 const NON_ARTICLE_PREFIXES = [
+  // EN
   "Wikipedia:",
-  "Berkas:",
   "File:",
-  "Kategori:",
   "Category:",
-  "Bantuan:",
   "Help:",
-  "Templat:",
   "Template:",
+  "Talk:",
+  "User_talk:",
+  "User:",
+  "Special:",
+  "Portal:",
+  "Module:",
+  "MediaWiki:",
+  "Book:",
+  "Draft:",
+  "TimedText:",
+  // ID
+  "Berkas:",
+  "Kategori:",
+  "Bantuan:",
+  "Templat:",
   "Pembicaraan:",
   "Pembicaraan_Wikipedia:",
   "Pembicaraan_Pengguna:",
   "Pembicaraan_Berkas:",
   "Pembicaraan_Templat:",
   "Pembicaraan_Kategori:",
-  "Talk:",
-  "User_talk:",
-  "User:",
   "Pengguna:",
   "Istimewa:",
-  "Special:",
-  "Portal:",
   "Modul:",
-  "Module:",
-  "MediaWiki:",
 ];
 
 /**
  * Ambil HTML konten artikel Wikipedia untuk judul tertentu.
  * Return null kalau artikel tidak ada / fetch gagal.
  */
-export async function fetchArticleHtml(title: string): Promise<string | null> {
-  const url = new URL(API_BASE);
+export async function fetchArticleHtml(
+  title: string,
+  lang: WikiLanguage = DEFAULT_LANGUAGE,
+): Promise<string | null> {
+  const cfg = getLangConfig(lang);
+  const url = new URL(`${cfg.baseUrl}/w/api.php`);
   url.searchParams.set("action", "parse");
   url.searchParams.set("page", title);
   url.searchParams.set("prop", "text");
@@ -67,23 +111,28 @@ export async function fetchArticleHtml(title: string): Promise<string | null> {
 
 /**
  * Ekstrak judul artikel dari href Wikipedia.
- * Mendukung relative `/wiki/Judul` maupun absolute `https://id.wikipedia.org/wiki/Judul`.
+ * Mendukung `/wiki/Judul` relatif maupun `https://<lang>.wikipedia.org/wiki/Judul`.
  *
- * Return:
- * - string judul (sudah di-decode + spasi normal) jika link adalah artikel valid
- * - null jika bukan link artikel namespace utama (Wikipedia:, Berkas:, dll),
- *   anchor (#section), atau eksternal.
+ * Hanya menerima link yang sesuai dengan bahasa room:
+ * - Domain harus `<lang>.wikipedia.org` (atau path relatif).
+ * - Bukan namespace non-artikel (Wikipedia:, Berkas:, dll).
  */
-export function extractArticleTitle(href: string): string | null {
+export function extractArticleTitle(
+  href: string,
+  lang: WikiLanguage = DEFAULT_LANGUAGE,
+): string | null {
   if (!href) return null;
-  // Anchor murni di dalam halaman yang sama.
   if (href.startsWith("#")) return null;
 
+  const cfg = getLangConfig(lang);
   let pathname: string;
   try {
-    const url = new URL(href, WIKI_BASE);
-    // Hanya domain Wikipedia ID yang kita izinkan.
-    if (url.hostname && url.hostname !== "id.wikipedia.org") return null;
+    const url = new URL(href, cfg.baseUrl);
+    if (url.hostname && url.hostname !== new URL(cfg.baseUrl).hostname) {
+      // Domain berbeda dari bahasa room → reject. Cegah pemain navigasi
+      // ke wiki bahasa lain via link interwiki.
+      return null;
+    }
     pathname = url.pathname;
   } catch {
     return null;
@@ -91,7 +140,6 @@ export function extractArticleTitle(href: string): string | null {
 
   if (!pathname.startsWith("/wiki/")) return null;
 
-  // Buang prefix `/wiki/` lalu decode URI.
   let raw = pathname.slice("/wiki/".length);
   try {
     raw = decodeURIComponent(raw);
@@ -101,28 +149,25 @@ export function extractArticleTitle(href: string): string | null {
 
   if (!raw) return null;
 
-  // Tolak namespace non-artikel.
   for (const prefix of NON_ARTICLE_PREFIXES) {
     if (raw.startsWith(prefix)) return null;
   }
 
-  // Wikipedia menulis spasi sebagai underscore di URL.
   return raw.replace(/_/g, " ");
 }
 
-
 /**
  * Autocomplete pencarian judul artikel via OpenSearch.
- * Return array berisi judul artikel (sudah di-decode).
- *
- * Format response OpenSearch:
- *   [query, [titles], [descriptions], [urls]]
  */
-export async function searchArticles(query: string): Promise<string[]> {
+export async function searchArticles(
+  query: string,
+  lang: WikiLanguage = DEFAULT_LANGUAGE,
+): Promise<string[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  const url = new URL(API_BASE);
+  const cfg = getLangConfig(lang);
+  const url = new URL(`${cfg.baseUrl}/w/api.php`);
   url.searchParams.set("action", "opensearch");
   url.searchParams.set("search", trimmed);
   url.searchParams.set("limit", "10");
