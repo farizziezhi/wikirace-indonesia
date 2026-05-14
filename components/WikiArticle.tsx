@@ -18,11 +18,12 @@ interface WikiArticleProps {
 
 /**
  * Render konten artikel Wikipedia ID + intercept klik tautan.
- * Hanya tautan ke artikel namespace utama yang ditindaklanjuti;
- * link non-artikel (Berkas:, Wikipedia:, dll) di-cancel saja.
  *
- * Tidak ada scroll internal — ukuran konten mengikuti page, biar parent
- * bisa atur sticky bar dan scroll natural pada level page.
+ * UX:
+ * - First load: spinner besar (belum ada konten apa pun).
+ * - Navigasi ke artikel berikutnya: konten lama tetap terlihat (sedikit
+ *   redup), progress bar tipis berjalan di atas → menghindari "blink".
+ * - Setelah HTML baru tiba, swap konten dan scroll page ke atas.
  */
 export default function WikiArticle({
   currentArticle,
@@ -40,13 +41,15 @@ export default function WikiArticle({
 
     setLoading(true);
     setError(null);
-    setHtml(null);
+    // PENTING: jangan setHtml(null) di sini. Biarkan konten lama terlihat
+    // sambil fetch berjalan — kunci agar tidak ada flash kosong.
 
     fetchArticleHtml(currentArticle)
       .then((result) => {
         if (cancelled) return;
         if (!result) {
           setError("Artikel tidak bisa dimuat. Coba klik tautan lain.");
+          setHtml(null); // Clear hanya saat error agar pesan jelas.
           setLoading(false);
           return;
         }
@@ -56,6 +59,7 @@ export default function WikiArticle({
       .catch(() => {
         if (cancelled) return;
         setError("Gagal terhubung ke Wikipedia. Periksa koneksi.");
+        setHtml(null);
         setLoading(false);
       });
 
@@ -64,15 +68,14 @@ export default function WikiArticle({
     };
   }, [currentArticle]);
 
-  // Scroll ke top page setiap kali load artikel baru — supaya pemain mulai
-  // membaca dari atas, dan sticky bar tetap terlihat tanpa lompatan.
+  // Scroll ke atas page setiap kali konten artikel benar-benar diganti.
   useEffect(() => {
     if (html) {
       window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     }
   }, [html]);
 
-  // Intercept klik <a> di dalam konten.
+  // Intercept klik <a> di dalam konten — listener satu kali pada container.
   useEffect(() => {
     const node = containerRef.current;
     if (!node) return;
@@ -107,10 +110,28 @@ export default function WikiArticle({
 
     node.addEventListener("click", handleClick);
     return () => node.removeEventListener("click", handleClick);
-  }, [onNavigate, html]);
+  }, [onNavigate]);
+
+  // Saat first load (belum ada konten apa pun), tampilkan spinner besar.
+  const isFirstLoad = loading && html === null && error === null;
 
   return (
-    <div className="flex flex-col">
+    <div className="relative flex flex-col">
+      {/* Progress bar tipis saat fetching artikel baru (bukan first load). */}
+      {loading && !isFirstLoad && (
+        <div
+          className="absolute left-0 right-0 top-0 z-10 overflow-hidden"
+          style={{
+            height: 3,
+            borderTopLeftRadius: "var(--radius-input)",
+            borderTopRightRadius: "var(--radius-input)",
+          }}
+          aria-hidden
+        >
+          <div className="wiki-progress-bar h-full" />
+        </div>
+      )}
+
       {/* Header artikel saat ini */}
       <div
         className="border-b border-parchment px-5 py-4 sm:px-6"
@@ -149,9 +170,17 @@ export default function WikiArticle({
         </div>
       </div>
 
-      {/* Konten */}
-      <div ref={containerRef} className="px-5 py-5 sm:px-6">
-        {loading && (
+      {/* Konten — selalu di-mount; ref tetap stabil untuk listener klik. */}
+      <div
+        ref={containerRef}
+        className="px-5 py-5 transition-opacity sm:px-6"
+        style={{
+          // Sedikit redup saat sedang fetch artikel berikutnya — sinyal
+          // bahwa konten ini "stale", tanpa mengosongkannya.
+          opacity: loading && !isFirstLoad ? 0.55 : 1,
+        }}
+      >
+        {isFirstLoad && (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-charcoal-text/70">
             <div
               className="border-charcoal-text border-t-transparent animate-spin"
@@ -168,7 +197,7 @@ export default function WikiArticle({
           </div>
         )}
 
-        {error && !loading && (
+        {error && (
           <div
             className="border-t-2 border-charcoal-text bg-charcoal-text text-pure-white"
             style={{
@@ -181,7 +210,7 @@ export default function WikiArticle({
           </div>
         )}
 
-        {!loading && !error && html && (
+        {!isFirstLoad && !error && html && (
           <div
             className="wiki-article"
             // eslint-disable-next-line react/no-danger

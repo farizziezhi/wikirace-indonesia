@@ -274,6 +274,30 @@ body {
 }
 
 /* ============================================================ */
+/* Wiki article — indeterminate progress bar                    */
+/* ============================================================ */
+
+@keyframes wiki-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.wiki-progress-bar {
+  width: 50%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-crank-violet) 50%,
+    transparent 100%
+  );
+  animation: wiki-progress 1.1s ease-in-out infinite;
+}
+
+/* ============================================================ */
 /* Styling artikel Wikipedia — meniru Vector skin               */
 /* ============================================================ */
 
