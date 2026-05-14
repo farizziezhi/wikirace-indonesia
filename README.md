@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WikiRace Indonesia
 
-## Getting Started
+Multiplayer realtime WikiRace memakai konten Wikipedia Bahasa Indonesia. Buat
+room, bagikan kodenya, lalu klik tautan secepat mungkin untuk sampai ke
+artikel tujuan.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + TypeScript
+- **Tailwind v4** (design system Playdate-inspired)
+- **Ably** — realtime messaging (token auth, no API key di client)
+- **Upstash Redis** — state room serverless (TTL 24 jam per room)
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.local.example .env.local
+# isi ABLY_API_KEY, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Nama                       | Sumber                                  | Catatan                |
+| -------------------------- | --------------------------------------- | ---------------------- |
+| `ABLY_API_KEY`             | https://ably.com/dashboard              | Server only — jangan expose |
+| `UPSTASH_REDIS_REST_URL`   | https://console.upstash.com             | Server only            |
+| `UPSTASH_REDIS_REST_TOKEN` | https://console.upstash.com             | Server only            |
+| `NEXT_PUBLIC_SITE_URL`     | URL produksi (opsional, untuk OG image) | Public — boleh expose  |
 
-## Learn More
+## Build
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm build
+pnpm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Lihat [docs/deploy.md](docs/deploy.md) untuk panduan deploy ke Vercel.
 
-## Deploy on Vercel
+## Struktur
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+├── api/                    # Route handlers (room state + Ably auth)
+├── room/[roomId]/          # Halaman gameplay (lobby/game/results)
+├── icon.tsx                # Favicon dinamis (next/og)
+├── apple-icon.tsx          # Apple touch icon dinamis
+├── opengraph-image.tsx     # OG image dinamis
+└── page.tsx                # Landing page
+components/                 # Lobby, Game, Results, WikiArticle
+lib/                        # Helper Ably, Redis, Wikipedia, types
+docs/                       # PRD, technical architecture, deploy guide
+```
