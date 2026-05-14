@@ -470,7 +470,16 @@ export default function HomePage() {
           className="text-center text-charcoal-text/70"
           style={{ fontSize: "13px" }}
         >
-          Dibuat dengan ☕ untuk pemain Wikipedia Bahasa Indonesia.
+          Dibuat dengan ☕ oleh{" "}
+          <a
+            href="https://github.com/farizziezhi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-charcoal-text underline underline-offset-2 hover:text-crank-violet"
+          >
+            @farizziezhi
+          </a>
+          .
         </p>
       </div>
     </main>
