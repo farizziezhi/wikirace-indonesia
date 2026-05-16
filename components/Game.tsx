@@ -202,7 +202,7 @@ export default function Game({
       <header
         className="sticky top-0 z-30 border-b-2 border-charcoal-text bg-pure-white"
         style={{
-          boxShadow: "0 4px 0 0 rgba(49, 47, 39, 0.06)",
+          boxShadow: "0 5px 0 0 rgba(41, 37, 31, 0.12)",
         }}
       >
         <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6">

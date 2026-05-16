@@ -31,35 +31,35 @@ export default function HomePage() {
 
   useEffect(() => {
     clientIdRef.current = getOrCreateClientId();
-    setUsername(getSavedUsername());
-    setHydrated(true);
 
-    // Pre-fill kode room dari query param `?room=XXX`. Pakai
-    // `window.location` (bukan `useSearchParams`) supaya halaman tetap
-    // bisa di-prerender static — efek hanya jalan di client.
-    try {
-      const fromQuery =
-        new URLSearchParams(window.location.search)
-          .get("room")
-          ?.trim()
-          .toUpperCase() ?? "";
-      if (/^[A-Z0-9]{6}$/.test(fromQuery)) {
-        setRoomCode(fromQuery);
-        setInvitedTo(fromQuery);
-      }
-    } catch {
-      // ignore
-    }
+    window.setTimeout(() => {
+      setUsername(getSavedUsername());
+      setHydrated(true);
 
-    try {
-      const saved = window.sessionStorage.getItem("wikirace:toast");
-      if (saved) {
-        setToast(saved);
-        window.sessionStorage.removeItem("wikirace:toast");
+      try {
+        const fromQuery =
+          new URLSearchParams(window.location.search)
+            .get("room")
+            ?.trim()
+            .toUpperCase() ?? "";
+        if (/^[A-Z0-9]{6}$/.test(fromQuery)) {
+          setRoomCode(fromQuery);
+          setInvitedTo(fromQuery);
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
+
+      try {
+        const saved = window.sessionStorage.getItem("wikirace:toast");
+        if (saved) {
+          setToast(saved);
+          window.sessionStorage.removeItem("wikirace:toast");
+        }
+      } catch {
+        // ignore
+      }
+    }, 0);
   }, []);
 
   function validateUsername(): string | null {
@@ -162,7 +162,7 @@ export default function HomePage() {
 
   return (
     <main className="dot-bg flex flex-1 items-center justify-center bg-playdate-yellow px-6 py-12">
-      <div className="flex w-full max-w-[520px] flex-col gap-8">
+      <div className="flex w-full max-w-[560px] flex-col gap-8">
         {invitedTo && (
           <div
             role="status"
@@ -233,7 +233,7 @@ export default function HomePage() {
               W
             </span>
             <span
-              className="font-extrabold uppercase tabular-nums"
+              className="font-extrabold uppercase tabular-nums drop-shadow-[2px_2px_0_rgba(255,255,255,0.55)]"
               style={{ fontSize: 17, letterSpacing: "0.18em" }}
             >
               WikiRace · ID
@@ -241,11 +241,11 @@ export default function HomePage() {
           </div>
 
           <h1
-            className="font-extrabold text-charcoal-text"
+            className="font-black text-charcoal-text drop-shadow-[3px_3px_0_rgba(255,255,255,0.65)]"
             style={{
-              fontSize: "clamp(38px, 6vw, 56px)",
-              lineHeight: 1.05,
-              letterSpacing: "-0.02em",
+              fontSize: "clamp(42px, 7vw, 64px)",
+              lineHeight: 0.98,
+              letterSpacing: "-0.035em",
             }}
           >
             Lompat dari{" "}

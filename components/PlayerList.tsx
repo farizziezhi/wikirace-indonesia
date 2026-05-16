@@ -196,9 +196,13 @@ function useJustMoved(lastMoveAt: number): boolean {
 
   useEffect(() => {
     if (!lastMoveAt) return;
-    setActive(true);
-    const id = window.setTimeout(() => setActive(false), 1200);
-    return () => window.clearTimeout(id);
+
+    const startId = window.setTimeout(() => setActive(true), 0);
+    const endId = window.setTimeout(() => setActive(false), 1200);
+    return () => {
+      window.clearTimeout(startId);
+      window.clearTimeout(endId);
+    };
   }, [lastMoveAt]);
 
   return active;

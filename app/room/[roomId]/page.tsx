@@ -51,22 +51,25 @@ export default function RoomPage({
   } | null>(null);
 
   useEffect(() => {
-    const clientId = getOrCreateClientId();
-    const username = getSavedUsername();
-    if (!clientId || !username) {
-      // User langsung buka URL tanpa lewat landing page.
-      try {
-        window.sessionStorage.setItem(
-          "wikirace:toast",
-          "Masukkan nama dulu sebelum gabung room.",
-        );
-      } catch {
-        // ignore
+    const id = window.setTimeout(() => {
+      const clientId = getOrCreateClientId();
+      const username = getSavedUsername();
+      if (!clientId || !username) {
+        try {
+          window.sessionStorage.setItem(
+            "wikirace:toast",
+            "Masukkan nama dulu sebelum gabung room.",
+          );
+        } catch {
+          // ignore
+        }
+        router.replace("/");
+        return;
       }
-      router.replace("/");
-      return;
-    }
-    setIdentity({ clientId, username });
+      setIdentity({ clientId, username });
+    }, 0);
+
+    return () => window.clearTimeout(id);
   }, [router]);
 
   // ------- Room state -------

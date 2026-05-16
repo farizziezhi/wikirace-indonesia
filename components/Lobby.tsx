@@ -247,9 +247,9 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             Kode room — bagikan ke teman
           </span>
           <div
-            className="font-extrabold tabular-nums text-charcoal-text"
+            className="font-black tabular-nums text-charcoal-text drop-shadow-[4px_4px_0_rgba(255,255,255,0.75)]"
             style={{
-              fontSize: "clamp(56px, 12vw, 90px)",
+              fontSize: "clamp(64px, 14vw, 104px)",
               lineHeight: 1,
               letterSpacing: "0.14em",
             }}
@@ -777,14 +777,16 @@ function ArticleAutocomplete({
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
 
     if (q.length < 2) {
-      setSuggestions([]);
-      setSearching(false);
+      debounceRef.current = window.setTimeout(() => {
+        setSuggestions([]);
+        setSearching(false);
+      }, 0);
       return;
     }
 
-    setSearching(true);
     const myReqId = ++reqIdRef.current;
     debounceRef.current = window.setTimeout(async () => {
+      setSearching(true);
       const result = await searchArticles(q, language).catch(
         () => [] as string[],
       );

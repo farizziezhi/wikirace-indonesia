@@ -43,32 +43,33 @@ export default function WikiArticle({
   useEffect(() => {
     let cancelled = false;
 
-    setLoading(true);
-    setError(null);
-    // PENTING: jangan setHtml(null) di sini. Biarkan konten lama terlihat
-    // sambil fetch berjalan — kunci agar tidak ada flash kosong.
+    const id = window.setTimeout(() => {
+      setLoading(true);
+      setError(null);
 
-    fetchArticleHtml(currentArticle, language)
-      .then((result) => {
-        if (cancelled) return;
-        if (!result) {
-          setError("Artikel tidak bisa dimuat. Coba klik tautan lain.");
-          setHtml(null); // Clear hanya saat error agar pesan jelas.
+      fetchArticleHtml(currentArticle, language)
+        .then((result) => {
+          if (cancelled) return;
+          if (!result) {
+            setError("Artikel tidak bisa dimuat. Coba klik tautan lain.");
+            setHtml(null);
+            setLoading(false);
+            return;
+          }
+          setHtml(result);
           setLoading(false);
-          return;
-        }
-        setHtml(result);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setError("Gagal terhubung ke Wikipedia. Periksa koneksi.");
-        setHtml(null);
-        setLoading(false);
-      });
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setError("Gagal terhubung ke Wikipedia. Periksa koneksi.");
+          setHtml(null);
+          setLoading(false);
+        });
+    }, 0);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(id);
     };
   }, [currentArticle, language]);
 
@@ -217,7 +218,6 @@ export default function WikiArticle({
         {!isFirstLoad && !error && html && (
           <div
             className="wiki-article"
-            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: html }}
           />
         )}
