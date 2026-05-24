@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import type { WikiLanguage } from "@/lib/types";
 import { extractArticleTitle, fetchArticleHtml } from "@/lib/wikipedia";
@@ -28,13 +28,14 @@ interface WikiArticleProps {
  *   redup), progress bar tipis berjalan di atas → menghindari "blink".
  * - Setelah HTML baru tiba, swap konten dan scroll page ke atas.
  */
-export default function WikiArticle({
+function WikiArticle({
   currentArticle,
   endArticle,
   language,
   onNavigate,
 }: WikiArticleProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [displayedArticle, setDisplayedArticle] = useState(currentArticle);
   const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,17 +53,16 @@ export default function WikiArticle({
           if (cancelled) return;
           if (!result) {
             setError("Artikel tidak bisa dimuat. Coba klik tautan lain.");
-            setHtml(null);
             setLoading(false);
             return;
           }
+          setDisplayedArticle(currentArticle);
           setHtml(result);
           setLoading(false);
         })
         .catch(() => {
           if (cancelled) return;
           setError("Gagal terhubung ke Wikipedia. Periksa koneksi.");
-          setHtml(null);
           setLoading(false);
         });
     }, 0);
@@ -158,7 +158,7 @@ export default function WikiArticle({
               lineHeight: "var(--leading-heading)",
             }}
           >
-            {currentArticle}
+            {displayedArticle}
           </h2>
           <div
             className="flex items-center gap-2 text-charcoal-text/70"
@@ -178,12 +178,7 @@ export default function WikiArticle({
       {/* Konten — selalu di-mount; ref tetap stabil untuk listener klik. */}
       <div
         ref={containerRef}
-        className="px-5 py-5 transition-opacity sm:px-6"
-        style={{
-          // Sedikit redup saat sedang fetch artikel berikutnya — sinyal
-          // bahwa konten ini "stale", tanpa mengosongkannya.
-          opacity: loading && !isFirstLoad ? 0.55 : 1,
-        }}
+        className="px-5 py-5 sm:px-6"
       >
         {isFirstLoad && (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-charcoal-text/70">
@@ -225,3 +220,5 @@ export default function WikiArticle({
     </div>
   );
 }
+
+export default memo(WikiArticle);

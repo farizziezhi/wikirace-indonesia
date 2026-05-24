@@ -62,16 +62,27 @@ export default function Game({
     }
   }, [me?.currentArticle]);
 
-  // ------- Timer (MM:SS sejak startTime) -------
-  const [elapsed, setElapsed] = useState(() =>
-    Math.max(0, Math.floor((Date.now() - startTime) / 1000)),
-  );
+  const normalizedStartTime = normalizeStartTime(startTime);
+  const [elapsed, setElapsed] = useState(() => getElapsedSeconds(normalizedStartTime));
   useEffect(() => {
-    const id = window.setInterval(() => {
-      setElapsed(Math.max(0, Math.floor((Date.now() - startTime) / 1000)));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [startTime]);
+    let timeoutId: number | null = null;
+
+    function tick() {
+      setElapsed((prev) => {
+        const next = getElapsedSeconds(normalizedStartTime);
+        return next === prev ? prev : next;
+      });
+
+      const msUntilNextSecond = 1000 - ((Date.now() - normalizedStartTime) % 1000);
+      timeoutId = window.setTimeout(tick, msUntilNextSecond || 1000);
+    }
+
+    tick();
+
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [normalizedStartTime]);
 
   // ------- Subscribe game_cancelled -------
   useEffect(() => {
@@ -324,6 +335,14 @@ export default function Game({
       </section>
     </div>
   );
+}
+
+function normalizeStartTime(value: number): number {
+  return value < 1_000_000_000_000 ? value * 1000 : value;
+}
+
+function getElapsedSeconds(startTime: number): number {
+  return Math.max(0, Math.floor((Date.now() - startTime) / 1000));
 }
 
 function formatElapsed(totalSeconds: number): string {
