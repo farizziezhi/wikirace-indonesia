@@ -11,6 +11,13 @@ artikel tujuan.
 - **Ably** — realtime messaging (token auth, no API key di client)
 - **Upstash Redis** — state room serverless (TTL 24 jam per room)
 
+## Race Theme Idea
+
+Considering a "Formula 1 / MotoGP" theme for the UI, to emphasize the "Race" aspect of WikiRace. Potential changes:
+- **Colors**: Asphalt black, F1 red (`#e10600`), silver/chrome for cards, F1 yellow (`#ffc700`) accents.
+- **Components**: Timer as F1 HUD, player list as F1 timing screen, results as podium.
+- **Feel**: Aggressive, high energy, while maintaining article readability.
+
 ## Local development
 
 ```bash
