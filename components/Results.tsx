@@ -443,14 +443,14 @@ function LeaderboardRow({
 
   return (
     <li
-      className="flex items-center gap-3 border-2 border-charcoal-text p-3"
+      className="flex items-center gap-3 border border-warm-gray p-3"
       style={{
         borderRadius: "var(--radius-input)",
         background: isWinner
-          ? "var(--color-playdate-yellow)"
+          ? "var(--color-lime-accent)"
           : isMe
-            ? "var(--color-playdate-yellow-soft)"
-            : "var(--color-pure-white)",
+            ? "var(--color-light-beige)"
+            : "var(--color-warm-cream)",
       }}
     >
       <span
@@ -557,7 +557,7 @@ function RouteAccordion({ row, openByDefault, isMe }: RouteAccordionProps) {
 
   return (
     <details
-      className="border-2 border-charcoal-text bg-pure-white"
+      className="border border-warm-gray bg-warm-cream"
       style={{ borderRadius: "var(--radius-input)" }}
       open={openByDefault}
     >
@@ -650,7 +650,7 @@ function RouteAccordion({ row, openByDefault, isMe }: RouteAccordionProps) {
                   className="flex items-center gap-1"
                 >
                   <span
-                    className="inline-flex items-baseline gap-1 border-2 border-charcoal-text text-charcoal-text"
+                    className="inline-flex items-baseline gap-1 border border-warm-gray text-charcoal-text"
                     style={{
                       background: bg,
                       padding: "3px 8px",

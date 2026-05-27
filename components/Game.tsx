@@ -206,21 +206,18 @@ export default function Game({
   ]);
 
   return (
-    <div className="flex flex-1 flex-col bg-playdate-yellow">
+    <div className="flex flex-1 flex-col bg-warm-cream">
       {/* ============================================================ */}
       {/* Sticky top bar */}
       {/* ============================================================ */}
       <header
-        className="sticky top-0 z-30 border-b-2 border-charcoal-text bg-pure-white"
-        style={{
-          boxShadow: "0 5px 0 0 rgba(41, 37, 31, 0.12)",
-        }}
+        className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream"
       >
         <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6">
           {/* Kiri: room code + tujuan */}
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <span
-              className="shrink-0 border-t-2 border-charcoal-text bg-playdate-yellow px-2 py-1 font-bold text-charcoal-text tabular-nums"
+              className="shrink-0 bg-lime-accent px-2 py-1 font-bold text-charcoal-text tabular-nums"
               style={{
                 borderRadius: "var(--radius-button)",
                 fontSize: "13px",
@@ -275,22 +272,20 @@ export default function Game({
             type="button"
             onClick={handleSurrenderClick}
             disabled={hasSurrendered}
-            className="shrink-0 border-t-2 transition active:translate-y-[1px] disabled:opacity-60 disabled:active:translate-y-0"
+            className="shrink-0 transition disabled:opacity-60"
             style={{
-              borderColor: confirmingSurrender
-                ? "var(--color-charcoal-text)"
-                : "var(--color-charcoal-text)",
+              border: "1px solid var(--color-warm-gray)",
               background: hasSurrendered
-                ? "var(--color-stone-gray)"
+                ? "var(--color-warm-gray)"
                 : confirmingSurrender
                   ? "var(--color-charcoal-text)"
-                  : "var(--color-pure-white)",
+                  : "var(--color-warm-cream)",
               color: confirmingSurrender
-                ? "var(--color-pure-white)"
+                ? "var(--color-warm-cream)"
                 : "var(--color-charcoal-text)",
               borderRadius: "var(--radius-button)",
-              padding: "8px 14px 11px 14px",
-              fontWeight: 700,
+              padding: "10px 16px",
+              fontWeight: 600,
               fontSize: "14px",
             }}
           >
@@ -305,7 +300,7 @@ export default function Game({
         {/* Banner saat sudah menyerah — info ke pemain bahwa tinggal nunggu */}
         {hasSurrendered && (
           <div
-            className="border-t border-parchment bg-paper-white text-charcoal-text"
+            className="border-t border-warm-gray bg-light-beige text-charcoal-text"
             style={{
               padding: "8px 16px",
               fontSize: "13px",

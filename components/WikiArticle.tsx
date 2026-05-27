@@ -139,7 +139,7 @@ function WikiArticle({
 
       {/* Header artikel saat ini */}
       <div
-        className="border-b border-parchment px-5 py-4 sm:px-6"
+        className="border-b border-warm-gray px-5 py-4 sm:px-6"
         style={{
           borderRadius: "var(--radius-input) var(--radius-input) 0 0",
         }}
@@ -166,7 +166,7 @@ function WikiArticle({
           >
             <span>menuju</span>
             <span
-              className="border-t-[1.5px] border-charcoal-text bg-playdate-yellow px-2 py-0.5 font-bold text-charcoal-text"
+              className="bg-lime-accent px-2 py-0.5 font-bold text-charcoal-text"
               style={{ borderRadius: "var(--radius-button)" }}
             >
               {endArticle}
@@ -199,7 +199,7 @@ function WikiArticle({
 
         {error && (
           <div
-            className="border-t-2 border-charcoal-text bg-charcoal-text text-pure-white"
+            className="bg-charcoal-text text-warm-cream"
             style={{
               borderRadius: "var(--radius-input)",
               padding: "12px 16px",

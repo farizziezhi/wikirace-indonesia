@@ -247,7 +247,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             Kode room — bagikan ke teman
           </span>
           <div
-            className="font-black tabular-nums text-charcoal-text drop-shadow-[4px_4px_0_rgba(255,255,255,0.75)]"
+            className="font-black tabular-nums text-charcoal-text"
             style={{
               fontSize: "clamp(64px, 14vw, 104px)",
               lineHeight: 1,
@@ -261,11 +261,12 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             <button
               type="button"
               onClick={handleCopyCode}
-              className="chunky-press chunky-sm bg-playdate-yellow text-charcoal-text"
+              className="chunky-press bg-lime-accent text-charcoal-text"
               style={{
+                border: "1px solid var(--color-lime-accent)",
                 borderRadius: "var(--radius-button)",
-                padding: "8px 14px",
-                fontWeight: 700,
+                padding: "10px 16px",
+                fontWeight: 600,
                 fontSize: "14px",
               }}
             >
@@ -274,11 +275,12 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             <button
               type="button"
               onClick={handleShareLink}
-              className="chunky-press chunky-sm bg-crank-violet text-pure-white"
+              className="chunky-press bg-charcoal-text text-warm-cream"
               style={{
+                border: "1px solid var(--color-charcoal-text)",
                 borderRadius: "var(--radius-button)",
-                padding: "8px 14px",
-                fontWeight: 700,
+                padding: "10px 16px",
+                fontWeight: 600,
                 fontSize: "14px",
               }}
             >
@@ -292,11 +294,12 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
               type="button"
               onClick={handleLeave}
               disabled={leaving}
-              className="chunky-press chunky-sm bg-pure-white text-charcoal-text"
+              className="chunky-press bg-warm-cream text-charcoal-text"
               style={{
+                border: "1px solid var(--color-warm-gray)",
                 borderRadius: "var(--radius-button)",
-                padding: "8px 14px",
-                fontWeight: 700,
+                padding: "10px 16px",
+                fontWeight: 600,
                 fontSize: "14px",
               }}
             >

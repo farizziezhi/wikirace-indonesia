@@ -62,6 +62,13 @@ export default function HomePage() {
     }, 0);
   }, []);
 
+  // Auto-dismiss toast setelah 5 detik.
+  useEffect(() => {
+    if (!toast) return;
+    const id = window.setTimeout(() => setToast(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [toast]);
+
   function validateUsername(): string | null {
     const trimmed = username.trim();
     if (!trimmed) return "Nama tidak boleh kosong.";
@@ -161,67 +168,77 @@ export default function HomePage() {
   const busy = mode !== "idle";
 
   return (
-    <main className="dot-bg flex flex-1 items-center justify-center bg-playdate-yellow px-6 py-12">
-      <div className="flex w-full max-w-[560px] flex-col gap-8">
-        {invitedTo && (
-          <div
-            role="status"
-            className="chunky bg-crank-violet text-pure-white"
-            style={{
-              borderRadius: "var(--radius-input)",
-              padding: "14px 16px",
-              fontSize: "var(--text-body)",
-              lineHeight: "var(--leading-body)",
-            }}
-          >
+    <main className="dot-bg flex flex-1 items-center justify-center bg-warm-cream px-6 py-12 lg:py-16">
+      {/* ===== Floating notifications (top-center on desktop, top on mobile) ===== */}
+      {(invitedTo || toast) && (
+        <div
+          className="pointer-events-none fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-2 px-4 sm:top-6"
+          aria-live="polite"
+        >
+          {invitedTo && (
             <div
-              className="font-bold uppercase opacity-80"
-              style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+              role="status"
+              className="pointer-events-auto bg-charcoal-text text-warm-cream"
+              style={{
+                borderRadius: "var(--radius-rounded)",
+                padding: "12px 16px",
+                fontSize: "14px",
+                lineHeight: "1.4",
+                boxShadow: "var(--shadow-floating)",
+                maxWidth: 460,
+                width: "100%",
+              }}
             >
-              Undangan room
-            </div>
-            <div className="mt-0.5 flex flex-wrap items-baseline gap-2">
-              <span>Kamu diundang ke room</span>
-              <span
-                className="chunky-sm bg-pure-white text-charcoal-text font-extrabold tabular-nums"
-                style={{
-                  borderRadius: "var(--radius-button)",
-                  padding: "2px 10px",
-                  fontSize: "var(--text-subheading)",
-                  letterSpacing: "0.18em",
-                }}
+              <div
+                className="font-bold uppercase opacity-70"
+                style={{ fontSize: "11px", letterSpacing: "0.6px" }}
               >
-                {invitedTo}
-              </span>
+                Undangan room
+              </div>
+              <div className="mt-1 flex flex-wrap items-baseline gap-2">
+                <span>Kamu diundang ke room</span>
+                <span
+                  className="bg-lime-accent text-charcoal-text font-extrabold tabular-nums"
+                  style={{
+                    borderRadius: "var(--radius-button)",
+                    padding: "2px 10px",
+                    fontSize: "var(--text-body)",
+                    letterSpacing: "0.18em",
+                  }}
+                >
+                  {invitedTo}
+                </span>
+              </div>
             </div>
-            <div className="mt-1 opacity-90" style={{ fontSize: 14 }}>
-              Masukkan nama lalu tekan{" "}
-              <span className="font-bold">Gabung Room</span>.
+          )}
+
+          {toast && (
+            <div
+              role="status"
+              className="pointer-events-auto bg-charcoal-text text-warm-cream"
+              style={{
+                borderRadius: "var(--radius-rounded)",
+                padding: "12px 16px",
+                fontSize: "14px",
+                lineHeight: "1.4",
+                boxShadow: "var(--shadow-floating)",
+                maxWidth: 460,
+                width: "100%",
+              }}
+            >
+              <span className="font-bold">📣 </span>
+              {toast}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        {toast && (
-          <div
-            role="status"
-            className="chunky bg-pure-white text-charcoal-text"
-            style={{
-              borderRadius: "var(--radius-input)",
-              padding: "12px 16px",
-              fontSize: "var(--text-body)",
-              lineHeight: "var(--leading-body)",
-            }}
-          >
-            <span className="font-bold">📣 </span>
-            {toast}
-          </div>
-        )}
-
+      <div className="grid w-full max-w-[1100px] grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
         {/* ====== Brand mark + hero ====== */}
         <header className="flex flex-col items-start gap-4 text-charcoal-text">
           <div className="flex items-center gap-2">
             <span
-              className="chunky-sm flex items-center justify-center bg-charcoal-text text-pure-white font-extrabold"
+              className="flex items-center justify-center bg-charcoal-text text-warm-cream font-extrabold"
               style={{
                 width: 36,
                 height: 36,
@@ -233,7 +250,7 @@ export default function HomePage() {
               W
             </span>
             <span
-              className="font-extrabold uppercase tabular-nums drop-shadow-[2px_2px_0_rgba(255,255,255,0.55)]"
+              className="font-extrabold uppercase tabular-nums"
               style={{ fontSize: 17, letterSpacing: "0.18em" }}
             >
               WikiRace · ID
@@ -241,23 +258,26 @@ export default function HomePage() {
           </div>
 
           <h1
-            className="font-black text-charcoal-text drop-shadow-[3px_3px_0_rgba(255,255,255,0.65)]"
+            className="font-black text-charcoal-text"
             style={{
-              fontSize: "clamp(42px, 7vw, 64px)",
+              fontSize: "clamp(38px, 6vw, 56px)",
               lineHeight: 0.98,
               letterSpacing: "-0.035em",
             }}
           >
             Lompat dari{" "}
             <span
-              className="chunky-sm inline-block bg-pure-white px-2"
-              style={{ borderRadius: 8 }}
+              className="inline-block bg-light-beige px-2"
+              style={{
+                borderRadius: 8,
+                border: "1px solid var(--color-warm-gray)",
+              }}
             >
               artikel A
             </span>{" "}
             ke{" "}
             <span
-              className="chunky-sm inline-block bg-crank-violet text-pure-white px-2"
+              className="inline-block bg-charcoal-text text-warm-cream px-2"
               style={{ borderRadius: 8 }}
             >
               artikel B
@@ -276,12 +296,35 @@ export default function HomePage() {
             Multiplayer realtime di Wikipedia Bahasa Indonesia. Buat room,
             bagikan kodenya, dan klik tautan secepat mungkin.
           </p>
+
+          {/* ====== Cara main — desktop only, di bawah hero ====== */}
+          <section className="mt-2 hidden w-full grid-cols-3 gap-3 lg:grid">
+            <HowToCard
+              n={1}
+              title="Pilih nama"
+              body="Tidak perlu daftar. Cukup ketik nama dan masuk room."
+            />
+            <HowToCard
+              n={2}
+              title="Bagikan kode"
+              body="Salin kode 6 karakter ke teman. Maksimal 8 pemain per room."
+            />
+            <HowToCard
+              n={3}
+              title="Klik & lari"
+              body="Hanya boleh klik tautan dalam artikel. Sampai duluan, menang."
+            />
+          </section>
         </header>
 
         {/* ====== Card form ====== */}
         <section
-          className="chunky-lg flex flex-col gap-5 bg-pure-white p-6"
-          style={{ borderRadius: "var(--radius-input)" }}
+          className="flex flex-col gap-5 bg-warm-cream p-6"
+          style={{
+            borderRadius: "var(--radius-input)",
+            border: "1px solid var(--color-warm-gray)",
+            boxShadow: "var(--shadow-raised)",
+          }}
         >
           <div className="flex flex-col gap-2">
             <label
@@ -322,8 +365,11 @@ export default function HomePage() {
                 Bahasa Wikipedia
               </span>
               <div
-                className="grid grid-cols-2 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
-                style={{ borderRadius: "var(--radius-input)" }}
+                className="grid grid-cols-2 gap-2 bg-light-beige p-1"
+                style={{
+                  borderRadius: "var(--radius-input)",
+                  border: "1px solid var(--color-warm-gray)",
+                }}
                 role="radiogroup"
                 aria-label="Bahasa Wikipedia"
               >
@@ -345,9 +391,9 @@ export default function HomePage() {
                           ? "var(--color-charcoal-text)"
                           : "transparent",
                         color: active
-                          ? "var(--color-pure-white)"
+                          ? "var(--color-warm-cream)"
                           : "var(--color-charcoal-text)",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         fontSize: "14px",
                       }}
                     >
@@ -434,7 +480,7 @@ export default function HomePage() {
           {error && (
             <div
               role="alert"
-              className="bg-charcoal-text text-pure-white"
+              className="bg-charcoal-text text-warm-cream"
               style={{
                 borderRadius: "var(--radius-input)",
                 padding: "12px 16px",
@@ -447,8 +493,8 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* ====== Cara main ====== */}
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {/* ====== Cara main — mobile only, di bawah form ====== */}
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:hidden">
           <HowToCard
             n={1}
             title="Pilih nama"
@@ -467,7 +513,7 @@ export default function HomePage() {
         </section>
 
         <p
-          className="text-center text-charcoal-text/70"
+          className="text-center text-charcoal-text/70 lg:col-span-2"
           style={{ fontSize: "13px" }}
         >
           Dibuat dengan ☕ oleh{" "}
@@ -475,7 +521,7 @@ export default function HomePage() {
             href="https://github.com/farizziezhi"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-bold text-charcoal-text underline underline-offset-2 hover:text-crank-violet"
+            className="font-bold text-charcoal-text underline underline-offset-2 hover:text-lime-soft"
           >
             @farizziezhi
           </a>
@@ -497,11 +543,14 @@ function HowToCard({
 }) {
   return (
     <div
-      className="chunky bg-pure-white p-4"
-      style={{ borderRadius: "var(--radius-input)" }}
+      className="bg-warm-cream p-4"
+      style={{
+        borderRadius: "var(--radius-input)",
+        border: "1px solid var(--color-warm-gray)",
+      }}
     >
       <span
-        className="chunky-sm flex items-center justify-center bg-playdate-yellow font-extrabold tabular-nums text-charcoal-text"
+        className="flex items-center justify-center bg-lime-accent font-extrabold tabular-nums text-charcoal-text"
         style={{
           width: 28,
           height: 28,

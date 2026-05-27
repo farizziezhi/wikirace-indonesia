@@ -1,108 +1,138 @@
 @import "tailwindcss";
 
 /**
- * Design tokens — "Playdate" / Lemon Drop Arcade style.
- * Bold blocky aesthetic: vivid yellow + violet CTA + charcoal text.
- * Roobert tidak tersedia di project; fallback ke Geist (sudah dimuat di layout).
+ * Design tokens — "Lando Norris" inspired modern racing premium.
+ * Warm cream foundation + deep charcoal forest text + lime accent CTA.
+ * Sebagian token lama (yellow/violet) tetap dipertahankan supaya komponen
+ * yang belum diupdate tidak pecah; warna utama dialihkan ke palette baru.
  */
 @theme {
-  /* Colors */
-  --color-playdate-yellow: #ffc700;
-  --color-playdate-yellow-soft: #fff0a8;
-  --color-crank-violet: #7c2cff;
-  --color-crank-violet-deep: #4f19d8;
-  --color-seafoam-teal: #19d3b2;
-  --color-deep-teal: #0c6f62;
-  --color-charcoal-text: #29251f;
+  /* ===== New Lando Norris palette ===== */
+  --color-charcoal-text: #282C20;       /* deep forest charcoal — primary text */
+  --color-charcoal-deep: #111112;       /* near-black untuk hero text */
+  --color-very-dark: #343A26;           /* ultra-refined borders */
+  --color-medium-gray: #535450;         /* secondary text */
+  --color-stone-gray: #B4B8A5;          /* tertiary / placeholder */
+  --color-charcoal-gray: #B9BBAD;       /* fine border */
+  --color-warm-gray: #DDE1D2;           /* divider / subtle border */
+  --color-light-beige: #EBEEE0;         /* surface layer */
+  --color-warm-cream: #F4F4ED;          /* primary background */
   --color-pure-white: #ffffff;
-  --color-midnight-absolute: #000000;
-  --color-default-gray: #6f747a;
   --color-paper-white: #fffaf0;
-  --color-ink-wash: #1c1d20;
-  --color-parchment: #e5d7bd;
-  --color-stone-gray: #b7b0a3;
-  --color-medal-gold: #ffd84d;
-  --color-medal-silver: #dedede;
-  --color-medal-bronze: #d88952;
-  --shadow-arcade: 0 18px 0 -12px rgba(41, 37, 31, 0.24);
-  --shadow-glow: 0 18px 55px rgba(124, 44, 255, 0.22);
 
-  /* Typography — pakai Geist sebagai fallback Roobert */
-  --font-roobert: var(--font-geist-sans), ui-sans-serif, system-ui,
+  --color-lime-accent: #D2FF00;         /* primary CTA / focus */
+  --color-lime-deep: #B8D700;            /* hover dark */
+  --color-lime-soft: #B2C73A;           /* muted accent */
+  --color-burnt-orange: #FF6B00;        /* warning / error rare */
+
+  /* ===== Legacy aliases (mapping ke palette baru, literal values) ===== */
+  --color-playdate-yellow: #D2FF00;
+  --color-playdate-yellow-soft: #EBEEE0;
+  --color-crank-violet: #282C20;
+  --color-crank-violet-deep: #111112;
+  --color-seafoam-teal: #B2C73A;
+  --color-deep-teal: #343A26;
+  --color-midnight-absolute: #111112;
+  --color-default-gray: #535450;
+  --color-ink-wash: #111112;
+  --color-parchment: #DDE1D2;
+  --color-medal-gold: #D2FF00;
+  --color-medal-silver: #DDE1D2;
+  --color-medal-bronze: #FF6B00;
+
+  /* ===== Shadows (subtle elevation) ===== */
+  --shadow-flat: none;
+  --shadow-raised: 0px 4px 12px rgba(40, 44, 32, 0.08);
+  --shadow-lifted: 0px 8px 24px rgba(40, 44, 32, 0.12);
+  --shadow-floating: 0px 12px 32px rgba(40, 44, 32, 0.16);
+  --shadow-inset: inset 0px 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-focus: 0px 0px 0px 3px rgba(210, 255, 0, 0.18);
+  /* Legacy alias — kalau dipakai komponen lama, jadi raised subtle */
+  --shadow-arcade: var(--shadow-raised);
+  --shadow-glow: var(--shadow-lifted);
+
+  /* ===== Typography — Mona Sans dengan fallback Geist ===== */
+  --font-roobert: "Mona Sans", var(--font-geist-sans), ui-sans-serif, system-ui,
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Mona Sans", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
-  /* Type scale */
-  --text-body: 19px;
-  --leading-body: 1.3;
+  /* ===== Type scale (4px grid aware) ===== */
+  --text-body: 16.67px;
+  --leading-body: 20.83px;
   --text-subheading: 21px;
   --leading-subheading: 1.2;
-  --text-heading: 29px;
-  --leading-heading: 1.2;
-  --text-heading-lg: 40px;
-  --leading-heading-lg: 1.1;
-  --text-display: 68px;
-  --leading-display: 1;
+  --text-heading: 32px;
+  --leading-heading: 36px;
+  --text-heading-lg: 38px;
+  --leading-heading-lg: 44px;
+  --text-display: 64px;
+  --leading-display: 1.05;
+  --text-caption: 12px;
+  --leading-caption: 15px;
 
-  /* Border radius */
-  --radius-input: 6px;
-  --radius-button: 6px;
-  --radius-pill: 152.19px;
+  /* ===== Border radius scale ===== */
+  --radius-sharp: 0px;
+  --radius-subtle: 4px;
+  --radius-input: 7.2px;
+  --radius-button: 7.2px;
+  --radius-rounded: 9.87px;
+  --radius-pill: 44.22px;
 }
 
 html,
 body {
-  background: var(--color-playdate-yellow);
+  background: var(--color-warm-cream);
   color: var(--color-charcoal-text);
   font-family: var(--font-roobert);
-  letter-spacing: -0.0070em;
+  letter-spacing: 0px;
 }
 
 /* ============================================================ */
-/* Playdate signature — chunky offset shadow utilities          */
+/* Lando-inspired surface utilities                              */
 /* ============================================================ */
 
 /**
- * `.chunky` → border charcoal + chunky offset shadow yang bikin elemen
- * terasa "stiker tebal". Dipakai di card, button, dan badge utama.
+ * `.chunky` legacy → re-mapped ke surface modern raised.
+ * Border tipis warm-gray, shadow subtle, radius rounded.
  */
 .chunky {
-  border: 2px solid var(--color-charcoal-text);
-  box-shadow:
-    4px 4px 0 0 var(--color-charcoal-text),
-    var(--shadow-arcade);
+  background: var(--color-warm-cream);
+  border: 1px solid var(--color-warm-gray);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-raised);
 }
 
 .chunky-sm {
-  border: 1.5px solid var(--color-charcoal-text);
-  box-shadow: 2px 2px 0 0 var(--color-charcoal-text);
+  background: var(--color-warm-cream);
+  border: 1px solid var(--color-warm-gray);
+  border-radius: var(--radius-subtle);
+  box-shadow: var(--shadow-flat);
 }
 
 .chunky-lg {
-  border: 2px solid var(--color-charcoal-text);
-  box-shadow:
-    7px 7px 0 0 var(--color-charcoal-text),
-    var(--shadow-glow);
+  background: var(--color-warm-cream);
+  border: 1px solid var(--color-warm-gray);
+  border-radius: var(--radius-rounded);
+  box-shadow: var(--shadow-lifted);
 }
 
 /**
- * Untuk elemen interaktif — efek "tekan" yang taktis.
- * Hover: shadow makin tebal, elemen sedikit naik.
- * Active: shadow hilang, elemen "menempel" ke permukaan.
+ * `.chunky-press` → interactive lift on hover, inset on active.
  */
 .chunky-press {
   transition:
-    transform 80ms ease-out,
-    box-shadow 80ms ease-out;
+    transform 120ms ease-out,
+    box-shadow 120ms ease-out;
 }
 
 .chunky-press:hover:not(:disabled) {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 0 var(--color-charcoal-text);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lifted);
 }
 
 .chunky-press:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 0 var(--color-charcoal-text);
+  transform: translateY(0);
+  box-shadow: var(--shadow-inset);
 }
 
 .chunky-press:disabled {
@@ -111,26 +141,25 @@ body {
 }
 
 /* ============================================================ */
-/* Background patterns                                          */
+/* Background patterns — Lando flowing organic                   */
 /* ============================================================ */
 
 .dot-bg {
-  background-color: var(--color-playdate-yellow);
+  background-color: var(--color-warm-cream);
   background-image:
-    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.64) 0 9rem, transparent 18rem),
-    radial-gradient(circle at 92% 8%, rgba(124, 44, 255, 0.28) 0 7rem, transparent 18rem),
-    radial-gradient(circle at 80% 88%, rgba(25, 211, 178, 0.28) 0 8rem, transparent 20rem),
-    radial-gradient(rgba(41, 37, 31, 0.2) 1.25px, transparent 1.25px);
-  background-size: auto, auto, auto, 22px 22px;
+    radial-gradient(circle at 12% 18%, rgba(210, 255, 0, 0.18) 0 12rem, transparent 22rem),
+    radial-gradient(circle at 88% 12%, rgba(40, 44, 32, 0.06) 0 14rem, transparent 24rem),
+    radial-gradient(circle at 78% 92%, rgba(178, 199, 58, 0.18) 0 12rem, transparent 24rem);
+  background-size: auto, auto, auto;
   background-position: 0 0;
 }
 
 .grid-bg {
-  background-color: var(--color-playdate-yellow-soft);
+  background-color: var(--color-light-beige);
   background-image:
-    linear-gradient(rgba(41, 37, 31, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(41, 37, 31, 0.12) 1px, transparent 1px);
-  background-size: 28px 28px;
+    linear-gradient(rgba(40, 44, 32, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40, 44, 32, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 /* ============================================================ */
@@ -139,28 +168,24 @@ body {
 
 .pd-input {
   width: 100%;
-  background: var(--color-paper-white);
+  background: var(--color-warm-cream);
   color: var(--color-charcoal-text);
-  border: 2px solid var(--color-charcoal-text);
+  border: 1px solid var(--color-warm-gray);
   border-radius: var(--radius-input);
-  padding: 14.25px;
+  padding: 12px 16px;
   font-size: var(--text-body);
   line-height: var(--leading-body);
   font-family: var(--font-roobert);
   outline: none;
-  box-shadow: inset 0 -3px 0 rgba(41, 37, 31, 0.1);
+  box-shadow: var(--shadow-flat);
   transition:
-    background 80ms ease-out,
-    box-shadow 80ms ease-out,
-    transform 80ms ease-out;
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out;
 }
 
 .pd-input:focus {
-  background: var(--color-pure-white);
-  box-shadow:
-    0 0 0 3px rgba(124, 44, 255, 0.22),
-    inset 0 -3px 0 rgba(41, 37, 31, 0.08);
-  transform: translateY(-1px);
+  border-color: var(--color-lime-accent);
+  box-shadow: var(--shadow-focus);
 }
 
 .pd-input:disabled {
@@ -176,40 +201,40 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #9441ff 0%, var(--color-crank-violet-deep) 100%);
-  color: var(--color-pure-white);
-  border: 2px solid var(--color-charcoal-text);
-  border-top-color: rgba(255, 255, 255, 0.9);
-  border-radius: var(--radius-pill);
-  padding: 12px 25px 16px 25px;
-  font-weight: 800;
-  font-size: var(--text-subheading);
-  line-height: var(--leading-subheading);
-  box-shadow:
-    4px 4px 0 0 var(--color-charcoal-text),
-    0 14px 32px rgba(124, 44, 255, 0.28);
+  background: var(--color-lime-accent);
+  color: var(--color-charcoal-text);
+  border: 1px solid var(--color-lime-accent);
+  border-radius: var(--radius-button);
+  padding: 14px 20px;
+  font-weight: 600;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: 0;
+  box-shadow: var(--shadow-flat);
   transition:
-    transform 80ms ease-out,
-    box-shadow 80ms ease-out,
-    filter 80ms ease-out;
+    background-color 120ms ease-out,
+    box-shadow 120ms ease-out,
+    transform 120ms ease-out;
   cursor: pointer;
 }
 
 .btn-primary:hover:not(:disabled) {
-  filter: saturate(1.08);
-  transform: translate(-1px, -1px);
-  box-shadow:
-    5px 5px 0 0 var(--color-charcoal-text),
-    0 18px 38px rgba(124, 44, 255, 0.32);
+  background: var(--color-lime-deep);
+  border-color: var(--color-lime-deep);
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-1px);
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 0 var(--color-charcoal-text);
+  background: #A0B800;
+  box-shadow: var(--shadow-inset);
+  transform: translateY(0);
 }
 
 .btn-primary:disabled {
-  opacity: 0.6;
+  background: var(--color-warm-gray);
+  border-color: var(--color-warm-gray);
+  color: var(--color-stone-gray);
   cursor: not-allowed;
 }
 
@@ -217,29 +242,31 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #ffdd36 0%, var(--color-playdate-yellow) 100%);
-  color: var(--color-charcoal-text);
-  border: 2px solid var(--color-charcoal-text);
+  background: var(--color-charcoal-text);
+  color: var(--color-warm-cream);
+  border: 1px solid var(--color-charcoal-text);
   border-radius: var(--radius-button);
-  padding: 10px 28.5px 13px 28.5px;
-  font-weight: 800;
+  padding: 14px 20px;
+  font-weight: 600;
   font-size: var(--text-body);
-  box-shadow: 4px 4px 0 0 var(--color-charcoal-text);
+  line-height: var(--leading-body);
+  box-shadow: var(--shadow-flat);
   transition:
-    transform 80ms ease-out,
-    box-shadow 80ms ease-out,
-    filter 80ms ease-out;
+    background-color 120ms ease-out,
+    box-shadow 120ms ease-out,
+    transform 120ms ease-out;
   cursor: pointer;
 }
 
 .btn-yellow:hover:not(:disabled) {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 0 var(--color-charcoal-text);
+  background: var(--color-charcoal-deep);
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-1px);
 }
 
 .btn-yellow:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 0 var(--color-charcoal-text);
+  box-shadow: var(--shadow-inset);
+  transform: translateY(0);
 }
 
 .btn-yellow:disabled {
@@ -251,29 +278,33 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, var(--color-pure-white) 0%, var(--color-paper-white) 100%);
+  background: var(--color-warm-cream);
   color: var(--color-charcoal-text);
-  border: 2px solid var(--color-charcoal-text);
+  border: 1px solid var(--color-warm-gray);
   border-radius: var(--radius-button);
-  padding: 10px 28.5px 13px 28.5px;
-  font-weight: 800;
+  padding: 14px 20px;
+  font-weight: 600;
   font-size: var(--text-body);
-  box-shadow: 4px 4px 0 0 var(--color-charcoal-text);
+  line-height: var(--leading-body);
+  box-shadow: var(--shadow-flat);
   transition:
-    transform 80ms ease-out,
-    box-shadow 80ms ease-out,
-    filter 80ms ease-out;
+    background-color 120ms ease-out,
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out,
+    transform 120ms ease-out;
   cursor: pointer;
 }
 
 .btn-white:hover:not(:disabled) {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 0 var(--color-charcoal-text);
+  background: var(--color-light-beige);
+  border-color: var(--color-stone-gray);
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-1px);
 }
 
 .btn-white:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 0 var(--color-charcoal-text);
+  box-shadow: var(--shadow-inset);
+  transform: translateY(0);
 }
 
 .btn-white:disabled {
@@ -287,10 +318,10 @@ body {
 
 @keyframes pd-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(119, 0, 255, 0.55);
+    box-shadow: 0 0 0 0 rgba(210, 255, 0, 0.55);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(119, 0, 255, 0);
+    box-shadow: 0 0 0 6px rgba(210, 255, 0, 0);
   }
 }
 
@@ -316,7 +347,7 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    var(--color-crank-violet) 50%,
+    var(--color-lime-accent) 50%,
     transparent 100%
   );
   animation: wiki-progress 1.1s ease-in-out infinite;
