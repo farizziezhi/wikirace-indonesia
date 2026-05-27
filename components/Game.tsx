@@ -4,6 +4,7 @@ import type Ably from "ably";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { playCountdownBeep } from "@/lib/race-audio";
 import type { Room } from "@/lib/types";
 
 import WikiArticle from "./WikiArticle";
@@ -84,6 +85,28 @@ export default function Game({
     };
   }, [normalizedStartTime]);
 
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (Date.now() >= normalizedStartTime) return;
+
+    const id = window.setInterval(() => {
+      setNow(Date.now());
+    }, 100);
+
+    return () => window.clearInterval(id);
+  }, [normalizedStartTime]);
+
+  const countdownLabel = getCountdownLabel(normalizedStartTime, now);
+  const countdownActive = countdownLabel !== null;
+  const lastCountdownBeepRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!countdownLabel) return;
+    if (lastCountdownBeepRef.current === countdownLabel) return;
+    lastCountdownBeepRef.current = countdownLabel;
+    playCountdownBeep(countdownLabel);
+  }, [countdownLabel]);
+
   // ------- Subscribe game_cancelled -------
   useEffect(() => {
     type GameCancelledData = { reason?: string };
@@ -115,6 +138,7 @@ export default function Game({
     async (article: string) => {
       if (navigatingRef.current) return;
       if (hasSurrendered) return;
+      if (Date.now() < normalizedStartTime) return;
       if (article === myArticle) return;
 
       navigatingRef.current = true;
@@ -142,7 +166,7 @@ export default function Game({
         navigatingRef.current = false;
       }
     },
-    [hasSurrendered, myArticle, room.id, currentClientId],
+    [hasSurrendered, normalizedStartTime, myArticle, room.id, currentClientId],
   );
 
   // ------- Action: surrender (two-step confirm) -------
@@ -207,6 +231,33 @@ export default function Game({
 
   return (
     <div className="flex flex-1 flex-col bg-warm-cream">
+      {countdownActive && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/90 px-6 text-center text-warm-cream"
+          aria-live="assertive"
+          aria-label="Countdown race"
+        >
+          <div className="flex flex-col items-center gap-4">
+            <div
+              className="font-black tabular-nums"
+              style={{
+                fontSize: "clamp(88px, 22vw, 180px)",
+                lineHeight: 0.9,
+                letterSpacing: countdownLabel === "GO" ? "0.04em" : "0",
+              }}
+            >
+              {countdownLabel}
+            </div>
+            <div
+              className="font-bold uppercase text-lime-accent"
+              style={{ fontSize: "14px", letterSpacing: "0.18em" }}
+            >
+              Race starting
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ============================================================ */}
       {/* Sticky top bar */}
       {/* ============================================================ */}
@@ -338,6 +389,18 @@ function normalizeStartTime(value: number): number {
 
 function getElapsedSeconds(startTime: number): number {
   return Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+}
+
+function getCountdownLabel(
+  startTime: number,
+  now: number,
+): "3" | "2" | "1" | "GO" | null {
+  const remaining = startTime - now;
+  if (remaining <= 0) return null;
+  if (remaining > 2000) return "3";
+  if (remaining > 1000) return "2";
+  if (remaining > 250) return "1";
+  return "GO";
 }
 
 function formatElapsed(totalSeconds: number): string {

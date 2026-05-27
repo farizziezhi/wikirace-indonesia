@@ -11,6 +11,8 @@ import { errorResponse } from "@/lib/room";
  */
 export const dynamic = "force-dynamic";
 
+const COUNTDOWN_MS = 3000;
+
 export async function POST(request: NextRequest) {
   let body: { roomId?: unknown; clientId?: unknown };
   try {
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
     return errorResponse("Minimal 2 pemain untuk memulai game.");
   }
 
-  const startTime = Date.now();
+  const startTime = Date.now() + COUNTDOWN_MS;
   room.status = "playing";
   room.startTime = startTime;
   for (const player of room.players) {

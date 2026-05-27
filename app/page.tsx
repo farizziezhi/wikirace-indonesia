@@ -8,6 +8,7 @@ import {
   getSavedUsername,
   saveUsername,
 } from "@/lib/client-id";
+import { isRaceAudioUnlocked, unlockRaceAudio } from "@/lib/race-audio";
 import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS } from "@/lib/wikipedia";
 
@@ -26,6 +27,7 @@ export default function HomePage() {
   const [toast, setToast] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("idle");
   const [hydrated, setHydrated] = useState(false);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   /** Pemain datang via shared link `?room=XXX` — UI sedikit beda. */
   const [invitedTo, setInvitedTo] = useState<string | null>(null);
 
@@ -35,6 +37,7 @@ export default function HomePage() {
     window.setTimeout(() => {
       setUsername(getSavedUsername());
       setHydrated(true);
+      setAudioUnlocked(isRaceAudioUnlocked());
 
       try {
         const fromQuery =
@@ -68,6 +71,11 @@ export default function HomePage() {
     const id = window.setTimeout(() => setToast(null), 5000);
     return () => window.clearTimeout(id);
   }, [toast]);
+
+  async function handleEnableAudio() {
+    const ok = await unlockRaceAudio();
+    setAudioUnlocked(ok);
+  }
 
   function validateUsername(): string | null {
     const trimmed = username.trim();
@@ -170,11 +178,30 @@ export default function HomePage() {
   return (
     <main className="dot-bg flex flex-1 items-center justify-center bg-warm-cream px-6 py-12 lg:py-16">
       {/* ===== Floating notifications (top-center on desktop, top on mobile) ===== */}
-      {(invitedTo || toast) && (
+      {(hydrated && !audioUnlocked) || invitedTo || toast ? (
         <div
           className="pointer-events-none fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-2 px-4 sm:top-6"
           aria-live="polite"
         >
+          {hydrated && !audioUnlocked && (
+            <button
+              type="button"
+              onClick={handleEnableAudio}
+              className="pointer-events-auto bg-charcoal-text text-warm-cream"
+              style={{
+                border: "1px solid var(--color-warm-gray)",
+                borderRadius: "var(--radius-rounded)",
+                padding: "10px 14px",
+                fontSize: "14px",
+                fontWeight: 600,
+                lineHeight: 1.4,
+                boxShadow: "var(--shadow-floating)",
+              }}
+            >
+              Aktifkan audio race
+            </button>
+          )}
+
           {invitedTo && (
             <div
               role="status"
@@ -231,7 +258,7 @@ export default function HomePage() {
             </div>
           )}
         </div>
-      )}
+      ) : null}
 
       <div className="grid w-full max-w-[1100px] grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
         {/* ====== Brand mark + hero ====== */}
