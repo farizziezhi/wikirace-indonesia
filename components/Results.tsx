@@ -10,6 +10,8 @@ import {
 import { avatarColor, initials } from "@/lib/avatar";
 import type { Player, Room, RouteStep } from "@/lib/types";
 
+import RouteReplay from "./RouteReplay";
+
 interface ResultsProps {
   room: Room;
   currentClientId: string;
@@ -80,6 +82,7 @@ export default function Results({
   // ------- Action: keluar -------
   const leaveBusy = useRef(false);
   const [leaveLoading, setLeaveLoading] = useState(false);
+  const [showReplay, setShowReplay] = useState(false);
 
   const handleLeave = useCallback(async () => {
     if (leaveBusy.current) return;
@@ -219,15 +222,30 @@ export default function Results({
           className="chunky flex flex-col gap-3 bg-pure-white p-6"
           style={{ borderRadius: "var(--radius-input)" }}
         >
-          <h2
-            className="font-extrabold text-charcoal-text"
-            style={{
-              fontSize: "var(--text-heading)",
-              lineHeight: "var(--leading-heading)",
-            }}
-          >
-            Rute pemain
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2
+              className="font-extrabold text-charcoal-text"
+              style={{
+                fontSize: "var(--text-heading)",
+                lineHeight: "var(--leading-heading)",
+              }}
+            >
+              Rute pemain
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowReplay(true)}
+              className="bg-charcoal-text text-warm-cream"
+              style={{
+                borderRadius: "var(--radius-button)",
+                padding: "9px 14px",
+                fontWeight: 700,
+                fontSize: "14px",
+              }}
+            >
+              Bandingkan Rute
+            </button>
+          </div>
 
           <div className="flex flex-col gap-2">
             {ranked.map((row) => (
@@ -295,6 +313,13 @@ export default function Results({
           </button>
         </section>
       </div>
+      {showReplay && (
+        <RouteReplay
+          rows={ranked}
+          winnerId={winnerId}
+          onClose={() => setShowReplay(false)}
+        />
+      )}
     </main>
   );
 }
@@ -754,7 +779,7 @@ function AchievementBadgePill({ badge }: { badge: AchievementBadge }) {
   );
 }
 
-interface RankedPlayer {
+export interface RankedPlayer {
   player: Player;
   route: RouteStep[];
   steps: number;

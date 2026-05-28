@@ -37,9 +37,11 @@ interface FinishedSnapshot {
  *    akan publish game_cancelled, tapi presence ini extra safety).
  * 6. beforeunload → sendBeacon ke /api/room/leave.
  */
-export default function RoomPage({
-  params,
-}: PageProps<"/room/[roomId]">) {
+interface RoomPageProps {
+  params: Promise<{ roomId: string }>;
+}
+
+export default function RoomPage({ params }: RoomPageProps) {
   const router = useRouter();
   const { roomId } = use(params);
   const normalizedRoomId = roomId.toUpperCase();
