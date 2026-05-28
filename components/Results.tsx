@@ -3,6 +3,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+  computeResultBadges,
+  type AchievementBadge,
+} from "@/lib/achievements";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { Player, Room, RouteStep } from "@/lib/types";
 
@@ -204,6 +208,7 @@ export default function Results({
                 row={row}
                 isMe={row.player.clientId === currentClientId}
                 isWinner={winnerId === row.player.clientId}
+                winnerId={winnerId}
               />
             ))}
           </ol>
@@ -231,6 +236,7 @@ export default function Results({
                 row={row}
                 openByDefault={winnerId === row.player.clientId}
                 isMe={row.player.clientId === currentClientId}
+                winnerId={winnerId}
               />
             ))}
           </div>
@@ -417,6 +423,7 @@ interface LeaderboardRowProps {
   row: RankedPlayer;
   isMe: boolean;
   isWinner: boolean;
+  winnerId: string | null;
 }
 
 function LeaderboardRow({
@@ -424,9 +431,15 @@ function LeaderboardRow({
   row,
   isMe,
   isWinner,
+  winnerId,
 }: LeaderboardRowProps) {
   const { player, steps, finishTimeSec } = row;
   const color = avatarColor(player.username);
+  const achievementBadges = computeResultBadges({
+    player,
+    route: row.route,
+    winnerId,
+  });
 
   let badgeLabel = "—";
   let badgeBg = "var(--color-paper-white)";
@@ -521,6 +534,13 @@ function LeaderboardRow({
             </>
           )}
         </div>
+        {achievementBadges.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {achievementBadges.map((badge) => (
+              <AchievementBadgePill key={badge.id} badge={badge} />
+            ))}
+          </div>
+        )}
       </div>
 
       <span
@@ -547,13 +567,24 @@ interface RouteAccordionProps {
   row: RankedPlayer;
   openByDefault: boolean;
   isMe: boolean;
+  winnerId: string | null;
 }
 
-function RouteAccordion({ row, openByDefault, isMe }: RouteAccordionProps) {
+function RouteAccordion({
+  row,
+  openByDefault,
+  isMe,
+  winnerId,
+}: RouteAccordionProps) {
   const { player, route, steps, finishTimeSec } = row;
   const finished = player.status === "finished";
   const surrendered = player.status === "surrendered";
   const color = avatarColor(player.username);
+  const achievementBadges = computeResultBadges({
+    player,
+    route,
+    winnerId,
+  });
 
   return (
     <details
@@ -612,6 +643,13 @@ function RouteAccordion({ row, openByDefault, isMe }: RouteAccordionProps) {
               </>
             )}
           </div>
+          {achievementBadges.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {achievementBadges.map((badge) => (
+                <AchievementBadgePill key={badge.id} badge={badge} />
+              ))}
+            </div>
+          )}
         </div>
         <span
           className="text-charcoal-text/60 transition-transform"
@@ -693,6 +731,28 @@ function RouteAccordion({ row, openByDefault, isMe }: RouteAccordionProps) {
 // ============================================================
 // Helpers
 // ============================================================
+
+function AchievementBadgePill({ badge }: { badge: AchievementBadge }) {
+  const className =
+    badge.tone === "lime"
+      ? "bg-lime-accent text-charcoal-text"
+      : "border border-warm-gray bg-warm-cream text-charcoal-text";
+
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 font-bold ${className}`}
+      style={{
+        borderRadius: "var(--radius-button)",
+        padding: "3px 10px",
+        fontSize: "12px",
+        letterSpacing: "0.3px",
+      }}
+    >
+      <span aria-hidden>{badge.icon}</span>
+      <span>{badge.label}</span>
+    </span>
+  );
+}
 
 interface RankedPlayer {
   player: Player;
