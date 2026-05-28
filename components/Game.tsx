@@ -4,6 +4,10 @@ import type Ably from "ably";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+  computeLiveBadges,
+  type AchievementBadge,
+} from "@/lib/achievements";
 import { playCountdownBeep } from "@/lib/race-audio";
 import type { Room } from "@/lib/types";
 
@@ -47,6 +51,9 @@ export default function Game({
   const [optimisticSurrendered, setOptimisticSurrendered] = useState(false);
   const hasSurrendered =
     me?.status === "surrendered" || optimisticSurrendered;
+  const liveBadges = me
+    ? computeLiveBadges({ route: me.route, status: me.status })
+    : [];
 
   // ------- Current article (saya) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
@@ -348,6 +355,16 @@ export default function Game({
           </button>
         </div>
 
+        {liveBadges.length > 0 && (
+          <div className="border-t border-warm-gray bg-light-beige">
+            <div className="mx-auto flex w-full max-w-[920px] gap-2 overflow-x-auto px-4 py-2 sm:px-6">
+              {liveBadges.map((badge) => (
+                <AchievementBadgePill key={badge.id} badge={badge} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Banner saat sudah menyerah — info ke pemain bahwa tinggal nunggu */}
         {hasSurrendered && (
           <div
@@ -380,6 +397,28 @@ export default function Game({
         </div>
       </section>
     </div>
+  );
+}
+
+function AchievementBadgePill({ badge }: { badge: AchievementBadge }) {
+  const className =
+    badge.tone === "lime"
+      ? "bg-lime-accent text-charcoal-text"
+      : "border border-warm-gray bg-warm-cream text-charcoal-text";
+
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 font-bold ${className}`}
+      style={{
+        borderRadius: "var(--radius-button)",
+        padding: "3px 10px",
+        fontSize: "12px",
+        letterSpacing: "0.3px",
+      }}
+    >
+      <span aria-hidden>{badge.icon}</span>
+      <span>{badge.label}</span>
+    </span>
   );
 }
 
