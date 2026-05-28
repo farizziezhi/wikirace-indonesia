@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import {
   computeLiveBadges,
+  computeMiniLeaderboard,
   type AchievementBadge,
 } from "@/lib/achievements";
 import { playCountdownBeep } from "@/lib/race-audio";
@@ -54,6 +55,21 @@ export default function Game({
   const liveBadges = me
     ? computeLiveBadges({ route: me.route, status: me.status })
     : [];
+
+  // ------- Mini leaderboard -------
+  const miniBoard = computeMiniLeaderboard({
+    players: room.players,
+    currentClientId,
+    winnerClientId: null,
+  });
+
+  const allDone = room.players.every(
+    (p) =>
+      p.status === "finished" ||
+      p.status === "surrendered" ||
+      p.status === "waiting",
+  );
+  const showMiniBoard = !allDone && room.players.length > 1;
 
   // ------- Current article (saya) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
@@ -265,6 +281,65 @@ export default function Game({
         </div>
       )}
 
+      {showMiniBoard && (
+        <div
+          className="fixed right-3 top-3 z-30 flex w-[200px] flex-col gap-1 bg-charcoal-text text-warm-cream"
+          style={{
+            borderRadius: "var(--radius-input)",
+            padding: "8px 10px",
+            boxShadow: "var(--shadow-floating)",
+          }}
+        >
+          <div
+            className="font-bold uppercase text-warm-cream/70"
+            style={{ fontSize: "10px", letterSpacing: "0.5px" }}
+          >
+            Papan Skor
+          </div>
+          {miniBoard.map((entry) => (
+            <div
+              key={entry.clientId}
+              className="flex items-center gap-2"
+              style={{ fontSize: "13px" }}
+            >
+              <span
+                className="flex shrink-0 items-center justify-center font-extrabold uppercase text-charcoal-text"
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: "9999px",
+                  background: entry.isWinner
+                    ? "var(--color-lime-accent)"
+                    : entry.isSurrendered
+                      ? "var(--color-stone-gray)"
+                      : "var(--color-warm-cream)",
+                  fontSize: "9px",
+                }}
+                aria-hidden
+              >
+                {initials(entry.username)}
+              </span>
+              <span
+                className={`min-w-0 flex-1 truncate font-bold ${entry.isMe ? "text-lime-accent" : ""}`}
+              >
+                {entry.isWinner ? "🏆 " : ""}
+                {entry.username}
+              </span>
+              <span
+                className="shrink-0 tabular-nums opacity-80"
+                style={{ fontSize: "12px" }}
+              >
+                {entry.isSurrendered
+                  ? "■"
+                  : entry.status === "finished"
+                    ? "✓"
+                    : `${entry.steps}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ============================================================ */}
       {/* Sticky top bar */}
       {/* ============================================================ */}
@@ -450,4 +525,13 @@ function formatElapsed(totalSeconds: number): string {
 
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
+}
+
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
 }
