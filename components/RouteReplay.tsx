@@ -77,17 +77,23 @@ export default function RouteReplay({
 
   useEffect(() => {
     if (!playing) return;
-    scheduleNextStep();
-    return clearReplayTimeout;
+    const id = window.setTimeout(() => scheduleNextStep(), 0);
+    return () => {
+      window.clearTimeout(id);
+      clearReplayTimeout();
+    };
   }, [clearReplayTimeout, playing, scheduleNextStep, stepIndexes]);
 
   useEffect(() => clearReplayTimeout, [clearReplayTimeout]);
 
   useEffect(() => {
-    setSelectedIds(playableRows.map((row) => row.player.clientId));
-    setStepIndexes(buildInitialStepIndexes(playableRows));
-    simulatedTimeRef.current = 0;
-    setPlaying(false);
+    const id = window.setTimeout(() => {
+      setSelectedIds(playableRows.map((row) => row.player.clientId));
+      setStepIndexes(buildInitialStepIndexes(playableRows));
+      simulatedTimeRef.current = 0;
+      setPlaying(false);
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [playableRows]);
 
   function togglePlayer(clientId: string) {
