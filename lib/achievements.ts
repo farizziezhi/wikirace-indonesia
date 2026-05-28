@@ -133,3 +133,48 @@ function getFinishTime(
   if (route.length === 0) return undefined;
   return route[route.length - 1].timestamp;
 }
+
+interface MiniLeaderboardEntry {
+  clientId: string;
+  username: string;
+  steps: number;
+  isMe: boolean;
+  isWinner: boolean;
+  isSurrendered: boolean;
+  status: Player["status"];
+}
+
+interface ComputeMiniLeaderboardInput {
+  players: Player[];
+  currentClientId: string;
+  winnerClientId: string | null;
+}
+
+export function computeMiniLeaderboard({
+  players,
+  currentClientId,
+  winnerClientId,
+}: ComputeMiniLeaderboardInput): MiniLeaderboardEntry[] {
+  const entries: MiniLeaderboardEntry[] = players
+    .filter((p) => p.status !== "waiting")
+    .map((p) => ({
+      clientId: p.clientId,
+      username: p.username,
+      steps: Math.max(0, p.route.length - 1),
+      isMe: p.clientId === currentClientId,
+      isWinner: p.clientId === winnerClientId,
+      isSurrendered: p.status === "surrendered",
+      status: p.status,
+    }));
+
+  return entries.sort((a, b) => {
+    if (a.isMe) return -1;
+    if (b.isMe) return 1;
+    if (a.isWinner) return -1;
+    if (b.isWinner) return 1;
+    if (a.isSurrendered !== b.isSurrendered) {
+      return a.isSurrendered ? 1 : -1;
+    }
+    return b.steps - a.steps;
+  });
+}
