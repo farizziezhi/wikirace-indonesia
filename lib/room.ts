@@ -12,6 +12,9 @@ export const MAX_PLAYERS = 8;
 export const MAX_USERNAME_LENGTH = 20;
 export const MAX_ARTICLE_TITLE_LENGTH = 200;
 export const MAX_CLIENT_ID_LENGTH = 64;
+export const MAX_CHAT_LENGTH = 200;
+
+export const ALLOWED_EMOJIS = ["🔥", "😂", "👏", "💀", "🎉", "😤"] as const;
 
 /** Karakter yang dipakai untuk roomId (hindari 0/O dan 1/I supaya mudah dibaca). */
 const ROOM_ID_CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

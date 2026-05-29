@@ -34,6 +34,24 @@ export type RoomStatus = "lobby" | "playing" | "finished";
  */
 export type WikiLanguage = "id" | "en";
 
+export interface ChatMessage {
+  /** UUID v4, generated client-side */
+  id: string;
+  clientId: string;
+  username: string;
+  text: string;
+  /** Date.now() ms */
+  timestamp: number;
+}
+
+export interface EmojiReaction {
+  emoji: string;
+  clientId: string;
+  username: string;
+  /** Date.now() ms */
+  timestamp: number;
+}
+
 export interface Room {
   /** 6 karakter, e.g. "ABC123" */
   id: string;
