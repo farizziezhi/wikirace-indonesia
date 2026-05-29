@@ -213,7 +213,7 @@ function ReplayColumn({
 
   return (
     <section
-      className="flex min-h-[320px] flex-col overflow-hidden bg-warm-cream text-charcoal-text"
+      className="flex min-h-[200px] sm:min-h-[320px] flex-col overflow-hidden bg-warm-cream text-charcoal-text"
       style={{ borderRadius: "var(--radius-input)" }}
     >
       <div className="border-b border-warm-gray p-3">

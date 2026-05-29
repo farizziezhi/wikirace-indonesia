@@ -370,11 +370,11 @@ function Podium({
             <span
               className="chunky-sm flex items-center justify-center font-extrabold uppercase text-pure-white"
               style={{
-                width: 52,
-                height: 52,
+                width: 40,
+                height: 40,
                 borderRadius: "9999px",
                 background: color,
-                fontSize: 18,
+                fontSize: 14,
               }}
               aria-hidden
             >
@@ -382,9 +382,9 @@ function Podium({
             </span>
             <div
               className="text-center font-extrabold text-charcoal-text"
-              style={{ fontSize: "14px", lineHeight: 1.1 }}
+              style={{ fontSize: "12px", lineHeight: 1.1 }}
             >
-              <span className="block truncate max-w-[120px] sm:max-w-[160px]">
+              <span className="block truncate max-w-[80px] sm:max-w-[160px]">
                 {row.player.username}
               </span>
               {isMe && (
