@@ -4,6 +4,8 @@ import Ably from "ably";
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import ChatPanel from "@/components/ChatPanel";
+import EmojiReactions from "@/components/EmojiReactions";
 import Game from "@/components/Game";
 import Lobby from "@/components/Lobby";
 import Results from "@/components/Results";
@@ -479,28 +481,39 @@ export default function RoomPage({ params }: RoomPageProps) {
     );
   }
 
-  if (gameState === "playing" && startTime !== null) {
-    return (
-      <Game
+  const chatDefaultMode = gameState === "playing" ? "collapsed" : "expanded";
+
+  return (
+    <>
+      {gameState === "playing" && startTime !== null ? (
+        <Game
+          room={room}
+          currentClientId={identity.clientId}
+          ablyChannel={ablyChannel}
+          startTime={startTime}
+        />
+      ) : gameState === "finished" ? (
+        <Results
+          room={room}
+          currentClientId={identity.clientId}
+          allRoutes={finishedSnapshot?.allRoutes ?? {}}
+          winnerId={finishedSnapshot?.winnerId ?? null}
+          onPlayAgain={handlePlayAgain}
+        />
+      ) : (
+        <Lobby room={room} currentClientId={identity.clientId} />
+      )}
+      <ChatPanel
         room={room}
         currentClientId={identity.clientId}
         ablyChannel={ablyChannel}
-        startTime={startTime}
+        defaultMode={chatDefaultMode}
       />
-    );
-  }
-
-  if (gameState === "finished") {
-    return (
-      <Results
-        room={room}
+      <EmojiReactions
+        roomId={normalizedRoomId}
         currentClientId={identity.clientId}
-        allRoutes={finishedSnapshot?.allRoutes ?? {}}
-        winnerId={finishedSnapshot?.winnerId ?? null}
-        onPlayAgain={handlePlayAgain}
+        ablyChannel={ablyChannel}
       />
-    );
-  }
-
-  return <Lobby room={room} currentClientId={identity.clientId} />;
+    </>
+  );
 }
