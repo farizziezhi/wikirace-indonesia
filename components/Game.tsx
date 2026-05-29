@@ -1,7 +1,7 @@
 "use client";
 
 import type Ably from "ably";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -45,29 +45,36 @@ export default function Game({
 }: GameProps) {
   const router = useRouter();
 
-  const me = room.players.find((p) => p.clientId === currentClientId);
+  const me = useMemo(
+    () => room.players.find((p) => p.clientId === currentClientId),
+    [room.players, currentClientId],
+  );
 
   // Optimistic flag — tetap perlukan supaya UI langsung respon sebelum
   // event `room_updated` tiba dari server.
   const [optimisticSurrendered, setOptimisticSurrendered] = useState(false);
   const hasSurrendered =
     me?.status === "surrendered" || optimisticSurrendered;
-  const liveBadges = me
-    ? computeLiveBadges({ route: me.route, status: me.status })
-    : [];
+  const liveBadges = useMemo(
+    () => (me ? computeLiveBadges({ route: me.route, status: me.status }) : []),
+    [me?.route, me?.status],
+  );
 
   // ------- Mini leaderboard -------
-  const miniBoard = computeMiniLeaderboard({
-    players: room.players,
-    currentClientId,
-    winnerClientId: null,
-  });
+  const miniBoard = useMemo(
+    () => computeMiniLeaderboard({ players: room.players, currentClientId, winnerClientId: null }),
+    [room.players, currentClientId],
+  );
 
-  const allDone = room.players.every(
-    (p) =>
-      p.status === "finished" ||
-      p.status === "surrendered" ||
-      p.status === "waiting",
+  const allDone = useMemo(
+    () =>
+      room.players.every(
+        (p) =>
+          p.status === "finished" ||
+          p.status === "surrendered" ||
+          p.status === "waiting",
+      ),
+    [room.players],
   );
   const showMiniBoard = !allDone && room.players.length > 1;
 
