@@ -709,6 +709,7 @@ body {
   color: #202122;
   margin: 1em 0;
   font-size: 96%;
+  max-width: 100%;
 }
 
 .wiki-article table.wikitable > tr > th,

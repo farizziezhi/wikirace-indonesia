@@ -211,10 +211,12 @@ function WikiArticle({
         )}
 
         {!isFirstLoad && !error && html && (
-          <div
-            className="wiki-article"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+          <div className="overflow-x-auto">
+            <div
+              className="wiki-article"
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          </div>
         )}
       </div>
     </div>
