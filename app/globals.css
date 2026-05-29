@@ -51,10 +51,10 @@
   --shadow-arcade: var(--shadow-raised);
   --shadow-glow: var(--shadow-lifted);
 
-  /* ===== Typography — Mona Sans dengan fallback Geist ===== */
-  --font-roobert: "Mona Sans", var(--font-geist-sans), ui-sans-serif, system-ui,
+  /* ===== Typography — Geist (loaded via next/font/google) ===== */
+  --font-roobert: var(--font-geist-sans), ui-sans-serif, system-ui,
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Mona Sans", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
   /* ===== Type scale (4px grid aware) ===== */
   --text-body: 16.67px;
