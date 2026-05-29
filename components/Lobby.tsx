@@ -249,7 +249,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
           <div
             className="font-black tabular-nums text-charcoal-text"
             style={{
-              fontSize: "clamp(64px, 14vw, 104px)",
+              fontSize: "clamp(48px, 14vw, 104px)",
               lineHeight: 1,
               letterSpacing: "0.14em",
             }}
@@ -257,7 +257,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
           >
             {room.id}
           </div>
-          <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-2 px-4">
             <button
               type="button"
               onClick={handleCopyCode}
