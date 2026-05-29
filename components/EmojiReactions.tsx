@@ -120,7 +120,7 @@ export default function EmojiReactions({
 
       {/* Emoji tray */}
       <div
-        className="fixed bottom-4 left-1/2 z-35 flex -translate-x-1/2 items-center gap-1 sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0"
+        className="fixed bottom-16 left-1/2 z-35 flex -translate-x-1/2 items-center gap-1 sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0"
         style={{ zIndex: 35 }}
       >
         {ALLOWED_EMOJIS.map((emoji) => (
