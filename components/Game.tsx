@@ -1,7 +1,14 @@
 "use client";
 
 import type Ably from "ably";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -21,6 +28,225 @@ interface GameProps {
   /** Timestamp ms saat game dimulai. */
   startTime: number;
 }
+
+const MiniLeaderboard = memo(
+  ({
+    players,
+    currentClientId,
+  }: {
+    players: Room["players"];
+    currentClientId: string;
+  }) => {
+    const miniBoard = useMemo(
+      () =>
+        computeMiniLeaderboard({
+          players,
+          currentClientId,
+          winnerClientId: null,
+        }),
+      [players, currentClientId],
+    );
+
+    const allDone = useMemo(
+      () =>
+        players.every(
+          (p) =>
+            p.status === "finished" ||
+            p.status === "surrendered" ||
+            p.status === "waiting",
+        ),
+      [players],
+    );
+    const showMiniBoard = !allDone && players.length > 1;
+
+    if (!showMiniBoard) return null;
+
+    return (
+      <div
+        className="fixed right-3 top-3 z-30 flex w-[200px] flex-col gap-1 bg-charcoal-text text-warm-cream"
+        style={{
+          borderRadius: "var(--radius-input)",
+          padding: "8px 10px",
+          boxShadow: "var(--shadow-floating)",
+        }}
+      >
+        <div
+          className="font-bold uppercase text-warm-cream/70"
+          style={{ fontSize: "10px", letterSpacing: "0.5px" }}
+        >
+          Papan Skor
+        </div>
+        {miniBoard.map((entry) => (
+          <div
+            key={entry.clientId}
+            className="flex items-center gap-2"
+            style={{ fontSize: "13px" }}
+          >
+            <span
+              className="flex shrink-0 items-center justify-center font-extrabold uppercase text-charcoal-text"
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: "9999px",
+                background: entry.isWinner
+                  ? "var(--color-lime-accent)"
+                  : entry.isSurrendered
+                    ? "var(--color-stone-gray)"
+                    : "var(--color-warm-cream)",
+                fontSize: "9px",
+              }}
+              aria-hidden
+            >
+              {initials(entry.username)}
+            </span>
+            <span
+              className={`min-w-0 flex-1 truncate font-bold ${entry.isMe ? "text-lime-accent" : ""}`}
+            >
+              {entry.isWinner ? "🏆 " : ""}
+              {entry.username}
+            </span>
+            <span
+              className="shrink-0 tabular-nums opacity-80"
+              style={{ fontSize: "12px" }}
+            >
+              {entry.isSurrendered
+                ? "■"
+                : entry.status === "finished"
+                  ? "✓"
+                  : `${entry.steps}`}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  },
+);
+MiniLeaderboard.displayName = "MiniLeaderboard";
+
+const GameHeader = memo(
+  ({
+    room,
+    hasSurrendered,
+    confirmingSurrender,
+    elapsed,
+    liveBadges,
+    handleSurrenderClick,
+  }: {
+    room: Room;
+    hasSurrendered: boolean;
+    confirmingSurrender: boolean;
+    elapsed: number;
+    liveBadges: AchievementBadge[];
+    handleSurrenderClick: () => void;
+  }) => (
+    <header className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream">
+      <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span
+            className="shrink-0 bg-lime-accent px-2 py-1 font-bold text-charcoal-text tabular-nums"
+            style={{
+              borderRadius: "var(--radius-button)",
+              fontSize: "13px",
+              letterSpacing: "0.6px",
+            }}
+            title={`Room ${room.id}`}
+          >
+            {room.id}
+          </span>
+          <div className="flex min-w-0 flex-col">
+            <span
+              className="font-bold uppercase text-charcoal-text/60"
+              style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+            >
+              Tujuan
+            </span>
+            <span
+              className="truncate font-extrabold text-charcoal-text"
+              style={{
+                fontSize: "var(--text-subheading)",
+                lineHeight: 1.1,
+              }}
+              title={room.endArticle}
+            >
+              {room.endArticle}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end leading-none">
+          <span
+            className="font-bold uppercase text-charcoal-text/60"
+            style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+          >
+            Waktu
+          </span>
+          <span
+            className="font-extrabold tabular-nums text-charcoal-text"
+            style={{
+              fontSize: "var(--text-heading)",
+              lineHeight: 1,
+            }}
+            aria-label="Waktu yang sudah berjalan"
+          >
+            {formatElapsed(elapsed)}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSurrenderClick}
+          disabled={hasSurrendered}
+          className="shrink-0 transition disabled:opacity-60"
+          style={{
+            border: "1px solid var(--color-warm-gray)",
+            background: hasSurrendered
+              ? "var(--color-warm-gray)"
+              : confirmingSurrender
+                ? "var(--color-charcoal-text)"
+                : "var(--color-warm-cream)",
+            color: confirmingSurrender
+              ? "var(--color-warm-cream)"
+              : "var(--color-charcoal-text)",
+            borderRadius: "var(--radius-button)",
+            padding: "10px 16px",
+            fontWeight: 600,
+            fontSize: "14px",
+          }}
+        >
+          {hasSurrendered
+            ? "Sudah menyerah"
+            : confirmingSurrender
+              ? "Yakin? Klik lagi"
+              : "Menyerah"}
+        </button>
+      </div>
+
+      {liveBadges.length > 0 && (
+        <div className="border-t border-warm-gray bg-light-beige">
+          <div className="mx-auto flex w-full max-w-[920px] gap-2 overflow-x-auto px-4 py-2 sm:px-6">
+            {liveBadges.map((badge) => (
+              <AchievementBadgePill key={badge.id} badge={badge} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {hasSurrendered && (
+        <div
+          className="border-t border-warm-gray bg-light-beige text-charcoal-text"
+          style={{
+            padding: "8px 16px",
+            fontSize: "13px",
+            textAlign: "center",
+          }}
+        >
+          Kamu sudah menyerah. Menunggu pemain lain selesai…
+        </div>
+      )}
+    </header>
+  ),
+);
+GameHeader.displayName = "GameHeader";
 
 /**
  * Layar gameplay aktif (room.status === 'playing').
@@ -59,24 +285,6 @@ export default function Game({
     () => (me ? computeLiveBadges({ route: me.route, status: me.status }) : []),
     [me?.route, me?.status],
   );
-
-  // ------- Mini leaderboard -------
-  const miniBoard = useMemo(
-    () => computeMiniLeaderboard({ players: room.players, currentClientId, winnerClientId: null }),
-    [room.players, currentClientId],
-  );
-
-  const allDone = useMemo(
-    () =>
-      room.players.every(
-        (p) =>
-          p.status === "finished" ||
-          p.status === "surrendered" ||
-          p.status === "waiting",
-      ),
-    [room.players],
-  );
-  const showMiniBoard = !allDone && room.players.length > 1;
 
   // ------- Current article (saya) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
@@ -288,179 +496,16 @@ export default function Game({
         </div>
       )}
 
-      {showMiniBoard && (
-        <div
-          className="fixed right-3 top-3 z-30 flex w-[200px] flex-col gap-1 bg-charcoal-text text-warm-cream"
-          style={{
-            borderRadius: "var(--radius-input)",
-            padding: "8px 10px",
-            boxShadow: "var(--shadow-floating)",
-          }}
-        >
-          <div
-            className="font-bold uppercase text-warm-cream/70"
-            style={{ fontSize: "10px", letterSpacing: "0.5px" }}
-          >
-            Papan Skor
-          </div>
-          {miniBoard.map((entry) => (
-            <div
-              key={entry.clientId}
-              className="flex items-center gap-2"
-              style={{ fontSize: "13px" }}
-            >
-              <span
-                className="flex shrink-0 items-center justify-center font-extrabold uppercase text-charcoal-text"
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: "9999px",
-                  background: entry.isWinner
-                    ? "var(--color-lime-accent)"
-                    : entry.isSurrendered
-                      ? "var(--color-stone-gray)"
-                      : "var(--color-warm-cream)",
-                  fontSize: "9px",
-                }}
-                aria-hidden
-              >
-                {initials(entry.username)}
-              </span>
-              <span
-                className={`min-w-0 flex-1 truncate font-bold ${entry.isMe ? "text-lime-accent" : ""}`}
-              >
-                {entry.isWinner ? "🏆 " : ""}
-                {entry.username}
-              </span>
-              <span
-                className="shrink-0 tabular-nums opacity-80"
-                style={{ fontSize: "12px" }}
-              >
-                {entry.isSurrendered
-                  ? "■"
-                  : entry.status === "finished"
-                    ? "✓"
-                    : `${entry.steps}`}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <MiniLeaderboard players={room.players} currentClientId={currentClientId} />
 
-      {/* ============================================================ */}
-      {/* Sticky top bar */}
-      {/* ============================================================ */}
-      <header
-        className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream"
-      >
-        <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6">
-          {/* Kiri: room code + tujuan */}
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <span
-              className="shrink-0 bg-lime-accent px-2 py-1 font-bold text-charcoal-text tabular-nums"
-              style={{
-                borderRadius: "var(--radius-button)",
-                fontSize: "13px",
-                letterSpacing: "0.6px",
-              }}
-              title={`Room ${room.id}`}
-            >
-              {room.id}
-            </span>
-            <div className="flex min-w-0 flex-col">
-              <span
-                className="font-bold uppercase text-charcoal-text/60"
-                style={{ fontSize: "11px", letterSpacing: "0.6px" }}
-              >
-                Tujuan
-              </span>
-              <span
-                className="truncate font-extrabold text-charcoal-text"
-                style={{
-                  fontSize: "var(--text-subheading)",
-                  lineHeight: 1.1,
-                }}
-                title={room.endArticle}
-              >
-                {room.endArticle}
-              </span>
-            </div>
-          </div>
-
-          {/* Tengah/kanan: timer */}
-          <div className="flex flex-col items-end leading-none">
-            <span
-              className="font-bold uppercase text-charcoal-text/60"
-              style={{ fontSize: "11px", letterSpacing: "0.6px" }}
-            >
-              Waktu
-            </span>
-            <span
-              className="font-extrabold tabular-nums text-charcoal-text"
-              style={{
-                fontSize: "var(--text-heading)",
-                lineHeight: 1,
-              }}
-              aria-label="Waktu yang sudah berjalan"
-            >
-              {formatElapsed(elapsed)}
-            </span>
-          </div>
-
-          {/* Tombol Menyerah */}
-          <button
-            type="button"
-            onClick={handleSurrenderClick}
-            disabled={hasSurrendered}
-            className="shrink-0 transition disabled:opacity-60"
-            style={{
-              border: "1px solid var(--color-warm-gray)",
-              background: hasSurrendered
-                ? "var(--color-warm-gray)"
-                : confirmingSurrender
-                  ? "var(--color-charcoal-text)"
-                  : "var(--color-warm-cream)",
-              color: confirmingSurrender
-                ? "var(--color-warm-cream)"
-                : "var(--color-charcoal-text)",
-              borderRadius: "var(--radius-button)",
-              padding: "10px 16px",
-              fontWeight: 600,
-              fontSize: "14px",
-            }}
-          >
-            {hasSurrendered
-              ? "Sudah menyerah"
-              : confirmingSurrender
-                ? "Yakin? Klik lagi"
-                : "Menyerah"}
-          </button>
-        </div>
-
-        {liveBadges.length > 0 && (
-          <div className="border-t border-warm-gray bg-light-beige">
-            <div className="mx-auto flex w-full max-w-[920px] gap-2 overflow-x-auto px-4 py-2 sm:px-6">
-              {liveBadges.map((badge) => (
-                <AchievementBadgePill key={badge.id} badge={badge} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Banner saat sudah menyerah — info ke pemain bahwa tinggal nunggu */}
-        {hasSurrendered && (
-          <div
-            className="border-t border-warm-gray bg-light-beige text-charcoal-text"
-            style={{
-              padding: "8px 16px",
-              fontSize: "13px",
-              textAlign: "center",
-            }}
-          >
-            Kamu sudah menyerah. Menunggu pemain lain selesai…
-          </div>
-        )}
-      </header>
+      <GameHeader
+        room={room}
+        hasSurrendered={hasSurrendered}
+        confirmingSurrender={confirmingSurrender}
+        elapsed={elapsed}
+        liveBadges={liveBadges}
+        handleSurrenderClick={handleSurrenderClick}
+      />
 
       {/* ============================================================ */}
       {/* Konten artikel (full-width, page-level scroll) */}
