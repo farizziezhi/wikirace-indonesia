@@ -80,12 +80,39 @@ const NON_ARTICLE_PREFIXES = [
 ];
 
 /**
+ * Client-side LRU cache untuk HTML artikel Wikipedia.
+ * Max 30 entries. Map iterates in insertion order → delete oldest = delete first.
+ */
+const ARTICLE_CACHE_MAX = 30;
+const articleCache = new Map<string, Promise<string | null>>();
+
+/**
  * Ambil HTML konten artikel Wikipedia untuk judul tertentu.
  * Return null kalau artikel tidak ada / fetch gagal.
+ * Hasil di-cache secara client-side supaya navigasi ulang instan.
  */
 export async function fetchArticleHtml(
   title: string,
   lang: WikiLanguage = DEFAULT_LANGUAGE,
+): Promise<string | null> {
+  const key = `${lang}:${title}`;
+  const cached = articleCache.get(key);
+  if (cached) return cached;
+
+  if (articleCache.size >= ARTICLE_CACHE_MAX) {
+    const oldest = articleCache.keys().next().value;
+    if (oldest) articleCache.delete(oldest);
+  }
+
+  const promise = fetchArticleHtmlRaw(title, lang);
+  articleCache.set(key, promise);
+  return promise;
+}
+
+/** Fetch tanpa cache — dipanggil internal. */
+async function fetchArticleHtmlRaw(
+  title: string,
+  lang: WikiLanguage,
 ): Promise<string | null> {
   const cfg = getLangConfig(lang);
   const url = new URL(`${cfg.baseUrl}/w/api.php`);
