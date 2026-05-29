@@ -127,6 +127,9 @@ export default function ChatPanel({
       e.preventDefault();
       void handleSend();
     }
+    if (e.key === "Escape") {
+      toggleExpand();
+    }
   }
 
   const canSend = inputText.trim().length > 0 && !sendCooldown;
@@ -174,9 +177,10 @@ export default function ChatPanel({
   // ------- Expanded mode -------
   return (
     <div
-      className="fixed bottom-4 left-4 z-35 flex flex-col bg-pure-white"
+      className="fixed bottom-4 left-4 right-4 z-35 flex flex-col bg-pure-white sm:right-auto"
       style={{
-        width: "min(320px, calc(100vw - 32px))",
+        width: "auto",
+        maxWidth: 320,
         maxHeight: "min(420px, calc(100vh - 100px))",
         borderRadius: "var(--radius-rounded)",
         boxShadow: "var(--shadow-floating)",
@@ -210,6 +214,9 @@ export default function ChatPanel({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
+        role="log"
+        aria-live="polite"
+        aria-label="Pesan obrolan"
         className="flex-1 overflow-y-auto px-3 py-2"
         style={{ minHeight: 120 }}
       >

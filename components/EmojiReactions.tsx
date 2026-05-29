@@ -120,7 +120,7 @@ export default function EmojiReactions({
 
       {/* Emoji tray */}
       <div
-        className="fixed bottom-4 right-4 z-35 flex items-center gap-1"
+        className="fixed bottom-4 left-1/2 z-35 flex -translate-x-1/2 items-center gap-1 sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0"
         style={{ zIndex: 35 }}
       >
         {ALLOWED_EMOJIS.map((emoji) => (
@@ -128,12 +128,12 @@ export default function EmojiReactions({
             key={emoji}
             type="button"
             onClick={() => void handleReact(emoji)}
-            className="chunky-press flex items-center justify-center bg-charcoal-text transition hover:bg-charcoal-deep"
+            className="chunky-press flex shrink-0 items-center justify-center bg-charcoal-text transition hover:bg-charcoal-deep"
             style={{
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               borderRadius: "9999px",
-              fontSize: 20,
+              fontSize: 18,
               boxShadow: "var(--shadow-floating)",
             }}
             aria-label={`Kirim reaksi ${emoji}`}
