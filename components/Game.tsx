@@ -139,9 +139,9 @@ const GameHeader = memo(
     liveBadges: AchievementBadge[];
     handleSurrenderClick: () => void;
   }) => (
-    <header className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream">
-      <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+    <header className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream pt-[env(safe-area-inset-top)]">
+      <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2 shrink-0">
           <span
             className="shrink-0 bg-lime-accent px-2 py-1 font-bold text-charcoal-text tabular-nums"
             style={{
@@ -173,17 +173,17 @@ const GameHeader = memo(
           </div>
         </div>
 
-        <div className="flex flex-col items-end leading-none">
+        <div className="flex shrink-0 flex-col items-end leading-none">
           <span
             className="font-bold uppercase text-charcoal-text/60"
-            style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+            style={{ fontSize: "10px", letterSpacing: "0.6px" }}
           >
             Waktu
           </span>
           <span
             className="font-extrabold tabular-nums text-charcoal-text"
             style={{
-              fontSize: "var(--text-heading)",
+              fontSize: "20px",
               lineHeight: 1,
             }}
             aria-label="Waktu yang sudah berjalan"
@@ -208,15 +208,15 @@ const GameHeader = memo(
               ? "var(--color-warm-cream)"
               : "var(--color-charcoal-text)",
             borderRadius: "var(--radius-button)",
-            padding: "10px 16px",
+            padding: "8px 12px",
             fontWeight: 600,
-            fontSize: "14px",
+            fontSize: "13px",
           }}
         >
           {hasSurrendered
-            ? "Sudah menyerah"
+            ? "Sudah"
             : confirmingSurrender
-              ? "Yakin? Klik lagi"
+              ? "Yakin?"
               : "Menyerah"}
         </button>
       </div>
