@@ -10,6 +10,7 @@ interface EmojiReactionsProps {
   roomId: string;
   currentClientId: string;
   ablyChannel: Ably.RealtimeChannel;
+  isChatExpanded: boolean;
 }
 
 /** Cooldown antar kirim emoji (ms). */
@@ -29,9 +30,11 @@ export default function EmojiReactions({
   roomId,
   currentClientId,
   ablyChannel,
+  isChatExpanded,
 }: EmojiReactionsProps) {
   const [floating, setFloating] = useState<FloatingEmoji[]>([]);
   const cooldownRef = useRef(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Subscribe emoji_reaction dari Ably.
   useEffect(() => {
@@ -118,29 +121,60 @@ export default function EmojiReactions({
         </div>
       )}
 
-      {/* Emoji tray */}
+      {/* Click outside backdrop to close dropdown */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-34"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Emoji trigger & dropdown container */}
       <div
-        className="fixed bottom-16 left-1/2 z-35 flex -translate-x-1/2 items-center gap-1 sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0"
-        style={{ zIndex: 35 }}
+        className={`${isChatExpanded ? "hidden sm:block" : "block"} fixed bottom-4 right-4 z-35`}
       >
-        {ALLOWED_EMOJIS.map((emoji) => (
-          <button
-            key={emoji}
-            type="button"
-            onClick={() => void handleReact(emoji)}
-            className="chunky-press flex shrink-0 items-center justify-center bg-charcoal-text transition hover:bg-charcoal-deep"
+        {/* Dropdown Menu (Muncul di atas tombol pemicu) */}
+        {isOpen && (
+          <div
+            className="absolute bottom-10 right-0 z-35 flex items-center gap-1 bg-charcoal-text p-1 sm:p-1.5 mb-1.5 border border-warm-gray"
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: "9999px",
-              fontSize: 18,
+              borderRadius: "var(--radius-pill)",
               boxShadow: "var(--shadow-floating)",
             }}
-            aria-label={`Kirim reaksi ${emoji}`}
           >
-            {emoji}
-          </button>
-        ))}
+            {ALLOWED_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => {
+                  void handleReact(emoji);
+                  setIsOpen(false);
+                }}
+                className="chunky-press flex shrink-0 items-center justify-center transition hover:scale-115 w-8 h-8 sm:w-10 sm:h-10 text-sm sm:text-base"
+                style={{
+                  borderRadius: "9999px",
+                }}
+                aria-label={`Kirim reaksi ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Trigger Button (Tombol smile untuk membuka/menutup) */}
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="chunky-press flex shrink-0 items-center justify-center bg-charcoal-text text-warm-cream transition hover:bg-charcoal-deep w-8 h-8 sm:w-10 sm:h-10 text-sm sm:text-base"
+          style={{
+            borderRadius: "9999px",
+            boxShadow: "var(--shadow-floating)",
+          }}
+          aria-label="Buka Pilihan Reaksi"
+        >
+          {isOpen ? "✕" : "😀"}
+        </button>
       </div>
     </>
   );

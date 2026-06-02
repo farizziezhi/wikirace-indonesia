@@ -33,10 +33,21 @@ const MiniLeaderboard = memo(
   ({
     players,
     currentClientId,
+    hasBadges,
   }: {
     players: Room["players"];
     currentClientId: string;
+    hasBadges: boolean;
   }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    useEffect(() => {
+      if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+        const timer = setTimeout(() => setIsExpanded(true), 0);
+        return () => clearTimeout(timer);
+      }
+    }, []);
+
     const miniBoard = useMemo(
       () =>
         computeMiniLeaderboard({
@@ -61,20 +72,65 @@ const MiniLeaderboard = memo(
 
     if (!showMiniBoard) return null;
 
+    const topClass = hasBadges
+      ? "top-[108px] sm:top-[124px]"
+      : "top-[72px] sm:top-[80px]";
+
+    if (!isExpanded) {
+      const myEntry = miniBoard.find((e) => e.isMe);
+      const steps = myEntry ? myEntry.steps : 0;
+      return (
+        <button
+          type="button"
+          onClick={() => setIsExpanded(true)}
+          className={`fixed right-3 ${topClass} z-35 flex items-center justify-center bg-charcoal-text text-warm-cream chunky-press`}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: "9999px",
+            boxShadow: "var(--shadow-floating)",
+          }}
+          aria-label="Buka Papan Skor"
+        >
+          <span style={{ fontSize: 16 }}>🏆</span>
+          <span
+            className="absolute -bottom-1 -right-1 flex items-center justify-center bg-lime-accent text-charcoal-text font-black text-[10px] tabular-nums"
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: "9999px",
+              border: "1.5px solid var(--color-charcoal-text)",
+            }}
+          >
+            {steps}
+          </span>
+        </button>
+      );
+    }
+
     return (
       <div
-        className="fixed right-3 top-3 z-30 flex w-[200px] flex-col gap-1 bg-charcoal-text text-warm-cream"
+        className={`fixed right-3 ${topClass} z-35 flex w-[200px] flex-col gap-1 bg-charcoal-text text-warm-cream`}
         style={{
           borderRadius: "var(--radius-input)",
           padding: "8px 10px",
           boxShadow: "var(--shadow-floating)",
         }}
       >
-        <div
-          className="font-bold uppercase text-warm-cream/70"
-          style={{ fontSize: "10px", letterSpacing: "0.5px" }}
-        >
-          Papan Skor
+        <div className="flex items-center justify-between border-b border-warm-cream/10 pb-1 mb-1">
+          <div
+            className="font-bold uppercase text-warm-cream/70"
+            style={{ fontSize: "10px", letterSpacing: "0.5px" }}
+          >
+            Papan Skor
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsExpanded(false)}
+            className="text-warm-cream/60 hover:text-warm-cream text-[11px] font-bold"
+          >
+            Tutup
+          </button>
         </div>
         {miniBoard.map((entry) => (
           <div
@@ -283,8 +339,37 @@ export default function Game({
     me?.status === "surrendered" || optimisticSurrendered;
   const liveBadges = useMemo(
     () => (me ? computeLiveBadges({ route: me.route, status: me.status }) : []),
-    [me?.route, me?.status],
+    [me],
   );
+
+  // ------- Cheat prevention: disable search shortcuts (Ctrl+F, Cmd+F, F3, etc) -------
+  const [cheatWarning, setCheatWarning] = useState(false);
+
+  useEffect(() => {
+    if (!cheatWarning) return;
+    const timer = window.setTimeout(() => setCheatWarning(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [cheatWarning]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const keyLower = e.key.toLowerCase();
+      const isSearchShortcut =
+        ((e.ctrlKey || e.metaKey) && (keyLower === "f" || keyLower === "g")) ||
+        e.key === "F3";
+
+      if (isSearchShortcut) {
+        e.preventDefault();
+        e.stopPropagation();
+        setCheatWarning(true);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, []);
 
   // ------- Current article (saya) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
@@ -469,6 +554,29 @@ export default function Game({
 
   return (
     <div className="flex flex-1 flex-col bg-warm-cream">
+      {cheatWarning && (
+        <div
+          className="pointer-events-none fixed inset-x-0 top-18 z-50 flex flex-col items-center px-4"
+          aria-live="polite"
+        >
+          <div
+            role="status"
+            className="pointer-events-auto bg-burnt-orange text-warm-cream font-bold"
+            style={{
+              borderRadius: "var(--radius-rounded)",
+              padding: "12px 16px",
+              fontSize: "14px",
+              lineHeight: "1.4",
+              boxShadow: "var(--shadow-floating)",
+              maxWidth: 460,
+              textAlign: "center",
+            }}
+          >
+            🚫 Pencarian (Ctrl+F) dinonaktifkan untuk mencegah kecurangan!
+          </div>
+        </div>
+      )}
+
       {countdownActive && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/90 px-6 text-center text-warm-cream"
@@ -496,7 +604,11 @@ export default function Game({
         </div>
       )}
 
-      <MiniLeaderboard players={room.players} currentClientId={currentClientId} />
+      <MiniLeaderboard
+        players={room.players}
+        currentClientId={currentClientId}
+        hasBadges={liveBadges.length > 0}
+      />
 
       <GameHeader
         room={room}

@@ -36,11 +36,24 @@ export async function POST(request: NextRequest) {
   }
 
   if (clientId === room.hostClientId) {
-    // Publish dulu, baru hapus, supaya semua client masih nyambung
-    // ke channel saat menerima event.
-    await publishRoomEvent(roomId, "game_cancelled", { reason: "host_left" });
-    await deleteRoom(roomId);
-    return Response.json({ ok: true, roomDeleted: true });
+    const otherPlayers = room.players.filter((p) => p.clientId !== clientId);
+    if (otherPlayers.length === 0) {
+      // Publish dulu, baru hapus, supaya semua client masih nyambung
+      // ke channel saat menerima event.
+      await publishRoomEvent(roomId, "game_cancelled", { reason: "host_left" });
+      await deleteRoom(roomId);
+      return Response.json({ ok: true, roomDeleted: true });
+    } else {
+      // Promosikan pemain berikutnya menjadi host baru.
+      const newHost = otherPlayers[0];
+      newHost.isHost = true;
+      room.hostClientId = newHost.clientId;
+      room.players = otherPlayers;
+
+      await setRoom(room);
+      await publishRoomEvent(roomId, "room_updated", { room });
+      return Response.json({ ok: true, room });
+    }
   }
 
   const beforeLen = room.players.length;

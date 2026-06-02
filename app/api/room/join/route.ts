@@ -51,13 +51,12 @@ export async function POST(request: NextRequest) {
 
   const room = await getRoom(roomId);
   if (!room) return errorResponse("Room tidak ditemukan.", 404);
-  if (room.status !== "lobby") {
-    return errorResponse("Room sudah memulai permainan.", 409);
-  }
-
   // Reconnect: pemain dengan clientId yang sama tinggal kembali ke room.
   const existing = findPlayer(room, clientId);
   if (!existing) {
+    if (room.status !== "lobby") {
+      return errorResponse("Room sudah memulai permainan.", 409);
+    }
     if (room.players.length >= MAX_PLAYERS) {
       return errorResponse(`Room sudah penuh (maks ${MAX_PLAYERS} pemain).`, 409);
     }

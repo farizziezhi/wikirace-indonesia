@@ -11,8 +11,8 @@ interface ChatPanelProps {
   room: Room;
   currentClientId: string;
   ablyChannel: Ably.RealtimeChannel;
-  /** Lobby/results → "expanded", playing → "collapsed". */
-  defaultMode: "expanded" | "collapsed";
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 }
 
 /** Maks pesan di buffer lokal (ring buffer). */
@@ -24,23 +24,37 @@ export default function ChatPanel({
   room,
   currentClientId,
   ablyChannel,
-  defaultMode,
+  isExpanded,
+  onToggleExpand,
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isExpanded, setIsExpanded] = useState(defaultMode === "expanded");
   const [inputText, setInputText] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [sendCooldown, setSendCooldown] = useState(false);
+  const [prevIsExpanded, setPrevIsExpanded] = useState(isExpanded);
+
+  // Clear unread count when panel becomes expanded (in render phase).
+  if (isExpanded !== prevIsExpanded) {
+    setPrevIsExpanded(isExpanded);
+    if (isExpanded) {
+      setUnreadCount(0);
+    }
+  }
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sinkronkan expanded state saat defaultMode berubah (phase switch).
+  // Scroll/focus when expanded.
   useEffect(() => {
-    setIsExpanded(defaultMode === "expanded");
-  }, [defaultMode]);
+    if (isExpanded) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+        inputRef.current?.focus();
+      });
+    }
+  }, [isExpanded]);
 
   // Subscribe chat_message dari Ably.
   useEffect(() => {
@@ -83,18 +97,7 @@ export default function ChatPanel({
 
   // Toggle expand/collapse.
   function toggleExpand() {
-    setIsExpanded((prev) => {
-      if (!prev) {
-        // Expanding → clear unread.
-        setUnreadCount(0);
-        // Auto-scroll ke bawah saat expand.
-        requestAnimationFrame(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
-          inputRef.current?.focus();
-        });
-      }
-      return !prev;
-    });
+    onToggleExpand();
   }
 
   // Kirim pesan.
@@ -140,14 +143,10 @@ export default function ChatPanel({
       <button
         type="button"
         onClick={toggleExpand}
-        className="chunky-press fixed bottom-4 left-4 z-35 flex items-center gap-2 bg-charcoal-text text-warm-cream"
+        className="chunky-press fixed bottom-4 left-4 z-35 flex items-center gap-1.5 bg-charcoal-text text-warm-cream py-2 px-3.5 sm:py-2.5 sm:px-4.5 text-xs sm:text-sm font-bold"
         style={{
           borderRadius: "var(--radius-pill)",
-          padding: "10px 18px",
           boxShadow: "var(--shadow-floating)",
-          zIndex: 35,
-          fontSize: "14px",
-          fontWeight: 600,
         }}
         aria-label={`Buka obrolan${unreadCount > 0 ? `, ${unreadCount} pesan baru` : ""}`}
       >
@@ -160,10 +159,10 @@ export default function ChatPanel({
             className="bg-lime-accent text-charcoal-text inline-flex items-center justify-center font-extrabold"
             style={{
               borderRadius: "9999px",
-              minWidth: 20,
-              height: 20,
-              padding: "0 6px",
-              fontSize: "11px",
+              minWidth: 18,
+              height: 18,
+              padding: "0 5px",
+              fontSize: "10px",
               marginLeft: 2,
             }}
           >
@@ -177,11 +176,11 @@ export default function ChatPanel({
   // ------- Expanded mode -------
   return (
     <div
-      className="fixed bottom-4 left-4 right-4 z-35 flex flex-col bg-pure-white sm:right-auto"
+      className="fixed bottom-4 left-4 right-4 mx-auto z-35 flex flex-col bg-pure-white sm:left-4 sm:right-auto sm:mx-0"
       style={{
         width: "auto",
         maxWidth: 320,
-        maxHeight: "min(420px, calc(100vh - 100px))",
+        maxHeight: "min(360px, calc(100vh - 100px))",
         borderRadius: "var(--radius-rounded)",
         boxShadow: "var(--shadow-floating)",
         border: "1px solid var(--color-warm-gray)",

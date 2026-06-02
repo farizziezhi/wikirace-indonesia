@@ -84,6 +84,14 @@ export default function RoomPage({ params }: RoomPageProps) {
     useState<FinishedSnapshot | null>(null);
   const [fatalError, setFatalError] = useState<string | null>(null);
 
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [prevGameState, setPrevGameState] = useState<GameState>("lobby");
+
+  if (gameState !== prevGameState) {
+    setPrevGameState(gameState);
+    setIsChatExpanded(gameState !== "playing");
+  }
+
   const roomRef = useRef<Room | null>(null);
   useEffect(() => {
     roomRef.current = room;
@@ -103,7 +111,7 @@ export default function RoomPage({ params }: RoomPageProps) {
     const client = new Ably.Realtime({
       authUrl: `/api/ably-auth?clientId=${encodeURIComponent(identity.clientId)}`,
       clientId: identity.clientId,
-      transportParams: { remainPresentFor: 1000 },
+      transportParams: { remainPresentFor: 15000 },
     });
     ablyClientRef.current = client;
 
@@ -368,7 +376,7 @@ export default function RoomPage({ params }: RoomPageProps) {
     };
   }, [ablyChannel, router]);
 
-  // Step 3: presence — kalau host leave, cepat redirect tanpa nunggu API.
+  // Step 3: presence — kalau host leave, panggil API leave atas nama host untuk memicu transfer host atau penghapusan room.
   useEffect(() => {
     if (!ablyChannel) return;
 
@@ -376,15 +384,16 @@ export default function RoomPage({ params }: RoomPageProps) {
       const currentRoom = roomRef.current;
       if (!currentRoom) return;
       if (member.clientId === currentRoom.hostClientId) {
-        try {
-          window.sessionStorage.setItem(
-            "wikirace:toast",
-            "Host keluar, game dibatalkan.",
-          );
-        } catch {
+        void fetch("/api/room/leave", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomId: normalizedRoomId,
+            clientId: member.clientId,
+          }),
+        }).catch(() => {
           // ignore
-        }
-        router.replace("/");
+        });
       }
     }
 
@@ -393,11 +402,19 @@ export default function RoomPage({ params }: RoomPageProps) {
     return () => {
       ablyChannel.presence.unsubscribe("leave", handlePresenceLeave);
     };
-  }, [ablyChannel, router]);
+  }, [ablyChannel, normalizedRoomId]);
 
   // Step 4: beforeunload → sendBeacon ke /api/room/leave (best-effort).
   useEffect(() => {
-    if (!identity) return;
+    if (!identity || !room) return;
+
+    // Host jangan send leave beacon biar kalau refresh room tidak hancur.
+    const isHost = identity.clientId === room.hostClientId;
+    if (isHost) return;
+
+    // Hanya kirim leave beacon kalau masih di lobby.
+    // Kalau sudah main, refresh harus tetap diizinkan tanpa terkeluar.
+    if (room.status !== "lobby") return;
 
     function handleBeforeUnload() {
       try {
@@ -414,7 +431,7 @@ export default function RoomPage({ params }: RoomPageProps) {
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [identity, normalizedRoomId]);
+  }, [identity, normalizedRoomId, room]);
 
   // Callback untuk Results: setelah host call play-again, server akan publish
   // room_reset. Kita juga set state lokal langsung biar UX instant.
@@ -481,8 +498,6 @@ export default function RoomPage({ params }: RoomPageProps) {
     );
   }
 
-  const chatDefaultMode = gameState === "playing" ? "collapsed" : "expanded";
-
   return (
     <>
       {gameState === "playing" && startTime !== null ? (
@@ -507,12 +522,14 @@ export default function RoomPage({ params }: RoomPageProps) {
         room={room}
         currentClientId={identity.clientId}
         ablyChannel={ablyChannel}
-        defaultMode={chatDefaultMode}
+        isExpanded={isChatExpanded}
+        onToggleExpand={() => setIsChatExpanded((prev) => !prev)}
       />
       <EmojiReactions
         roomId={normalizedRoomId}
         currentClientId={identity.clientId}
         ablyChannel={ablyChannel}
+        isChatExpanded={isChatExpanded}
       />
     </>
   );
