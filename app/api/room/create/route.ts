@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     typeof body.username === "string" ? body.username.trim() : "";
   const clientId =
     typeof body.clientId === "string" ? body.clientId.trim() : "";
-  const language: WikiLanguage =
+  let language: WikiLanguage =
     body.language === "en" ? "en" : "id";
   const random = !!body.random;
   const packId = typeof body.packId === "string" ? body.packId : null;
@@ -64,8 +64,7 @@ export async function POST(request: NextRequest) {
     if (!pack) return errorResponse("Pack tidak ditemukan.");
     startArticle = pack.startArticle;
     endArticle = pack.endArticle;
-    // @ts-expect-error lang matches type WikiLanguage
-    language = pack.lang;
+    language = pack.lang as WikiLanguage;
   } else if (random) {
     const s = await fetchRandomArticle(language);
     const e = await fetchRandomArticle(language);
