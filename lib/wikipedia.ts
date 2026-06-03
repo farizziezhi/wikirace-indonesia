@@ -209,3 +209,29 @@ export async function searchArticles(
   if (!Array.isArray(data) || !Array.isArray(data[1])) return [];
   return (data[1] as unknown[]).filter((t): t is string => typeof t === "string");
 }
+
+/**
+ * Ambil satu artikel Wikipedia random.
+ * Dipakai untuk fitur "Surprise Me" — generate article pair otomatis.
+ */
+export async function fetchRandomArticle(
+  lang: WikiLanguage = DEFAULT_LANGUAGE,
+): Promise<string | null> {
+  const cfg = getLangConfig(lang);
+  const url = new URL(`${cfg.baseUrl}/w/api.php`);
+  url.searchParams.set("action", "query");
+  url.searchParams.set("list", "random");
+  url.searchParams.set("rnnamespace", "0");
+  url.searchParams.set("rnlimit", "1");
+  url.searchParams.set("format", "json");
+  url.searchParams.set("origin", "*");
+
+  const res = await fetch(url.toString());
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as {
+    query?: { random?: Array<{ title: string }> };
+  };
+
+  return data.query?.random?.[0]?.title ?? null;
+}
