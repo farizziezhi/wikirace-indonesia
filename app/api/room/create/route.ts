@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { getChallengePackById } from "@/lib/challenges";
 import { fetchRandomArticle } from "@/lib/wikipedia";
 import { getRoom, setRoom } from "@/lib/redis";
 import {
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     clientId?: unknown;
     language?: unknown;
     random?: unknown;
+    packId?: unknown;
   };
   try {
     body = await request.json();
@@ -43,6 +45,7 @@ export async function POST(request: NextRequest) {
   const language: WikiLanguage =
     body.language === "en" ? "en" : "id";
   const random = !!body.random;
+  const packId = typeof body.packId === "string" ? body.packId : null;
 
   if (!username) return errorResponse("username wajib diisi.");
   if (username.length > MAX_USERNAME_LENGTH) {
@@ -56,7 +59,14 @@ export async function POST(request: NextRequest) {
   let startArticle = "";
   let endArticle = "";
 
-  if (random) {
+  if (packId) {
+    const pack = getChallengePackById(packId);
+    if (!pack) return errorResponse("Pack tidak ditemukan.");
+    startArticle = pack.startArticle;
+    endArticle = pack.endArticle;
+    // @ts-expect-error lang matches type WikiLanguage
+    language = pack.lang;
+  } else if (random) {
     const s = await fetchRandomArticle(language);
     const e = await fetchRandomArticle(language);
     if (!s || !e || s === e) {
