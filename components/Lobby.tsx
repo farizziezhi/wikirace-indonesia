@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { getChallengePackById, getPacksByLanguage } from "@/lib/challenges";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
@@ -253,6 +254,32 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     }
   }
 
+  async function handleSelectPack(packId: string) {
+    if (!isHost || starting) return;
+    setError(null);
+    setStarting(true);
+    try {
+      const res = await fetch("/api/room/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: room.id,
+          clientId: currentClientId,
+          packId,
+          language,
+        }),
+      });
+      if (!res.ok) {
+        const data: { error?: string } = await res.json().catch(() => ({}));
+        setError(data.error ?? "Gagal memuat tantangan.");
+      }
+    } catch {
+      setError("Tidak bisa terhubung ke server.");
+    } finally {
+      setStarting(false);
+    }
+  }
+
   const trimmedStart = startArticle.trim();
   const trimmedEnd = endArticle.trim();
   const articlesValid =
@@ -360,6 +387,31 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
               </span>
             )}
           </div>
+
+          {isHost && (
+            <section
+              className="chunky flex flex-col gap-4 bg-pure-white p-6"
+              style={{ borderRadius: "var(--radius-input)" }}
+            >
+              <h3 className="text-xl font-extrabold text-charcoal-text">
+                Tantangan Siap Pakai
+              </h3>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {getPacksByLanguage(language).map((pack) => (
+                  <button
+                    key={pack.id}
+                    onClick={() => void handleSelectPack(pack.id)}
+                    className="chunky text-left p-3 transition hover:bg-lime-accent/10"
+                  >
+                    <div className="font-bold text-charcoal-text">{pack.name}</div>
+                    <div className="text-sm text-charcoal-text/70">
+                      {pack.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           {isHost ? (
             <div className="flex flex-col gap-4">
