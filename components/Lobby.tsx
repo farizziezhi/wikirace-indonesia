@@ -23,13 +23,11 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
 
   const [startArticle, setStartArticle] = useState(room.startArticle);
   const [endArticle, setEndArticle] = useState(room.endArticle);
-  const [language, setLanguage] = useState<WikiLanguage>(
-    room.language ?? "id",
-  );
+  const [language, setLanguage] = useState<WikiLanguage>(room.language ?? "id");
   const [copied, setCopied] = useState(false);
-  const [shareStatus, setShareStatus] = useState<
-    "idle" | "shared" | "copied"
-  >("idle");
+  const [shareStatus, setShareStatus] = useState<"idle" | "shared" | "copied">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -63,11 +61,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
   const saveTimer = useRef<number | null>(null);
 
   const saveArticles = useCallback(
-    async (
-      start: string,
-      end: string,
-      lang: WikiLanguage,
-    ) => {
+    async (start: string, end: string, lang: WikiLanguage) => {
       if (!isHost) return;
       const s = start.trim();
       const e = end.trim();
@@ -106,11 +100,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     [isHost, room.id, currentClientId],
   );
 
-  function scheduleSave(
-    start: string,
-    end: string,
-    lang: WikiLanguage,
-  ) {
+  function scheduleSave(start: string, end: string, lang: WikiLanguage) {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
       void saveArticles(start, end, lang);
@@ -403,7 +393,9 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                     onClick={() => void handleSelectPack(pack.id)}
                     className="chunky text-left p-3 transition hover:bg-lime-accent/10"
                   >
-                    <div className="font-bold text-charcoal-text">{pack.name}</div>
+                    <div className="font-bold text-charcoal-text">
+                      {pack.name}
+                    </div>
                     <div className="text-sm text-charcoal-text/70">
                       {pack.description}
                     </div>
@@ -812,9 +804,7 @@ function ArticlePreview({
     return null;
   }
   return (
-    <div
-      className="flex flex-wrap items-center gap-2 border-t border-parchment pt-3"
-    >
+    <div className="flex flex-wrap items-center gap-2 border-t border-parchment pt-3">
       <span
         className="font-bold uppercase text-charcoal-text/60"
         style={{ fontSize: "11px", letterSpacing: "0.6px" }}

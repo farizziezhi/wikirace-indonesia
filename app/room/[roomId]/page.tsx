@@ -19,26 +19,6 @@ interface FinishedSnapshot {
   winnerId: string | null;
 }
 
-/**
- * Orchestrator halaman room.
- *
- * Tugasnya:
- * 1. Hydrate clientId + username dari localStorage. Kalau tidak ada → redirect /.
- * 2. Connect Ably (authUrl ke /api/ably-auth supaya API key tidak expose).
- * 3. POST /api/room/join sekali untuk masuk room (idempotent — server kita
- *    sudah handle reconnect dengan clientId yang sama).
- * 4. Subscribe channel `room:{roomId}` untuk:
- *    - room_updated   → re-fetch & update room state lokal
- *    - game_started   → switch ke 'playing'
- *    - player_moved   → biarkan child Game.tsx yang handle (juga update player.route di sini)
- *    - game_won       → switch ke 'finished' + simpan winnerId + allRoutes
- *    - game_surrendered → switch ke 'finished' + simpan allRoutes
- *    - game_cancelled → toast + redirect '/'
- *    - room_reset     → switch ke 'lobby' + reset state finished
- * 5. Presence: enter dengan { username }. Kalau host leave → cleanup (server
- *    akan publish game_cancelled, tapi presence ini extra safety).
- * 6. beforeunload → sendBeacon ke /api/room/leave.
- */
 interface RoomPageProps {
   params: Promise<{ roomId: string }>;
 }
@@ -67,14 +47,14 @@ export default function RoomPage({ params }: RoomPageProps) {
         } catch {
           // ignore
         }
-        router.replace("/");
+        router.replace(`/?room=${normalizedRoomId}`);
         return;
       }
       setIdentity({ clientId, username });
     }, 0);
 
     return () => window.clearTimeout(id);
-  }, [router]);
+  }, [router, normalizedRoomId]);
 
   // ------- Room state -------
   const [room, setRoom] = useState<Room | null>(null);
@@ -143,7 +123,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           } catch {
             // ignore
           }
-          router.replace("/");
+          router.replace(`/?room=${normalizedRoomId}`);
           return;
         }
 

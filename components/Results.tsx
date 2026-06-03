@@ -3,10 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  computeResultBadges,
-  type AchievementBadge,
-} from "@/lib/achievements";
+import { computeResultBadges, type AchievementBadge } from "@/lib/achievements";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { Player, Room, RouteStep } from "@/lib/types";
 
@@ -336,11 +333,7 @@ function Podium({
   currentClientId: string;
 }) {
   // Tampilkan urutan: 2 - 1 - 3 supaya juara di tengah.
-  const arranged = [
-    podium[1] ?? null,
-    podium[0] ?? null,
-    podium[2] ?? null,
-  ];
+  const arranged = [podium[1] ?? null, podium[0] ?? null, podium[2] ?? null];
 
   return (
     <section
@@ -658,7 +651,9 @@ function RouteAccordion({
             {finishTimeSec !== undefined && (
               <>
                 <span className="mx-2 opacity-50">·</span>
-                <span className="tabular-nums">{formatTime(finishTimeSec)}</span>
+                <span className="tabular-nums">
+                  {formatTime(finishTimeSec)}
+                </span>
               </>
             )}
             {surrendered && (
@@ -689,10 +684,7 @@ function RouteAccordion({
 
       <div className="border-t border-parchment px-4 py-3">
         {route.length === 0 ? (
-          <p
-            className="text-charcoal-text/70"
-            style={{ fontSize: "14px" }}
-          >
+          <p className="text-charcoal-text/70" style={{ fontSize: "14px" }}>
             Pemain tidak sempat membuka artikel apa pun.
           </p>
         ) : (
