@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { fetchRandomArticle } from "@/lib/wikipedia";
 import { getRoom, setRoom } from "@/lib/redis";
 import {
   createPlayer,
@@ -8,7 +9,7 @@ import {
   MAX_CLIENT_ID_LENGTH,
   MAX_USERNAME_LENGTH,
 } from "@/lib/room";
-import type { Room } from "@/lib/types";
+import type { Room, WikiLanguage } from "@/lib/types";
 
 /**
  * POST /api/room/create
@@ -27,6 +28,7 @@ export async function POST(request: NextRequest) {
     username?: unknown;
     clientId?: unknown;
     language?: unknown;
+    random?: unknown;
   };
   try {
     body = await request.json();
@@ -38,8 +40,9 @@ export async function POST(request: NextRequest) {
     typeof body.username === "string" ? body.username.trim() : "";
   const clientId =
     typeof body.clientId === "string" ? body.clientId.trim() : "";
-  const language: "id" | "en" =
-    body.language === "en" ? "en" : "id"; // default & whitelist
+  const language: WikiLanguage =
+    body.language === "en" ? "en" : "id";
+  const random = !!body.random;
 
   if (!username) return errorResponse("username wajib diisi.");
   if (username.length > MAX_USERNAME_LENGTH) {
@@ -48,6 +51,19 @@ export async function POST(request: NextRequest) {
   if (!clientId) return errorResponse("clientId wajib diisi.");
   if (clientId.length > MAX_CLIENT_ID_LENGTH) {
     return errorResponse("clientId tidak valid.");
+  }
+
+  let startArticle = "";
+  let endArticle = "";
+
+  if (random) {
+    const s = await fetchRandomArticle(language);
+    const e = await fetchRandomArticle(language);
+    if (!s || !e || s === e) {
+      return errorResponse("Gagal generate artikel random. Coba lagi.");
+    }
+    startArticle = s;
+    endArticle = e;
   }
 
   // Cari roomId yang belum dipakai. Tabrakan amat jarang
@@ -64,8 +80,8 @@ export async function POST(request: NextRequest) {
     hostClientId: clientId,
     status: "lobby",
     language,
-    startArticle: "",
-    endArticle: "",
+    startArticle,
+    endArticle,
     players: [createPlayer(clientId, username, true)],
     createdAt: Date.now(),
   };
