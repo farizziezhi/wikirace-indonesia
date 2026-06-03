@@ -32,6 +32,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [surprising, setSurprising] = useState(false);
 
   // Re-sync kalau update datang dari server.
   const lastSyncedRef = useRef({
@@ -149,6 +150,33 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
       setError("Tidak bisa terhubung ke server.");
     } finally {
       setStarting(false);
+    }
+  }
+
+  async function handleSurpriseMe() {
+    if (!isHost || surprising || starting) return;
+    setError(null);
+    setSurprising(true);
+
+    try {
+      const res = await fetch("/api/room/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: room.id,
+          clientId: currentClientId,
+          random: true,
+          language,
+        }),
+      });
+      if (!res.ok) {
+        const data: { error?: string } = await res.json().catch(() => ({}));
+        setError(data.error ?? "Gagal generate artikel random.");
+      }
+    } catch {
+      setError("Tidak bisa terhubung ke server.");
+    } finally {
+      setSurprising(false);
     }
   }
 
@@ -347,6 +375,22 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                 }}
                 disabled={starting}
               />
+
+              <button
+                type="button"
+                onClick={handleSurpriseMe}
+                disabled={surprising || starting}
+                className="chunky-press bg-lime-accent text-charcoal-text transition disabled:opacity-60"
+                style={{
+                  border: "1px solid var(--color-lime-accent)",
+                  borderRadius: "var(--radius-button)",
+                  padding: "12px 16px",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                }}
+              >
+                {surprising ? "Mencari…" : "🎲 Surprise Me"}
+              </button>
 
               <ArticleAutocomplete
                 id="start-article"
