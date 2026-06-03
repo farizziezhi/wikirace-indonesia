@@ -3,10 +3,13 @@ import type { NextRequest } from "next/server";
 import { publishRoomEvent } from "@/lib/ably";
 import { getRoom, setRoom } from "@/lib/redis";
 import { errorResponse, MAX_ARTICLE_TITLE_LENGTH } from "@/lib/room";
+import { getChallengePackById } from "@/lib/challenges";
+import { fetchRandomArticle } from "@/lib/wikipedia";
+import type { WikiLanguage } from "@/lib/types";
 
 /**
  * POST /api/room/set-articles
- * Body: { roomId, clientId, startArticle, endArticle }
+ * Body: { roomId, clientId, startArticle, endArticle, language, random, packId }
  * Hanya host yang boleh, status harus 'lobby'.
  */
 export const dynamic = "force-dynamic";
@@ -18,6 +21,8 @@ export async function POST(request: NextRequest) {
     startArticle?: unknown;
     endArticle?: unknown;
     language?: unknown;
+    random?: unknown;
+    packId?: unknown;
   };
   try {
     body = await request.json();
@@ -29,31 +34,11 @@ export async function POST(request: NextRequest) {
     typeof body.roomId === "string" ? body.roomId.trim().toUpperCase() : "";
   const clientId =
     typeof body.clientId === "string" ? body.clientId.trim() : "";
-  const startArticle =
-    typeof body.startArticle === "string" ? body.startArticle.trim() : "";
-  const endArticle =
-    typeof body.endArticle === "string" ? body.endArticle.trim() : "";
-  // Whitelist & opsional — kalau body tidak kirim language, biarkan tetap.
-  const language: "id" | "en" | undefined =
-    body.language === "id"
-      ? "id"
-      : body.language === "en"
-        ? "en"
-        : undefined;
+  const random = !!body.random;
+  const packId = typeof body.packId === "string" ? body.packId : null;
 
   if (!roomId) return errorResponse("roomId wajib diisi.");
   if (!clientId) return errorResponse("clientId wajib diisi.");
-  if (!startArticle) return errorResponse("startArticle wajib diisi.");
-  if (!endArticle) return errorResponse("endArticle wajib diisi.");
-  if (
-    startArticle.length > MAX_ARTICLE_TITLE_LENGTH ||
-    endArticle.length > MAX_ARTICLE_TITLE_LENGTH
-  ) {
-    return errorResponse("Judul artikel terlalu panjang.");
-  }
-  if (startArticle === endArticle) {
-    return errorResponse("startArticle dan endArticle tidak boleh sama.");
-  }
 
   const room = await getRoom(roomId);
   if (!room) return errorResponse("Room tidak ditemukan.", 404);
@@ -62,6 +47,50 @@ export async function POST(request: NextRequest) {
   }
   if (room.status !== "lobby") {
     return errorResponse("Artikel hanya bisa diatur saat di lobby.", 409);
+  }
+
+  let startArticle = "";
+  let endArticle = "";
+  let language: WikiLanguage | undefined =
+    body.language === "id"
+      ? "id"
+      : body.language === "en"
+        ? "en"
+        : undefined;
+
+  if (packId) {
+    const pack = getChallengePackById(packId);
+    if (!pack) return errorResponse("Pack tidak ditemukan.");
+    startArticle = pack.startArticle;
+    endArticle = pack.endArticle;
+    language = pack.lang as WikiLanguage;
+  } else if (random) {
+    const targetLang = language ?? room.language ?? "id";
+    const s = await fetchRandomArticle(targetLang);
+    const e = await fetchRandomArticle(targetLang);
+    if (!s || !e || s === e) {
+      return errorResponse("Gagal generate artikel random. Coba lagi.");
+    }
+    startArticle = s;
+    endArticle = e;
+    language = targetLang;
+  } else {
+    startArticle =
+      typeof body.startArticle === "string" ? body.startArticle.trim() : "";
+    endArticle =
+      typeof body.endArticle === "string" ? body.endArticle.trim() : "";
+
+    if (!startArticle) return errorResponse("startArticle wajib diisi.");
+    if (!endArticle) return errorResponse("endArticle wajib diisi.");
+    if (
+      startArticle.length > MAX_ARTICLE_TITLE_LENGTH ||
+      endArticle.length > MAX_ARTICLE_TITLE_LENGTH
+    ) {
+      return errorResponse("Judul artikel terlalu panjang.");
+    }
+    if (startArticle === endArticle) {
+      return errorResponse("startArticle dan endArticle tidak boleh sama.");
+    }
   }
 
   room.startArticle = startArticle;
@@ -75,3 +104,4 @@ export async function POST(request: NextRequest) {
 
   return Response.json({ room });
 }
+

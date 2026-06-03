@@ -150,7 +150,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     setSurprising(true);
 
     try {
-      const res = await fetch("/api/room/create", {
+      const res = await fetch("/api/room/set-articles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -249,7 +249,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     setError(null);
     setStarting(true);
     try {
-      const res = await fetch("/api/room/create", {
+      const res = await fetch("/api/room/set-articles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
