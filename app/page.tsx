@@ -65,6 +65,25 @@ export default function HomePage() {
     }, 0);
   }, []);
 
+  // Silently auto-unlock audio on first user click/touch
+  useEffect(() => {
+    function handleUnlock() {
+      unlockRaceAudio().then((ok) => {
+        if (ok) setAudioUnlocked(true);
+      });
+      window.removeEventListener("click", handleUnlock);
+      window.removeEventListener("touchstart", handleUnlock);
+    }
+    if (hydrated && !audioUnlocked) {
+      window.addEventListener("click", handleUnlock);
+      window.addEventListener("touchstart", handleUnlock);
+    }
+    return () => {
+      window.removeEventListener("click", handleUnlock);
+      window.removeEventListener("touchstart", handleUnlock);
+    };
+  }, [hydrated, audioUnlocked]);
+
   // Auto-dismiss toast setelah 5 detik.
   useEffect(() => {
     if (!toast) return;

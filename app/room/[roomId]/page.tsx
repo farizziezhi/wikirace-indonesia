@@ -10,6 +10,7 @@ import Game from "@/components/Game";
 import Lobby from "@/components/Lobby";
 import Results from "@/components/Results";
 import { getOrCreateClientId, getSavedUsername } from "@/lib/client-id";
+import { unlockRaceAudio } from "@/lib/race-audio";
 import type { Player, Room, RouteStep } from "@/lib/types";
 
 type GameState = "lobby" | "playing" | "finished";
@@ -55,6 +56,21 @@ export default function RoomPage({ params }: RoomPageProps) {
 
     return () => window.clearTimeout(id);
   }, [router, normalizedRoomId]);
+
+  // Silently auto-unlock audio on first click/touch inside the room
+  useEffect(() => {
+    function handleUnlock() {
+      unlockRaceAudio();
+      window.removeEventListener("click", handleUnlock);
+      window.removeEventListener("touchstart", handleUnlock);
+    }
+    window.addEventListener("click", handleUnlock);
+    window.addEventListener("touchstart", handleUnlock);
+    return () => {
+      window.removeEventListener("click", handleUnlock);
+      window.removeEventListener("touchstart", handleUnlock);
+    };
+  }, []);
 
   // ------- Room state -------
   const [room, setRoom] = useState<Room | null>(null);

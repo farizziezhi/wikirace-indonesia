@@ -16,7 +16,7 @@ import {
   computeMiniLeaderboard,
   type AchievementBadge,
 } from "@/lib/achievements";
-import { playCountdownBeep } from "@/lib/race-audio";
+import { playCountdownBeep, playCheatAlarm } from "@/lib/race-audio";
 import type { Room } from "@/lib/types";
 
 import WikiArticle from "./WikiArticle";
@@ -343,13 +343,16 @@ export default function Game({
   );
 
   // ------- Cheat prevention: disable search shortcuts (Ctrl+F, Cmd+F, F3, etc) -------
-  const [cheatWarning, setCheatWarning] = useState(false);
+  const [cheaterInfo, setCheaterInfo] = useState<{
+    username: string;
+    isMe: boolean;
+  } | null>(null);
 
   useEffect(() => {
-    if (!cheatWarning) return;
-    const timer = window.setTimeout(() => setCheatWarning(false), 3000);
+    if (!cheaterInfo) return;
+    const timer = window.setTimeout(() => setCheaterInfo(null), 4000);
     return () => window.clearTimeout(timer);
-  }, [cheatWarning]);
+  }, [cheaterInfo]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -361,7 +364,19 @@ export default function Game({
       if (isSearchShortcut) {
         e.preventDefault();
         e.stopPropagation();
-        setCheatWarning(true);
+        
+        // Show local toast and play sound immediately for responsive feedback
+        setCheaterInfo({
+          username: me?.username || "Kamu",
+          isMe: true,
+        });
+        playCheatAlarm();
+
+        // Broadcast to all other players in the room via Ably
+        void ablyChannel.publish("player_cheated", {
+          username: me?.username || "Pemain",
+          clientId: currentClientId,
+        });
       }
     }
 
@@ -369,7 +384,7 @@ export default function Game({
     return () => {
       window.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, []);
+  }, [ablyChannel, me?.username, currentClientId]);
 
   // ------- Current article (saya) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
@@ -430,9 +445,10 @@ export default function Game({
     playCountdownBeep(countdownLabel);
   }, [countdownLabel]);
 
-  // ------- Subscribe game_cancelled -------
+  // ------- Subscribe game events (cancelled & cheated) -------
   useEffect(() => {
     type GameCancelledData = { reason?: string };
+    type PlayerCheatedData = { username: string; clientId: string };
 
     function handleGameCancelled(message: Ably.Message) {
       const data = (message.data as GameCancelledData) ?? {};
@@ -448,11 +464,29 @@ export default function Game({
       router.push("/");
     }
 
+    function handlePlayerCheated(message: Ably.Message) {
+      const data = message.data as PlayerCheatedData;
+      if (!data?.username) return;
+
+      // If this client initiated the cheat, ignore the pubsub message (handled locally)
+      if (data.clientId === currentClientId) return;
+
+      // Display warning banner for other player cheating and play alarm sound
+      setCheaterInfo({
+        username: data.username,
+        isMe: false,
+      });
+      playCheatAlarm();
+    }
+
     void ablyChannel.subscribe("game_cancelled", handleGameCancelled);
+    void ablyChannel.subscribe("player_cheated", handlePlayerCheated);
+
     return () => {
       ablyChannel.unsubscribe("game_cancelled", handleGameCancelled);
+      ablyChannel.unsubscribe("player_cheated", handlePlayerCheated);
     };
-  }, [ablyChannel, router]);
+  }, [ablyChannel, router, currentClientId]);
 
   // ------- Action: navigate -------
   const navigatingRef = useRef(false);
@@ -554,7 +588,7 @@ export default function Game({
 
   return (
     <div className="flex flex-1 flex-col bg-warm-cream">
-      {cheatWarning && (
+      {cheaterInfo && (
         <div
           className="pointer-events-none fixed inset-x-0 top-18 z-50 flex flex-col items-center px-4"
           aria-live="polite"
@@ -568,11 +602,13 @@ export default function Game({
               fontSize: "14px",
               lineHeight: "1.4",
               boxShadow: "var(--shadow-floating)",
-              maxWidth: 460,
+              maxWidth: 500,
               textAlign: "center",
             }}
           >
-            🚫 Pencarian (Ctrl+F) dinonaktifkan untuk mencegah kecurangan!
+            {cheaterInfo.isMe
+              ? "🚫 Pencarian (Ctrl+F) dinonaktifkan untuk mencegah kecurangan!"
+              : `⚠️ ${cheaterInfo.username} mencoba mencari kata menggunakan Ctrl+F (Kecurangan terdeteksi!)`}
           </div>
         </div>
       )}

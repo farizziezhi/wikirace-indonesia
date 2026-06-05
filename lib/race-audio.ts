@@ -78,3 +78,40 @@ export function playCountdownBeep(step: "3" | "2" | "1" | "GO"): void {
   oscillator.start(now);
   oscillator.stop(now + (step === "GO" ? 0.2 : 0.14));
 }
+
+export function playCheatAlarm(): void {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    if (ctx.state === "suspended") {
+      void ctx.resume();
+    }
+  } catch {
+    // ignore
+  }
+
+  const now = ctx.currentTime;
+  
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(440, now);
+  osc.frequency.linearRampToValueAtTime(880, now + 0.15);
+  osc.frequency.linearRampToValueAtTime(440, now + 0.3);
+  osc.frequency.linearRampToValueAtTime(880, now + 0.45);
+  osc.frequency.linearRampToValueAtTime(440, now + 0.6);
+  
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.12, now + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.12, now + 0.55);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+  
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  osc.start(now);
+  osc.stop(now + 0.6);
+}
+
