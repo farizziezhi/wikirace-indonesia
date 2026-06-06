@@ -35,7 +35,7 @@ Game ini dibangun dengan pendekatan *serverless-first* berkinerja tinggi:
 
 ---
 
-## 📦 Struktur Folder
+## 📦 Struktur Folderr
 
 ```plain
 wikirace-id/
