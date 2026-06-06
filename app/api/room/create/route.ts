@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
     hostClientId: clientId,
     status: "lobby",
     language,
+    gameMode: "competitive",
     startArticle,
     endArticle,
     players: [createPlayer(clientId, username, true)],

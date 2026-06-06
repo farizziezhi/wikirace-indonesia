@@ -494,6 +494,8 @@ export default function RoomPage({ params }: RoomPageProps) {
     );
   }
 
+  const showChatAndEmoji = !(gameState === "playing" && room.gameMode === "competitive");
+
   return (
     <>
       {gameState === "playing" && startTime !== null ? (
@@ -514,19 +516,23 @@ export default function RoomPage({ params }: RoomPageProps) {
       ) : (
         <Lobby room={room} currentClientId={identity.clientId} />
       )}
-      <ChatPanel
-        room={room}
-        currentClientId={identity.clientId}
-        ablyChannel={ablyChannel}
-        isExpanded={isChatExpanded}
-        onToggleExpand={() => setIsChatExpanded((prev) => !prev)}
-      />
-      <EmojiReactions
-        roomId={normalizedRoomId}
-        currentClientId={identity.clientId}
-        ablyChannel={ablyChannel}
-        isChatExpanded={isChatExpanded}
-      />
+      {showChatAndEmoji && (
+        <>
+          <ChatPanel
+            room={room}
+            currentClientId={identity.clientId}
+            ablyChannel={ablyChannel}
+            isExpanded={isChatExpanded}
+            onToggleExpand={() => setIsChatExpanded((prev) => !prev)}
+          />
+          <EmojiReactions
+            roomId={normalizedRoomId}
+            currentClientId={identity.clientId}
+            ablyChannel={ablyChannel}
+            isChatExpanded={isChatExpanded}
+          />
+        </>
+      )}
     </>
   );
 }

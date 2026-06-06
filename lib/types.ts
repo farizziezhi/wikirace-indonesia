@@ -23,6 +23,8 @@ export interface Player {
   route: RouteStep[];
   /** Timestamp saat menang (undefined jika belum) */
   finishedAt?: number;
+  suspendedUntil?: number;
+  helpUsed?: boolean;
 }
 
 export type RoomStatus = "lobby" | "playing" | "finished";
@@ -63,6 +65,7 @@ export interface Room {
    * sebelum field ini ada akan diperlakukan sebagai "id".
    */
   language?: WikiLanguage;
+  gameMode?: "competitive" | "casual";
   /** Judul artikel Wikipedia awal */
   startArticle: string;
   /** Judul artikel Wikipedia tujuan */
@@ -73,3 +76,4 @@ export interface Room {
   /** Timestamp saat game dimulai (ms). Hanya ada saat status 'playing' / 'finished'. */
   startTime?: number;
 }
+

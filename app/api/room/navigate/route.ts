@@ -60,6 +60,10 @@ export async function POST(request: NextRequest) {
     return errorResponse("Pemain tidak dalam status 'playing'.", 409);
   }
 
+  if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
+    return errorResponse("Kamu sedang ditangguhkan (suspended) dan tidak bisa navigasi.", 403);
+  }
+
   const step = createRouteStep(article, room.startTime);
   player.route.push(step);
   player.currentArticle = article;

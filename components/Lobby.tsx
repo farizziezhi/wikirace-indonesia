@@ -24,6 +24,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
   const [startArticle, setStartArticle] = useState(room.startArticle);
   const [endArticle, setEndArticle] = useState(room.endArticle);
   const [language, setLanguage] = useState<WikiLanguage>(room.language ?? "id");
+  const [gameMode, setGameMode] = useState<"competitive" | "casual">(room.gameMode ?? "competitive");
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "shared" | "copied">(
     "idle",
@@ -38,37 +39,43 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     start: room.startArticle,
     end: room.endArticle,
     language: room.language ?? ("id" as WikiLanguage),
+    gameMode: room.gameMode ?? "competitive",
   });
   useEffect(() => {
     const serverLang = room.language ?? "id";
+    const serverMode = room.gameMode ?? "competitive";
     if (
       room.startArticle !== lastSyncedRef.current.start ||
       room.endArticle !== lastSyncedRef.current.end ||
-      serverLang !== lastSyncedRef.current.language
+      serverLang !== lastSyncedRef.current.language ||
+      serverMode !== lastSyncedRef.current.gameMode
     ) {
       setStartArticle(room.startArticle);
       setEndArticle(room.endArticle);
       setLanguage(serverLang);
+      setGameMode(serverMode);
       lastSyncedRef.current = {
         start: room.startArticle,
         end: room.endArticle,
         language: serverLang,
+        gameMode: serverMode,
       };
     }
-  }, [room.startArticle, room.endArticle, room.language]);
+  }, [room.startArticle, room.endArticle, room.language, room.gameMode]);
 
   // ------- Save articles (host only) — debounced -------
   const saveTimer = useRef<number | null>(null);
 
   const saveArticles = useCallback(
-    async (start: string, end: string, lang: WikiLanguage) => {
+    async (start: string, end: string, lang: WikiLanguage, mode: "competitive" | "casual") => {
       if (!isHost) return;
       const s = start.trim();
       const e = end.trim();
-      // Bisa save kalau salah satu artikel terisi DAN beda. Bahasa boleh
-      // di-save sendirian (tanpa artikel valid) — biar toggle responsif.
+      // Bisa save jika artikel valid ATAU bahasa berubah ATAU gameMode berubah
       const articlesValid = !!s && !!e && s !== e;
-      if (!articlesValid && lang === lastSyncedRef.current.language) return;
+      const langChanged = lang !== lastSyncedRef.current.language;
+      const modeChanged = mode !== lastSyncedRef.current.gameMode;
+      if (!articlesValid && !langChanged && !modeChanged) return;
 
       try {
         const res = await fetch("/api/room/set-articles", {
@@ -80,6 +87,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             startArticle: s,
             endArticle: e,
             language: lang,
+            gameMode: mode,
           }),
         });
         if (!res.ok) {
@@ -91,7 +99,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
           }
         } else {
           setError(null);
-          lastSyncedRef.current = { start: s, end: e, language: lang };
+          lastSyncedRef.current = { start: s, end: e, language: lang, gameMode: mode };
         }
       } catch {
         setError("Tidak bisa terhubung ke server.");
@@ -100,10 +108,10 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     [isHost, room.id, currentClientId],
   );
 
-  function scheduleSave(start: string, end: string, lang: WikiLanguage) {
+  function scheduleSave(start: string, end: string, lang: WikiLanguage, mode: "competitive" | "casual") {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      void saveArticles(start, end, lang);
+      void saveArticles(start, end, lang, mode);
     }, SAVE_DEBOUNCE_MS);
   }
 
@@ -121,7 +129,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
       saveTimer.current = null;
-      await saveArticles(startArticle, endArticle, language);
+      await saveArticles(startArticle, endArticle, language, gameMode);
     }
 
     try {
@@ -407,18 +415,28 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
 
           {isHost ? (
             <div className="flex flex-col gap-4">
-              <LanguageToggle
-                value={language}
-                onChange={(next) => {
-                  setLanguage(next);
-                  // Ganti bahasa biasanya invalidasi pilihan artikel sebelumnya.
-                  // Bersihkan supaya host pilih ulang dari Wikipedia bahasa baru.
-                  setStartArticle("");
-                  setEndArticle("");
-                  scheduleSave("", "", next);
-                }}
-                disabled={starting}
-              />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <LanguageToggle
+                  value={language}
+                  onChange={(next) => {
+                    setLanguage(next);
+                    // Ganti bahasa biasanya invalidasi pilihan artikel sebelumnya.
+                    // Bersihkan supaya host pilih ulang dari Wikipedia bahasa baru.
+                    setStartArticle("");
+                    setEndArticle("");
+                    scheduleSave("", "", next, gameMode);
+                  }}
+                  disabled={starting}
+                />
+                <GameModeToggle
+                  value={gameMode}
+                  onChange={(next) => {
+                    setGameMode(next);
+                    scheduleSave(startArticle, endArticle, language, next);
+                  }}
+                  disabled={starting}
+                />
+              </div>
 
               <button
                 type="button"
@@ -446,7 +464,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                 language={language}
                 onChange={(next) => {
                   setStartArticle(next);
-                  scheduleSave(next, endArticle, language);
+                  scheduleSave(next, endArticle, language, gameMode);
                 }}
                 disabled={starting}
               />
@@ -460,7 +478,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                 language={language}
                 onChange={(next) => {
                   setEndArticle(next);
-                  scheduleSave(startArticle, next, language);
+                  scheduleSave(startArticle, next, language, gameMode);
                 }}
                 disabled={starting}
               />
@@ -478,14 +496,17 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
               )}
             </div>
           ) : (
-            <>
-              <LanguagePill language={room.language ?? "id"} />
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <LanguagePill language={room.language ?? "id"} />
+                <GameModePill gameMode={room.gameMode ?? "competitive"} />
+              </div>
               <ArticlePreview
                 start={room.startArticle}
                 end={room.endArticle}
                 empty="Host belum memilih artikel."
               />
-            </>
+            </div>
           )}
         </section>
 
@@ -681,6 +702,106 @@ function LanguagePill({ language }: { language: WikiLanguage }) {
           {opt.flag}
         </span>
         {opt.label}
+      </span>
+    </div>
+  );
+}
+
+function GameModeToggle({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: "competitive" | "casual";
+  onChange: (next: "competitive" | "casual") => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span
+        className="font-bold text-charcoal-text"
+        style={{ fontSize: "var(--text-body)" }}
+      >
+        Mode Permainan
+      </span>
+      <div
+        className="grid grid-cols-2 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
+        style={{ borderRadius: "var(--radius-input)" }}
+        role="radiogroup"
+        aria-label="Mode Permainan"
+      >
+        <button
+          type="button"
+          role="radio"
+          aria-checked={value === "competitive"}
+          onClick={() => onChange("competitive")}
+          disabled={disabled}
+          className="flex items-center justify-center gap-2 transition disabled:opacity-60 cursor-pointer"
+          style={{
+            padding: "10px 14px",
+            borderRadius: "var(--radius-button)",
+            background: value === "competitive"
+              ? "var(--color-charcoal-text)"
+              : "transparent",
+            color: value === "competitive"
+              ? "var(--color-pure-white)"
+              : "var(--color-charcoal-text)",
+            fontWeight: 700,
+            fontSize: "14px",
+          }}
+        >
+          <span aria-hidden style={{ fontSize: 18 }}>🏆</span>
+          <span>Competitive</span>
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={value === "casual"}
+          onClick={() => onChange("casual")}
+          disabled={disabled}
+          className="flex items-center justify-center gap-2 transition disabled:opacity-60 cursor-pointer"
+          style={{
+            padding: "10px 14px",
+            borderRadius: "var(--radius-button)",
+            background: value === "casual"
+              ? "var(--color-charcoal-text)"
+              : "transparent",
+            color: value === "casual"
+              ? "var(--color-pure-white)"
+              : "var(--color-charcoal-text)",
+            fontWeight: 700,
+            fontSize: "14px",
+          }}
+        >
+          <span aria-hidden style={{ fontSize: 18 }}>☕</span>
+          <span>Santai</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function GameModePill({ gameMode }: { gameMode: "competitive" | "casual" }) {
+  const isCompetitive = gameMode === "competitive";
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="font-bold uppercase text-charcoal-text/60"
+        style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+      >
+        Mode
+      </span>
+      <span
+        className="chunky-sm bg-paper-white px-2 py-1 font-bold text-charcoal-text"
+        style={{
+          borderRadius: "var(--radius-button)",
+          fontSize: "13px",
+        }}
+      >
+        <span aria-hidden style={{ marginRight: 4 }}>
+          {isCompetitive ? "🏆" : "☕"}
+        </span>
+        {isCompetitive ? "Competitive" : "Santai"}
       </span>
     </div>
   );

@@ -187,6 +187,9 @@ const GameHeader = memo(
     elapsed,
     liveBadges,
     handleSurrenderClick,
+    showHelpButton,
+    isHelpDisabled,
+    handleHelpClick,
   }: {
     room: Room;
     hasSurrendered: boolean;
@@ -194,6 +197,9 @@ const GameHeader = memo(
     elapsed: number;
     liveBadges: AchievementBadge[];
     handleSurrenderClick: () => void;
+    showHelpButton: boolean;
+    isHelpDisabled: boolean;
+    handleHelpClick: () => void;
   }) => (
     <header className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-3">
@@ -248,33 +254,53 @@ const GameHeader = memo(
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSurrenderClick}
-          disabled={hasSurrendered}
-          className="shrink-0 transition disabled:opacity-60"
-          style={{
-            border: "1px solid var(--color-warm-gray)",
-            background: hasSurrendered
-              ? "var(--color-warm-gray)"
+        <div className="flex items-center gap-2 shrink-0">
+          {showHelpButton && (
+            <button
+              type="button"
+              onClick={handleHelpClick}
+              disabled={isHelpDisabled}
+              className="chunky-press bg-pure-white text-charcoal-text transition disabled:opacity-60 cursor-pointer font-bold"
+              style={{
+                border: "1px solid var(--color-warm-gray)",
+                borderRadius: "var(--radius-button)",
+                padding: "8px 12px",
+                fontSize: "13px",
+              }}
+              title="Kembali ke awal artikel (denda suspensi)"
+            >
+              Kembali ke Awal 🔁
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSurrenderClick}
+            disabled={hasSurrendered}
+            className="shrink-0 transition disabled:opacity-60 cursor-pointer"
+            style={{
+              border: "1px solid var(--color-warm-gray)",
+              background: hasSurrendered
+                ? "var(--color-warm-gray)"
+                : confirmingSurrender
+                  ? "var(--color-charcoal-text)"
+                  : "var(--color-warm-cream)",
+              color: confirmingSurrender
+                ? "var(--color-warm-cream)"
+                : "var(--color-charcoal-text)",
+              borderRadius: "var(--radius-button)",
+              padding: "8px 12px",
+              fontWeight: 600,
+              fontSize: "13px",
+            }}
+          >
+            {hasSurrendered
+              ? "Sudah"
               : confirmingSurrender
-                ? "var(--color-charcoal-text)"
-                : "var(--color-warm-cream)",
-            color: confirmingSurrender
-              ? "var(--color-warm-cream)"
-              : "var(--color-charcoal-text)",
-            borderRadius: "var(--radius-button)",
-            padding: "8px 12px",
-            fontWeight: 600,
-            fontSize: "13px",
-          }}
-        >
-          {hasSurrendered
-            ? "Sudah"
-            : confirmingSurrender
-              ? "Yakin?"
-              : "Menyerah"}
-        </button>
+                ? "Yakin?"
+                : "Menyerah"}
+          </button>
+        </div>
       </div>
 
       {liveBadges.length > 0 && (
@@ -343,16 +369,45 @@ export default function Game({
   );
 
   // ------- Cheat prevention: disable search shortcuts (Ctrl+F, Cmd+F, F3, etc) -------
-  const [cheaterInfo, setCheaterInfo] = useState<{
+  const [suspensionNotice, setSuspensionNotice] = useState<{
     username: string;
     isMe: boolean;
+    reason: string;
+    duration: number;
   } | null>(null);
 
+  const [mySuspensionReason, setMySuspensionReason] = useState<string | null>(null);
+  const [suspensionTimeLeft, setSuspensionTimeLeft] = useState(0);
+
   useEffect(() => {
-    if (!cheaterInfo) return;
-    const timer = window.setTimeout(() => setCheaterInfo(null), 4000);
+    if (!suspensionNotice) return;
+    const timer = window.setTimeout(() => setSuspensionNotice(null), 4000);
     return () => window.clearTimeout(timer);
-  }, [cheaterInfo]);
+  }, [suspensionNotice]);
+
+  useEffect(() => {
+    if (!me?.suspendedUntil) {
+      setSuspensionTimeLeft(0);
+      return;
+    }
+
+    function updateTimeLeft() {
+      const msLeft = (me?.suspendedUntil ?? 0) - Date.now();
+      const secLeft = Math.max(0, Math.ceil(msLeft / 1000));
+      setSuspensionTimeLeft(secLeft);
+    }
+
+    updateTimeLeft();
+    const interval = window.setInterval(updateTimeLeft, 250);
+    return () => window.clearInterval(interval);
+  }, [me?.suspendedUntil]);
+
+  // Clear mySuspensionReason when suspension is over
+  useEffect(() => {
+    if (suspensionTimeLeft === 0) {
+      setMySuspensionReason(null);
+    }
+  }, [suspensionTimeLeft]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -365,18 +420,20 @@ export default function Game({
         e.preventDefault();
         e.stopPropagation();
         
-        // Show local toast and play sound immediately for responsive feedback
-        setCheaterInfo({
-          username: me?.username || "Kamu",
-          isMe: true,
-        });
-        playCheatAlarm();
+        // Cek jika sedang disuspensi untuk menghindari request dobel
+        const isSuspendedNow = me?.suspendedUntil && Date.now() < me.suspendedUntil;
+        if (isSuspendedNow) return;
 
-        // Broadcast to all other players in the room via Ably
-        void ablyChannel.publish("player_cheated", {
-          username: me?.username || "Pemain",
-          clientId: currentClientId,
-        });
+        // Panggil endpoint suspensi server
+        void fetch("/api/room/suspend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomId: room.id,
+            clientId: currentClientId,
+            reason: "ctrl_f",
+          }),
+        }).catch((err) => console.warn("[suspend] gagal:", err));
       }
     }
 
@@ -384,7 +441,7 @@ export default function Game({
     return () => {
       window.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [ablyChannel, me?.username, currentClientId]);
+  }, [ablyChannel, me?.suspendedUntil, room.id, currentClientId]);
 
   // ------- Current article (saya) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
@@ -445,10 +502,16 @@ export default function Game({
     playCountdownBeep(countdownLabel);
   }, [countdownLabel]);
 
-  // ------- Subscribe game events (cancelled & cheated) -------
+  // ------- Subscribe game events (cancelled & suspended) -------
   useEffect(() => {
     type GameCancelledData = { reason?: string };
-    type PlayerCheatedData = { username: string; clientId: string };
+    type PlayerSuspendedData = {
+      clientId: string;
+      username: string;
+      reason: string;
+      duration: number;
+      suspendedUntil: number;
+    };
 
     function handleGameCancelled(message: Ably.Message) {
       const data = (message.data as GameCancelledData) ?? {};
@@ -464,27 +527,30 @@ export default function Game({
       router.push("/");
     }
 
-    function handlePlayerCheated(message: Ably.Message) {
-      const data = message.data as PlayerCheatedData;
-      if (!data?.username) return;
+    function handlePlayerSuspended(message: Ably.Message) {
+      const data = message.data as PlayerSuspendedData;
+      if (!data?.clientId) return;
 
-      // If this client initiated the cheat, ignore the pubsub message (handled locally)
-      if (data.clientId === currentClientId) return;
-
-      // Display warning banner for other player cheating and play alarm sound
-      setCheaterInfo({
-        username: data.username,
-        isMe: false,
-      });
       playCheatAlarm();
+
+      if (data.clientId === currentClientId) {
+        setMySuspensionReason(data.reason);
+      } else {
+        setSuspensionNotice({
+          username: data.username,
+          isMe: false,
+          reason: data.reason,
+          duration: data.duration,
+        });
+      }
     }
 
     void ablyChannel.subscribe("game_cancelled", handleGameCancelled);
-    void ablyChannel.subscribe("player_cheated", handlePlayerCheated);
+    void ablyChannel.subscribe("player_suspended", handlePlayerSuspended);
 
     return () => {
       ablyChannel.unsubscribe("game_cancelled", handleGameCancelled);
-      ablyChannel.unsubscribe("player_cheated", handlePlayerCheated);
+      ablyChannel.unsubscribe("player_suspended", handlePlayerSuspended);
     };
   }, [ablyChannel, router, currentClientId]);
 
@@ -586,9 +652,35 @@ export default function Game({
     currentClientId,
   ]);
 
+  const [usingHelp, setUsingHelp] = useState(false);
+
+  const handleHelpClick = useCallback(async () => {
+    if (usingHelp || me?.helpUsed || hasSurrendered) return;
+
+    setUsingHelp(true);
+    try {
+      const res = await fetch("/api/room/use-help", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: room.id,
+          clientId: currentClientId,
+        }),
+      });
+      if (!res.ok) {
+        const data: { error?: string } = await res.json().catch(() => ({}));
+        console.warn("[use-help] gagal:", data.error ?? res.status);
+      }
+    } catch (err) {
+      console.warn("[use-help] error jaringan:", err);
+    } finally {
+      setUsingHelp(false);
+    }
+  }, [me?.helpUsed, hasSurrendered, room.id, currentClientId, usingHelp]);
+
   return (
     <div className="flex flex-1 flex-col bg-warm-cream">
-      {cheaterInfo && (
+      {suspensionNotice && (
         <div
           className="pointer-events-none fixed inset-x-0 top-18 z-50 flex flex-col items-center px-4"
           aria-live="polite"
@@ -606,9 +698,9 @@ export default function Game({
               textAlign: "center",
             }}
           >
-            {cheaterInfo.isMe
-              ? "🚫 Pencarian (Ctrl+F) dinonaktifkan untuk mencegah kecurangan!"
-              : `⚠️ ${cheaterInfo.username} mencoba mencari kata menggunakan Ctrl+F (Kecurangan terdeteksi!)`}
+            {suspensionNotice.reason === "ctrl_f"
+              ? `⚠️ ${suspensionNotice.username} disuspen ${suspensionNotice.duration === 120 ? "2 menit" : "1 menit"} karena menekan Ctrl+F (Kecurangan terdeteksi!)`
+              : `🔄 ${suspensionNotice.username} kembali ke awal dan disuspen ${suspensionNotice.duration} detik.`}
           </div>
         </div>
       )}
@@ -640,11 +732,13 @@ export default function Game({
         </div>
       )}
 
-      <MiniLeaderboard
-        players={room.players}
-        currentClientId={currentClientId}
-        hasBadges={liveBadges.length > 0}
-      />
+      {room.gameMode !== "competitive" && (
+        <MiniLeaderboard
+          players={room.players}
+          currentClientId={currentClientId}
+          hasBadges={liveBadges.length > 0}
+        />
+      )}
 
       <GameHeader
         room={room}
@@ -653,6 +747,9 @@ export default function Game({
         elapsed={elapsed}
         liveBadges={liveBadges}
         handleSurrenderClick={handleSurrenderClick}
+        showHelpButton={me ? !me.helpUsed && myArticle !== room.startArticle && me.status === "playing" : false}
+        isHelpDisabled={usingHelp || (suspensionTimeLeft > 0)}
+        handleHelpClick={handleHelpClick}
       />
 
       {/* ============================================================ */}
@@ -660,15 +757,48 @@ export default function Game({
       {/* ============================================================ */}
       <section className="mx-auto w-full max-w-[920px] flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <div
-          className="chunky bg-pure-white"
+          className="relative chunky bg-pure-white"
           style={{ borderRadius: "var(--radius-input)" }}
         >
-          <WikiArticle
-            currentArticle={myArticle}
-            endArticle={room.endArticle}
-            language={room.language ?? "id"}
-            onNavigate={handleNavigate}
-          />
+          {suspensionTimeLeft > 0 && (
+            <div
+              className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-charcoal-text/85 text-center p-6"
+              style={{ borderRadius: "var(--radius-input)" }}
+            >
+              <div
+                className="chunky-lg bg-pure-white p-6 sm:p-8 flex flex-col items-center gap-4 text-charcoal-text max-w-sm"
+                style={{ boxShadow: "var(--shadow-floating)" }}
+              >
+                <div className="text-4xl" aria-hidden>⏳</div>
+                <h3 className="font-black text-xl uppercase tracking-wider text-burnt-orange">
+                  AKSES DITANGGUHKAN
+                </h3>
+                <p className="text-sm text-charcoal-text/80 leading-relaxed">
+                  {mySuspensionReason === "ctrl_f" 
+                    ? "Pencarian kata (Ctrl+F) terdeteksi! Dilarang mencari kata demi kejujuran permainan."
+                    : "Anda menggunakan bantuan untuk kembali ke awal."}
+                </p>
+                <div
+                  className="font-black text-4xl tabular-nums bg-charcoal-text text-lime-accent px-4 py-2 mt-2"
+                  style={{ borderRadius: "var(--radius-button)" }}
+                >
+                  {formatElapsed(suspensionTimeLeft)}
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
+                  Tunggu hingga hukuman selesai
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className={suspensionTimeLeft > 0 ? "blur-md pointer-events-none select-none" : ""}>
+            <WikiArticle
+              currentArticle={myArticle}
+              endArticle={room.endArticle}
+              language={room.language ?? "id"}
+              onNavigate={handleNavigate}
+            />
+          </div>
         </div>
       </section>
     </div>

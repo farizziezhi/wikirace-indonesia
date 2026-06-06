@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     startArticle?: unknown;
     endArticle?: unknown;
     language?: unknown;
+    gameMode?: unknown;
     random?: unknown;
     packId?: unknown;
   };
@@ -57,6 +58,12 @@ export async function POST(request: NextRequest) {
       : body.language === "en"
         ? "en"
         : undefined;
+  const gameMode =
+    body.gameMode === "casual"
+      ? "casual"
+      : body.gameMode === "competitive"
+        ? "competitive"
+        : undefined;
 
   if (packId) {
     const pack = getChallengePackById(packId);
@@ -64,6 +71,8 @@ export async function POST(request: NextRequest) {
     startArticle = pack.startArticle;
     endArticle = pack.endArticle;
     language = pack.lang as WikiLanguage;
+    room.startArticle = startArticle;
+    room.endArticle = endArticle;
   } else if (random) {
     const targetLang = language ?? room.language ?? "id";
     const s = await fetchRandomArticle(targetLang);
@@ -74,30 +83,35 @@ export async function POST(request: NextRequest) {
     startArticle = s;
     endArticle = e;
     language = targetLang;
+    room.startArticle = startArticle;
+    room.endArticle = endArticle;
   } else {
-    startArticle =
-      typeof body.startArticle === "string" ? body.startArticle.trim() : "";
-    endArticle =
-      typeof body.endArticle === "string" ? body.endArticle.trim() : "";
-
-    if (!startArticle) return errorResponse("startArticle wajib diisi.");
-    if (!endArticle) return errorResponse("endArticle wajib diisi.");
-    if (
-      startArticle.length > MAX_ARTICLE_TITLE_LENGTH ||
-      endArticle.length > MAX_ARTICLE_TITLE_LENGTH
-    ) {
-      return errorResponse("Judul artikel terlalu panjang.");
+    if (typeof body.startArticle === "string") {
+      const s = body.startArticle.trim();
+      if (s.length > MAX_ARTICLE_TITLE_LENGTH) {
+        return errorResponse("Judul artikel awal terlalu panjang.");
+      }
+      room.startArticle = s;
     }
-    if (startArticle === endArticle) {
-      return errorResponse("startArticle dan endArticle tidak boleh sama.");
+    if (typeof body.endArticle === "string") {
+      const e = body.endArticle.trim();
+      if (e.length > MAX_ARTICLE_TITLE_LENGTH) {
+        return errorResponse("Judul artikel tujuan terlalu panjang.");
+      }
+      room.endArticle = e;
+    }
+    if (room.startArticle && room.endArticle && room.startArticle === room.endArticle) {
+      return errorResponse("Artikel awal dan tujuan tidak boleh sama.");
     }
   }
 
-  room.startArticle = startArticle;
-  room.endArticle = endArticle;
   if (language !== undefined) {
     room.language = language;
   }
+  if (gameMode !== undefined) {
+    room.gameMode = gameMode;
+  }
+
   await setRoom(room);
 
   await publishRoomEvent(roomId, "room_updated", { room });

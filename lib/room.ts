@@ -48,6 +48,8 @@ export function createPlayer(
     status: "waiting",
     currentArticle: "",
     route: [],
+    suspendedUntil: 0,
+    helpUsed: false,
   };
 }
 
