@@ -18,26 +18,18 @@ export default function SoloPlayPage() {
 
   const [currentArticle, setCurrentArticle] = useState(startArticle);
   const [clicks, setClicks] = useState(0);
-  const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [finished, setFinished] = useState(false);
   const [route, setRoute] = useState<string[]>([startArticle]);
+  const [startTime] = useState<number | null>(() =>
+    mode === "time-attack" ? Date.now() : null,
+  );
 
   const timerRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-
-  // Initialize timer on mount for time-attack
-  useEffect(() => {
-    if (mode === "time-attack") {
-      const now = Date.now();
-      startTimeRef.current = now;
-      setStartTime(now);
-    }
-  }, [mode]);
 
   // Timer tick for time-attack
   useEffect(() => {
-    if (mode !== "time-attack" || !startTime || finished) return;
+    if (mode !== "time-attack" || startTime == null || finished) return;
 
     timerRef.current = window.setInterval(() => {
       setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
