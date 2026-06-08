@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await generateSoloArticlePair(lang, 4);
+    const result = await generateSoloArticlePair(lang, 3);
     if (!result) {
       return NextResponse.json({ error: "Gagal generate artikel. Coba lagi." }, { status: 500 });
     }

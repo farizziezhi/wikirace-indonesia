@@ -63,40 +63,59 @@ async function fetchArticleLinks(
 /**
  * BFS from start article up to maxDepth.
  * Collects articles at each level, returns candidates from depth 2-maxDepth.
- * Max 200 total articles explored to prevent runaway API calls.
+ * Parallel fetch per depth level. Max 120 total articles explored.
  */
 async function bfsArticles(
   startTitle: string,
   lang: WikiLanguage,
-  maxDepth: number = 4,
+  maxDepth: number = 3,
 ): Promise<BfsArticle[]> {
   const visited = new Set<string>();
-  const queue: BfsArticle[] = [{ title: startTitle, depth: 0 }];
   const candidates: BfsArticle[] = [];
+  let frontier: string[] = [startTitle];
+  visited.add(startTitle);
   let explored = 0;
-  const MAX_EXPLORED = 200;
+  const MAX_EXPLORED = 120;
+  let depth = 0;
 
-  while (queue.length > 0 && explored < MAX_EXPLORED) {
-    const { title, depth } = queue.shift()!;
-
-    if (visited.has(title)) continue;
-    visited.add(title);
-    explored++;
-
-    // Collect articles at depth 2-maxDepth as potential endpoints
-    if (depth >= 2 && depth <= maxDepth) {
-      candidates.push({ title, depth });
+  // Batch fetch 5 articles at a time
+  async function fetchBatch(titles: string[]): Promise<string[][]> {
+    const chunks: string[][] = [];
+    const BATCH = 5;
+    for (let i = 0; i < titles.length; i += BATCH) {
+      const batch = titles.slice(i, i + BATCH);
+      const results = await Promise.all(
+        batch.map((t) => fetchArticleLinks(t, lang)),
+      );
+      chunks.push(...results);
     }
+    return chunks;
+  }
 
-    // Continue BFS if within max depth
-    if (depth < maxDepth) {
-      const links = await fetchArticleLinks(title, lang);
+  while (depth < maxDepth && explored < MAX_EXPLORED && frontier.length > 0) {
+    const linksPerNode = await fetchBatch(frontier);
+    const nextFrontier: string[] = [];
+    const nextDepth = depth + 1;
+
+    for (const links of linksPerNode) {
+      explored++;
       for (const link of links) {
-        if (!visited.has(link) && explored < MAX_EXPLORED) {
-          queue.push({ title: link, depth: depth + 1 });
+        if (visited.has(link)) continue;
+        visited.add(link);
+        if (nextDepth >= 2 && nextDepth <= maxDepth) {
+          candidates.push({ title: link, depth: nextDepth });
         }
+        if (nextDepth < maxDepth && explored < MAX_EXPLORED) {
+          nextFrontier.push(link);
+        }
+        explored++;
+        if (explored >= MAX_EXPLORED) break;
       }
+      if (explored >= MAX_EXPLORED) break;
     }
+
+    frontier = nextFrontier;
+    depth = nextDepth;
   }
 
   return candidates;
