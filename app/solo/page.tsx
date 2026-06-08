@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS } from "@/lib/wikipedia";
@@ -11,16 +11,12 @@ export default function SoloPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedMode, setSelectedMode] = useState<SoloMode>("time-attack");
-  const [language, setLanguage] = useState<WikiLanguage>("id");
+  const [language, setLanguage] = useState<WikiLanguage>(() => {
+    const param = searchParams.get("lang");
+    return param === "en" ? "en" : "id";
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const langParam = searchParams.get("lang");
-    if (langParam === "id" || langParam === "en") {
-      setLanguage(langParam);
-    }
-  }, [searchParams]);
 
   async function handleStart() {
     setLoading(true);

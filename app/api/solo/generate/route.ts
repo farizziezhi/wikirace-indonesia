@@ -7,7 +7,6 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lang = (searchParams.get("lang") ?? "id") as WikiLanguage;
-  const mode = searchParams.get("mode") ?? "time-attack";
 
   // Validate inputs
   if (lang !== "id" && lang !== "en") {

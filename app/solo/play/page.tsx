@@ -15,7 +15,6 @@ export default function SoloPlayPage() {
   const endArticle = searchParams.get("end") ?? "";
   const mode = (searchParams.get("mode") ?? "time-attack") as SoloMode;
   const language = (searchParams.get("lang") ?? "id") as WikiLanguage;
-  const estimatedDepth = parseInt(searchParams.get("depth") ?? "3", 10);
 
   const [currentArticle, setCurrentArticle] = useState(startArticle);
   const [clicks, setClicks] = useState(0);
@@ -25,11 +24,14 @@ export default function SoloPlayPage() {
   const [route, setRoute] = useState<string[]>([startArticle]);
 
   const timerRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
-  // Start timer on mount for time-attack
+  // Initialize timer on mount for time-attack
   useEffect(() => {
     if (mode === "time-attack") {
-      setStartTime(Date.now());
+      const now = Date.now();
+      startTimeRef.current = now;
+      setStartTime(now);
     }
   }, [mode]);
 
