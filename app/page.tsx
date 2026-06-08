@@ -144,6 +144,21 @@ export default function HomePage() {
     }
   }
 
+  // Launch solo mode practice. Save username and navigate to /solo.
+  async function handleSolo() {
+    setError(null);
+    const usernameError = validateUsername();
+    if (usernameError) {
+      setError(usernameError);
+      return;
+    }
+
+    const trimmedUsername = username.trim();
+    saveUsername(trimmedUsername);
+    // navigate to solo page with language param
+    router.push(`/solo?lang=${language}`);
+  }
+
   async function handleJoin() {
     setError(null);
     const usernameError = validateUsername();
@@ -464,6 +479,20 @@ export default function HomePage() {
             {mode === "creating" ? "Membuat room…" : "Buat Room Baru"}
           </button>
 
+          {/* Tombol Solo */}
+          <button
+            type="button"
+            onClick={handleSolo}
+            disabled={busy || !hydrated}
+            className="btn-secondary"
+            style={{
+              border: "1px solid var(--color-lime-accent)",
+              color: "var(--color-charcoal-text)",
+            }}
+          >
+            🏎️ Latihan Solo
+          </button>
+
           {/* Divider */}
           <div className="flex items-center gap-3" aria-hidden>
             <div className="h-px flex-1 bg-parchment" />
@@ -471,7 +500,7 @@ export default function HomePage() {
               className="font-bold uppercase text-charcoal-text/70"
               style={{ fontSize: "12px", letterSpacing: "0.6px" }}
             >
-              {invitedTo ? "atau buat baru di atas" : "atau gabung"}
+              {invitedTo ? "atau buat baru di atas" : "atau gabung room"}
             </span>
             <div className="h-px flex-1 bg-parchment" />
           </div>
