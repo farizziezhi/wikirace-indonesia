@@ -385,29 +385,36 @@ export default function Game({
     return () => window.clearTimeout(timer);
   }, [suspensionNotice]);
 
+  const suspensionUntilRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (!me?.suspendedUntil) {
-      setSuspensionTimeLeft(0);
+    const current = me?.suspendedUntil ?? null;
+    const prev = suspensionUntilRef.current;
+    suspensionUntilRef.current = current;
+
+    // Suspension cleared externally → reset via microtask (avoids sync cascade)
+    if (!current) {
+      if (prev !== null) {
+        void Promise.resolve().then(() => {
+          setSuspensionTimeLeft(0);
+          setMySuspensionReason(null);
+        });
+      }
       return;
     }
 
-    function updateTimeLeft() {
-      const msLeft = (me?.suspendedUntil ?? 0) - Date.now();
-      const secLeft = Math.max(0, Math.ceil(msLeft / 1000));
-      setSuspensionTimeLeft(secLeft);
-    }
+    const interval = window.setInterval(() => {
+      const msLeft = current - Date.now();
+      if (msLeft <= 0) {
+        setSuspensionTimeLeft(0);
+        setMySuspensionReason(null);
+        return;
+      }
+      setSuspensionTimeLeft(Math.ceil(msLeft / 1000));
+    }, 250);
 
-    updateTimeLeft();
-    const interval = window.setInterval(updateTimeLeft, 250);
     return () => window.clearInterval(interval);
   }, [me?.suspendedUntil]);
-
-  // Clear mySuspensionReason when suspension is over
-  useEffect(() => {
-    if (suspensionTimeLeft === 0) {
-      setMySuspensionReason(null);
-    }
-  }, [suspensionTimeLeft]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
