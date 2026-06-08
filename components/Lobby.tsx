@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { getChallengePackById, getPacksByLanguage } from "@/lib/challenges";
+import { getPacksByLanguage } from "@/lib/challenges";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
