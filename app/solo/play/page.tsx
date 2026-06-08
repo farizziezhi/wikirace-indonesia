@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import WikiArticle from "@/components/WikiArticle";
 import type { WikiLanguage } from "@/lib/types";
 
 type SoloMode = "time-attack" | "free-roam";
 
-export default function SoloPlayPage() {
+function SoloPlayContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -246,5 +246,17 @@ export default function SoloPlayPage() {
         />
       </div>
     </main>
+  );
+}
+
+export default function SoloPlayPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen items-center justify-center bg-warm-cream px-6">
+        <p className="text-charcoal-text" style={{ fontSize: "16px" }}>Loading...</p>
+      </main>
+    }>
+      <SoloPlayContent />
+    </Suspense>
   );
 }
