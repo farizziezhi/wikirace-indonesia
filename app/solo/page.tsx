@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS } from "@/lib/wikipedia";
 
 type SoloMode = "time-attack" | "free-roam";
 
-export default function SoloPage() {
+function SoloPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedMode, setSelectedMode] = useState<SoloMode>("time-attack");
@@ -200,5 +200,19 @@ export default function SoloPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function SoloPage() {
+  return (
+    <Suspense fallback={
+      <main className="dot-bg flex min-h-screen flex-col items-center justify-center bg-warm-cream px-6 py-12">
+        <div className="w-full max-w-[560px] text-center">
+          <p className="text-charcoal-text" style={{ fontSize: "16px" }}>Loading...</p>
+        </div>
+      </main>
+    }>
+      <SoloPageContent />
+    </Suspense>
   );
 }
