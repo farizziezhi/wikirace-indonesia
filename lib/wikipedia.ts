@@ -124,7 +124,11 @@ async function fetchArticleHtmlRaw(
   url.searchParams.set("redirects", "1");
   url.searchParams.set("origin", "*");
 
-  const res = await fetch(url.toString());
+  const res = await fetch(url.toString(), {
+    headers: {
+      "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+    },
+  });
   if (!res.ok) return null;
 
   const data: {
@@ -202,7 +206,11 @@ export async function searchArticles(
   url.searchParams.set("format", "json");
   url.searchParams.set("origin", "*");
 
-  const res = await fetch(url.toString());
+  const res = await fetch(url.toString(), {
+    headers: {
+      "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+    },
+  });
   if (!res.ok) return [];
 
   const data = (await res.json()) as unknown;
@@ -226,7 +234,11 @@ export async function fetchRandomArticle(
   url.searchParams.set("format", "json");
   url.searchParams.set("origin", "*");
 
-  const res = await fetch(url.toString());
+  const res = await fetch(url.toString(), {
+    headers: {
+      "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+    },
+  });
   if (!res.ok) return null;
 
   const data = (await res.json()) as {

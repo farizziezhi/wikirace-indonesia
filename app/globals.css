@@ -312,6 +312,45 @@ body {
   cursor: not-allowed;
 }
 
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--color-charcoal-text);
+  border: 2px solid var(--color-charcoal-text);
+  border-radius: var(--radius-button);
+  padding: 14px 20px;
+  font-weight: 700;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  box-shadow: var(--shadow-flat);
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out,
+    transform 120ms ease-out;
+  cursor: pointer;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-lime-accent);
+  border-color: var(--color-charcoal-text);
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active:not(:disabled) {
+  background: var(--color-lime-deep);
+  box-shadow: var(--shadow-inset);
+  transform: translateY(0);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ============================================================ */
 /* Pulse animation untuk avatar host / live indicator           */
 /* ============================================================ */

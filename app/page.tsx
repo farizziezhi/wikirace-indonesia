@@ -485,10 +485,6 @@ export default function HomePage() {
             onClick={handleSolo}
             disabled={busy || !hydrated}
             className="btn-secondary"
-            style={{
-              border: "1px solid var(--color-lime-accent)",
-              color: "var(--color-charcoal-text)",
-            }}
           >
             🏎️ Latihan Solo
           </button>
