@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import { Redis as UpstashRedis } from "@upstash/redis";
 
 import type { Room } from "./types";
 import { ensureDbInitialized, turso } from "./turso";
@@ -6,6 +7,23 @@ import { ensureDbInitialized, turso } from "./turso";
 // ---------- Valkey (Aiven Redis) Client Singleton ----------
 
 let valkeyClient: Redis | null = null;
+let upstashClient: UpstashRedis | null = null;
+
+export function getUpstashClient(): UpstashRedis | null {
+  if (upstashClient) return upstashClient;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
+    return null;
+  }
+  try {
+    upstashClient = new UpstashRedis({ url, token });
+    return upstashClient;
+  } catch (err) {
+    console.warn("Gagal inisialisasi Upstash client:", err);
+    return null;
+  }
+}
 
 export function getValkeyClient(): Redis {
   if (!valkeyClient) {
@@ -194,3 +212,72 @@ export async function checkRateLimit(
     return { allowed: true, count: 0, remaining: limit };
   }
 }
+
+// ---------- Matchmaking Paths Pool Helpers (Upstash Redis + Valkey Fallback) ----------
+
+const poolKey = (lang: string, difficulty: string) => `matchmaking:pool:${lang}:${difficulty}`;
+
+export async function popMatchmakingPath(
+  lang: string,
+  difficulty: string,
+): Promise<{ startArticle: string; endArticle: string } | null> {
+  try {
+    const key = poolKey(lang, difficulty);
+    const upstash = getUpstashClient();
+    if (upstash) {
+      const res = await upstash.rpop(key);
+      if (!res) return null;
+      if (typeof res === "object") {
+        return res as { startArticle: string; endArticle: string };
+      }
+      return JSON.parse(res as string) as { startArticle: string; endArticle: string };
+    } else {
+      const valkey = getValkeyClient();
+      const res = await valkey.rpop(key);
+      if (!res) return null;
+      return JSON.parse(res) as { startArticle: string; endArticle: string };
+    }
+  } catch (err) {
+    console.error("Gagal RPOP dari matchmaking pool:", err);
+    return null;
+  }
+}
+
+export async function pushMatchmakingPath(
+  lang: string,
+  difficulty: string,
+  path: { startArticle: string; endArticle: string },
+): Promise<void> {
+  try {
+    const key = poolKey(lang, difficulty);
+    const upstash = getUpstashClient();
+    if (upstash) {
+      await upstash.lpush(key, JSON.stringify(path));
+    } else {
+      const valkey = getValkeyClient();
+      await valkey.lpush(key, JSON.stringify(path));
+    }
+  } catch (err) {
+    console.error("Gagal LPUSH ke matchmaking pool:", err);
+  }
+}
+
+export async function getMatchmakingPoolSize(
+  lang: string,
+  difficulty: string,
+): Promise<number> {
+  try {
+    const key = poolKey(lang, difficulty);
+    const upstash = getUpstashClient();
+    if (upstash) {
+      return await upstash.llen(key);
+    } else {
+      const valkey = getValkeyClient();
+      return await valkey.llen(key);
+    }
+  } catch (err) {
+    console.error("Gagal LLEN dari matchmaking pool:", err);
+    return 0;
+  }
+}
+

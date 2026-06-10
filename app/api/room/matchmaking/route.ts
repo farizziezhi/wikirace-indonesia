@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 
 import { getSessionUsername } from "@/lib/auth-server";
 import { getPacksByLanguage } from "@/lib/challenges";
+import { getAllCuratedArticles } from "@/lib/solo-curated";
 import { publishRoomEvent } from "@/lib/ably";
 import {
   addMatchmakingRoom,
@@ -10,6 +11,9 @@ import {
   getRoom,
   removeMatchmakingRoom,
   setRoom,
+  popMatchmakingPath,
+  pushMatchmakingPath,
+  getMatchmakingPoolSize,
 } from "@/lib/redis";
 import {
   createPlayer,
@@ -20,6 +24,73 @@ import {
 import type { Room, WikiLanguage } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+async function fetchWikiLinks(title: string, lang: string): Promise<string[]> {
+  try {
+    const url = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=links&titles=${encodeURIComponent(title)}&pllimit=500&plnamespace=0&format=json&origin=*`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+      },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const pages = data.query?.pages;
+    if (!pages) return [];
+    const pageId = Object.keys(pages)[0];
+    const linksObj = pages[pageId]?.links;
+    if (!linksObj || !Array.isArray(linksObj)) return [];
+    return linksObj.map((l: { title: string }) => l.title).filter(Boolean);
+  } catch (err) {
+    console.error("Gagal mengambil link Wiki:", err);
+    return [];
+  }
+}
+
+async function generateRandomWalkPath(
+  lang: WikiLanguage,
+  elo: number,
+): Promise<{ startArticle: string; endArticle: string } | null> {
+  let steps = 5;
+  if (elo >= 1300) {
+    steps = 9;
+  } else if (elo >= 1100) {
+    steps = 7;
+  }
+
+  const seeds = getAllCuratedArticles(lang);
+  if (seeds.length === 0) return null;
+
+  let attempts = 0;
+  const startAttemptTime = Date.now();
+  // Maksimal 3 percobaan atau 3 detik total untuk mencegah timeout serverless
+  while (attempts < 3 && (Date.now() - startAttemptTime) < 3000) {
+    attempts++;
+    const startArticle = seeds[Math.floor(Math.random() * seeds.length)];
+    let current = startArticle;
+    const visited = new Set<string>([startArticle]);
+    let success = true;
+
+    for (let i = 0; i < steps; i++) {
+      const links = await fetchWikiLinks(current, lang);
+      const candidates = links.filter((l) => !visited.has(l));
+      if (candidates.length === 0) {
+        success = false;
+        break;
+      }
+      const next = candidates[Math.floor(Math.random() * candidates.length)];
+      visited.add(next);
+      current = next;
+    }
+
+    if (success && current !== startArticle) {
+      return { startArticle, endArticle: current };
+    }
+  }
+
+  return null;
+}
 
 export async function POST(request: NextRequest) {
   // 1. Verifikasi Sesi (Wajib Login untuk Ranked)
@@ -122,39 +193,70 @@ export async function POST(request: NextRequest) {
       targetDifficulty = "medium";
     }
 
-    const allPacks = getPacksByLanguage(language);
-    let filteredPacks = allPacks.filter((p) => p.difficulty === targetDifficulty);
+    let startArticle = "";
+    let endArticle = "";
+    let pathFound = false;
 
-    // Fallback jika kuota untuk kesulitan tersebut kosong
-    if (filteredPacks.length === 0) {
-      if (targetDifficulty === "hard") {
-        filteredPacks = allPacks.filter((p) => p.difficulty === "medium");
-        if (filteredPacks.length === 0) {
-          filteredPacks = allPacks.filter((p) => p.difficulty === "easy");
-        }
-      } else if (targetDifficulty === "medium") {
-        filteredPacks = allPacks.filter((p) => p.difficulty === "easy");
-        if (filteredPacks.length === 0) {
-          filteredPacks = allPacks.filter((p) => p.difficulty === "hard");
-        }
+    // A. Coba ambil dari kolam Upstash Redis / Valkey pool
+    const cachedPath = await popMatchmakingPath(language, targetDifficulty);
+    if (cachedPath) {
+      startArticle = cachedPath.startArticle;
+      endArticle = cachedPath.endArticle;
+      pathFound = true;
+    } else {
+      // B. Jika pool kosong, generate via Random Walk secara instan
+      const dynamicPath = await generateRandomWalkPath(language, userElo);
+      if (dynamicPath) {
+        startArticle = dynamicPath.startArticle;
+        endArticle = dynamicPath.endArticle;
+        pathFound = true;
       }
     }
 
-    if (filteredPacks.length === 0) {
-      filteredPacks = allPacks;
+    // C. Fallback ke preset challenge packs jika pool kosong dan random walk gagal/timeout
+    if (!pathFound) {
+      const allPacks = getPacksByLanguage(language);
+      let filteredPacks = allPacks.filter((p) => p.difficulty === targetDifficulty);
+
+      if (filteredPacks.length === 0) {
+        if (targetDifficulty === "hard") {
+          filteredPacks = allPacks.filter((p) => p.difficulty === "medium");
+          if (filteredPacks.length === 0) {
+            filteredPacks = allPacks.filter((p) => p.difficulty === "easy");
+          }
+        } else if (targetDifficulty === "medium") {
+          filteredPacks = allPacks.filter((p) => p.difficulty === "easy");
+          if (filteredPacks.length === 0) {
+            filteredPacks = allPacks.filter((p) => p.difficulty === "hard");
+          }
+        }
+      }
+
+      if (filteredPacks.length === 0) {
+        filteredPacks = allPacks;
+      }
+
+      if (filteredPacks.length > 0) {
+        const pack = filteredPacks[Math.floor(Math.random() * filteredPacks.length)];
+        startArticle = pack.startArticle;
+        endArticle = pack.endArticle;
+      } else {
+        startArticle = language === "en" ? "Earth" : "Indonesia";
+        endArticle = language === "en" ? "London" : "Jakarta";
+      }
     }
 
-    let startArticle = "";
-    let endArticle = "";
-
-    if (filteredPacks.length > 0) {
-      const pack = filteredPacks[Math.floor(Math.random() * filteredPacks.length)];
-      startArticle = pack.startArticle;
-      endArticle = pack.endArticle;
-    } else {
-      startArticle = language === "en" ? "London" : "Jakarta";
-      endArticle = language === "en" ? "Paris" : "Bali";
-    }
+    // D. Trigger pengisian kembali pool secara asinkronus (fire-and-forget)
+    void getMatchmakingPoolSize(language, targetDifficulty)
+      .then(async (size) => {
+        if (size < 3) {
+          const newPath = await generateRandomWalkPath(language, userElo);
+          if (newPath) {
+            await pushMatchmakingPath(language, targetDifficulty, newPath);
+          }
+        }
+      })
+      .catch((err) => console.warn("Gagal mengisi kembali pool matchmaking:", err));
 
     // Generate roomId yang unik
     let roomId = generateRoomId();
