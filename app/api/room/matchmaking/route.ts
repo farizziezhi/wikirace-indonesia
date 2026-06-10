@@ -114,13 +114,41 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Jika tidak ditemukan room, buat room matchmaking baru!
-    // Pilih tantangan siap pakai acak
-    const packs = getPacksByLanguage(language);
+    // Pilih tingkat kesulitan berdasarkan ELO pemain
+    let targetDifficulty: "easy" | "medium" | "hard" = "easy";
+    if (userElo >= 1300) {
+      targetDifficulty = "hard";
+    } else if (userElo >= 1100) {
+      targetDifficulty = "medium";
+    }
+
+    const allPacks = getPacksByLanguage(language);
+    let filteredPacks = allPacks.filter((p) => p.difficulty === targetDifficulty);
+
+    // Fallback jika kuota untuk kesulitan tersebut kosong
+    if (filteredPacks.length === 0) {
+      if (targetDifficulty === "hard") {
+        filteredPacks = allPacks.filter((p) => p.difficulty === "medium");
+        if (filteredPacks.length === 0) {
+          filteredPacks = allPacks.filter((p) => p.difficulty === "easy");
+        }
+      } else if (targetDifficulty === "medium") {
+        filteredPacks = allPacks.filter((p) => p.difficulty === "easy");
+        if (filteredPacks.length === 0) {
+          filteredPacks = allPacks.filter((p) => p.difficulty === "hard");
+        }
+      }
+    }
+
+    if (filteredPacks.length === 0) {
+      filteredPacks = allPacks;
+    }
+
     let startArticle = "";
     let endArticle = "";
 
-    if (packs.length > 0) {
-      const pack = packs[Math.floor(Math.random() * packs.length)];
+    if (filteredPacks.length > 0) {
+      const pack = filteredPacks[Math.floor(Math.random() * filteredPacks.length)];
       startArticle = pack.startArticle;
       endArticle = pack.endArticle;
     } else {

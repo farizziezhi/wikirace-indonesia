@@ -88,6 +88,24 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     lang: "id",
     difficulty: "easy",
   },
+  {
+    id: "philosophy-id-1",
+    name: "Filsafat Dunia",
+    description: "Perjalanan logika dan pemikiran",
+    startArticle: "Filsafat",
+    endArticle: "Logika",
+    lang: "id",
+    difficulty: "hard",
+  },
+  {
+    id: "tech-id-1",
+    name: "Sistem Komputasi",
+    description: "Dari sistem operasi ke cloud",
+    startArticle: "Linux",
+    endArticle: "Komputasi awan",
+    lang: "id",
+    difficulty: "hard",
+  },
 
   // English Geography
   {
@@ -147,6 +165,24 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Bill Gates",
     lang: "en",
     difficulty: "easy",
+  },
+  {
+    id: "science-en-3",
+    name: "Advanced Science",
+    description: "From counting numbers to the subatomic world",
+    startArticle: "Mathematics",
+    endArticle: "Quantum computing",
+    lang: "en",
+    difficulty: "hard",
+  },
+  {
+    id: "philosophy-en-1",
+    name: "Philosophy of Mind",
+    description: "From socratic thought to AI machines",
+    startArticle: "Socrates",
+    endArticle: "Artificial intelligence",
+    lang: "en",
+    difficulty: "hard",
   },
 ];
 
