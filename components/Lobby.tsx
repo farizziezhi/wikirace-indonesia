@@ -34,6 +34,36 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
   const [leaving, setLeaving] = useState(false);
   const [surprising, setSurprising] = useState(false);
 
+  // Hitung mundur untuk matchmaking
+  const [matchmakingTimeLeft, setMatchmakingTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!room.isMatchmaking || !room.autoStartAt || room.players.length < 2) {
+      setMatchmakingTimeLeft(null);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const diff = room.autoStartAt! - Date.now();
+      const seconds = Math.max(0, Math.ceil(diff / 1000));
+      setMatchmakingTimeLeft(seconds);
+
+      if (seconds <= 0) {
+        clearInterval(interval);
+        const isHost = room.hostClientId === currentClientId;
+        // Host memicu start langsung, non-host menunggu 2 detik sebagai fallback
+        const delay = isHost ? 0 : 2000;
+        setTimeout(() => {
+          if (room.status === "lobby") {
+            void handleStart();
+          }
+        }, delay);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [room.isMatchmaking, room.autoStartAt, room.players.length, room.status, currentClientId, room.hostClientId]);
+
   // Re-sync kalau update datang dari server.
   const lastSyncedRef = useRef({
     start: room.startArticle,
@@ -157,6 +187,12 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     setError(null);
     setSurprising(true);
 
+    // Batal simpanan debounced agar tidak menimpa artikel acak
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+
     try {
       const res = await fetch("/api/room/set-articles", {
         method: "POST",
@@ -256,6 +292,12 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     if (!isHost || starting) return;
     setError(null);
     setStarting(true);
+
+    // Batal simpanan debounced agar tidak menimpa paket artikel
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
     try {
       const res = await fetch("/api/room/set-articles", {
         method: "POST",
@@ -413,18 +455,40 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             </section>
           )}
 
-          {isHost ? (
+          {room.isMatchmaking ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold uppercase text-charcoal-text/60" style={{ fontSize: "11px", letterSpacing: "0.6px" }}>
+                    Lobby
+                  </span>
+                  <span className="chunky-sm bg-lime-accent px-2 py-0.5 font-extrabold text-charcoal-text" style={{ borderRadius: "var(--radius-button)", fontSize: "12px" }}>
+                    ⚔️ Ranked Matchmaking
+                  </span>
+                </div>
+                <LanguagePill language={language} />
+                <GameModePill gameMode={gameMode} />
+              </div>
+              <ArticlePreview
+                start={room.startArticle}
+                end={room.endArticle}
+                empty="Memuat artikel..."
+              />
+            </div>
+          ) : isHost ? (
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <LanguageToggle
                   value={language}
                   onChange={(next) => {
                     setLanguage(next);
-                    // Ganti bahasa biasanya invalidasi pilihan artikel sebelumnya.
-                    // Bersihkan supaya host pilih ulang dari Wikipedia bahasa baru.
                     setStartArticle("");
                     setEndArticle("");
-                    scheduleSave("", "", next, gameMode);
+                    if (saveTimer.current) {
+                      window.clearTimeout(saveTimer.current);
+                      saveTimer.current = null;
+                    }
+                    void saveArticles("", "", next, gameMode);
                   }}
                   disabled={starting}
                 />
@@ -432,7 +496,11 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                   value={gameMode}
                   onChange={(next) => {
                     setGameMode(next);
-                    scheduleSave(startArticle, endArticle, language, next);
+                    if (saveTimer.current) {
+                      window.clearTimeout(saveTimer.current);
+                      saveTimer.current = null;
+                    }
+                    void saveArticles(startArticle, endArticle, language, next);
                   }}
                   disabled={starting}
                 />
@@ -540,6 +608,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                 username={p.username}
                 isMe={p.clientId === currentClientId}
                 isHost={p.isHost}
+                elo={p.elo}
               />
             ))}
             {/* Empty slots */}
@@ -567,7 +636,43 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             </div>
           )}
 
-          {isHost ? (
+          {room.isMatchmaking ? (
+            <div
+              className="chunky flex flex-col items-center justify-center gap-3 bg-pure-white text-charcoal-text p-6 text-center"
+              style={{
+                borderRadius: "var(--radius-input)",
+              }}
+            >
+              {room.players.length < 2 ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-lime-soft pd-pulse inline-block shrink-0 rounded-full" style={{ width: 10, height: 10 }} />
+                    <span className="font-extrabold text-charcoal-text">Mencari lawan...</span>
+                  </div>
+                  <p className="text-sm text-charcoal-text/75 mt-1">
+                    Menunggu pemain lain bergabung. Minimal 2 pemain untuk memulai otomatis.
+                  </p>
+                </>
+              ) : matchmakingTimeLeft !== null ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-burnt-orange pd-pulse inline-block shrink-0 rounded-full" style={{ width: 10, height: 10 }} />
+                    <span className="font-black text-lg text-charcoal-text">
+                      🏎️ Game dimulai otomatis dalam {matchmakingTimeLeft} detik!
+                    </span>
+                  </div>
+                  <p className="text-sm text-charcoal-text/75 font-semibold">
+                    Bersiaplah di garis start. Semoga sukses!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="border-charcoal-text border-t-transparent animate-spin rounded-full" style={{ width: 20, height: 20, borderWidth: 3 }} />
+                  <span className="font-bold">Memulai game…</span>
+                </>
+              )}
+            </div>
+          ) : isHost ? (
             <>
               <button
                 type="button"
@@ -811,10 +916,12 @@ function PlayerSlot({
   username,
   isMe,
   isHost,
+  elo,
 }: {
   username: string;
   isMe: boolean;
   isHost: boolean;
+  elo?: number;
 }) {
   const color = avatarColor(username);
   return (
@@ -863,10 +970,15 @@ function PlayerSlot({
           )}
         </div>
         <div
-          className="flex items-center gap-1 text-charcoal-text/70"
+          className="flex items-center gap-1.5 text-charcoal-text/70"
           style={{ fontSize: "12px" }}
         >
-          {isHost ? "👑 Host" : "Siap bermain"}
+          <span>{isHost ? "👑 Host" : "Siap bermain"}</span>
+          {elo !== undefined && (
+            <span className="font-bold text-charcoal-text bg-lime-accent/40 px-1.5 py-0.5 rounded ml-1" style={{ fontSize: "10px" }}>
+              {elo} ELO
+            </span>
+          )}
         </div>
       </div>
     </li>
