@@ -274,6 +274,8 @@ export default function RoomPage({ params }: RoomPageProps) {
           status: Player["status"];
           route: RouteStep[];
           finishedAt?: number;
+          eloChange?: number;
+          newElo?: number;
         }>;
       };
       const allRoutes = buildAllRoutesRecord(data.allRoutes);
@@ -292,6 +294,8 @@ export default function RoomPage({ params }: RoomPageProps) {
             status: snap.status ?? p.status,
             route: snap.route ?? p.route,
             finishedAt: snap.finishedAt ?? p.finishedAt,
+            elo: snap.newElo !== undefined ? snap.newElo : p.elo,
+            eloChange: snap.eloChange !== undefined ? snap.eloChange : p.eloChange,
           };
         });
         return { ...prev, status: "finished", players: updatedPlayers };
@@ -307,6 +311,8 @@ export default function RoomPage({ params }: RoomPageProps) {
           status: Player["status"];
           route: RouteStep[];
           finishedAt?: number;
+          eloChange?: number;
+          newElo?: number;
         }>;
       };
       const allRoutes = buildAllRoutesRecord(data.allRoutes);
@@ -322,6 +328,8 @@ export default function RoomPage({ params }: RoomPageProps) {
             ...p,
             status: snap.status ?? p.status,
             route: snap.route ?? p.route,
+            elo: snap.newElo !== undefined ? snap.newElo : p.elo,
+            eloChange: snap.eloChange !== undefined ? snap.eloChange : p.eloChange,
           };
         });
         return { ...prev, status: "finished", players: updatedPlayers };

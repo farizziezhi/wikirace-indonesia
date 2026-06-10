@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     roomId?: unknown;
     clientId?: unknown;
     emoji?: unknown;
+    emojis?: unknown;
   };
   try {
     body = await request.json();
@@ -34,11 +35,22 @@ export async function POST(request: NextRequest) {
     typeof body.clientId === "string" ? body.clientId.trim() : "";
   const emoji =
     typeof body.emoji === "string" ? body.emoji : "";
+  const emojis =
+    Array.isArray(body.emojis) ? body.emojis.filter((e): e is string => typeof e === "string") : [];
 
   if (!roomId) return errorResponse("roomId wajib diisi.");
   if (!clientId) return errorResponse("clientId wajib diisi.");
-  if (!(ALLOWED_EMOJIS as readonly string[]).includes(emoji)) {
+
+  // Validasi emoji tunggal jika dikirim
+  if (emoji && !(ALLOWED_EMOJIS as readonly string[]).includes(emoji)) {
     return errorResponse("Emoji tidak valid.");
+  }
+
+  // Validasi daftar emojis jika dikirim
+  const validEmojis = emojis.filter((e) => (ALLOWED_EMOJIS as readonly string[]).includes(e));
+
+  if (!emoji && validEmojis.length === 0) {
+    return errorResponse("Tidak ada emoji valid yang dikirim.");
   }
 
   const room = await getRoom(roomId);
@@ -47,8 +59,9 @@ export async function POST(request: NextRequest) {
   const player = findPlayer(room, clientId);
   if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
 
+  // Kirim payload batch jika validEmojis ada, jika tidak kirim emoji tunggal (untuk backward compat)
   await publishRoomEvent(roomId, "emoji_reaction", {
-    emoji,
+    ...(validEmojis.length > 0 ? { emojis: validEmojis } : { emoji }),
     clientId,
     username: player.username,
     timestamp: Date.now(),

@@ -113,7 +113,7 @@ export default function Results({
             className="font-bold uppercase text-charcoal-text/60"
             style={{ fontSize: "12px", letterSpacing: "0.6px" }}
           >
-            Hasil — Room {room.id}
+            Hasil — Room {room.id}{room.isMatchmaking ? " • Ranked Matchmaking (ELO)" : ""}
           </span>
 
           {winner ? (
@@ -382,7 +382,7 @@ function Podium({
               </span>
               {isMe && (
                 <span
-                  className="text-charcoal-text/60"
+                  className="text-charcoal-text/60 block"
                   style={{
                     fontSize: "10px",
                     letterSpacing: "0.3px",
@@ -390,6 +390,24 @@ function Podium({
                 >
                   (kamu)
                 </span>
+              )}
+              {row.player.elo !== undefined && (
+                <div
+                  className="font-bold flex items-center justify-center gap-1 mt-0.5"
+                  style={{ fontSize: "11px" }}
+                >
+                  <span className="text-charcoal-text/75">{row.player.elo} ELO</span>
+                  {row.player.eloChange !== undefined && row.player.eloChange !== 0 && (
+                    <span
+                      className="font-extrabold"
+                      style={{
+                        color: row.player.eloChange > 0 ? "#10b981" : "#f43f5e",
+                      }}
+                    >
+                      {row.player.eloChange > 0 ? `+${row.player.eloChange}` : row.player.eloChange}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
             <div
@@ -543,12 +561,30 @@ function LeaderboardRow({
             </span>
           )}
         </div>
-        <div className="text-charcoal-text/80" style={{ fontSize: "14px" }}>
+        <div className="text-charcoal-text/80 flex flex-wrap items-center gap-x-2" style={{ fontSize: "14px" }}>
           <span className="tabular-nums">{steps} klik</span>
           {finishTimeSec !== undefined && (
             <>
-              <span className="mx-2 opacity-50">·</span>
+              <span className="opacity-50">·</span>
               <span className="tabular-nums">{formatTime(finishTimeSec)}</span>
+            </>
+          )}
+          {player.elo !== undefined && (
+            <>
+              <span className="opacity-50">·</span>
+              <span className="font-bold text-charcoal-text/80">
+                {player.elo} ELO
+              </span>
+              {player.eloChange !== undefined && player.eloChange !== 0 && (
+                <span
+                  className="font-extrabold"
+                  style={{
+                    color: player.eloChange > 0 ? "#10b981" : "#f43f5e",
+                  }}
+                >
+                  ({player.eloChange > 0 ? `+${player.eloChange}` : player.eloChange})
+                </span>
+              )}
             </>
           )}
         </div>
@@ -646,11 +682,11 @@ function RouteAccordion({
               </span>
             )}
           </div>
-          <div className="text-charcoal-text/70" style={{ fontSize: "13px" }}>
+          <div className="text-charcoal-text/70 flex flex-wrap items-center gap-x-2" style={{ fontSize: "13px" }}>
             <span className="tabular-nums">{steps} klik</span>
             {finishTimeSec !== undefined && (
               <>
-                <span className="mx-2 opacity-50">·</span>
+                <span className="opacity-50">·</span>
                 <span className="tabular-nums">
                   {formatTime(finishTimeSec)}
                 </span>
@@ -658,8 +694,26 @@ function RouteAccordion({
             )}
             {surrendered && (
               <>
-                <span className="mx-2 opacity-50">·</span>
+                <span className="opacity-50">·</span>
                 <span>menyerah</span>
+              </>
+            )}
+            {player.elo !== undefined && (
+              <>
+                <span className="opacity-50">·</span>
+                <span className="font-bold text-charcoal-text/70">
+                  {player.elo} ELO
+                </span>
+                {player.eloChange !== undefined && player.eloChange !== 0 && (
+                  <span
+                    className="font-extrabold"
+                    style={{
+                      color: player.eloChange > 0 ? "#10b981" : "#f43f5e",
+                    }}
+                  >
+                    ({player.eloChange > 0 ? `+${player.eloChange}` : player.eloChange})
+                  </span>
+                )}
               </>
             )}
           </div>

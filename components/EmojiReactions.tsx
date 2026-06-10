@@ -35,25 +35,44 @@ export default function EmojiReactions({
   const [floating, setFloating] = useState<FloatingEmoji[]>([]);
   const cooldownRef = useRef(false);
   const [isOpen, setIsOpen] = useState(false);
+  const reactionBufferRef = useRef<string[]>([]);
+  const batchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (batchTimerRef.current) {
+        clearTimeout(batchTimerRef.current);
+      }
+    };
+  }, []);
 
   // Subscribe emoji_reaction dari Ably.
   useEffect(() => {
     function handleReaction(msg: Ably.Message) {
       const data = msg.data as EmojiReaction;
-      if (!data?.emoji) return;
+      if (!data) return;
 
-      const id = `${data.timestamp}-${data.clientId}-${Math.random().toString(36).slice(2, 6)}`;
-      const x = 10 + Math.random() * 80; // 10%-90% dari lebar layar
+      const emojisToRender = data.emojis ?? (data.emoji ? [data.emoji] : []);
+      if (emojisToRender.length === 0) return;
 
-      setFloating((prev) => {
-        const next = [...prev, { id, emoji: data.emoji, x }];
-        return next.length > MAX_FLOATING ? next.slice(-MAX_FLOATING) : next;
+      // Render each emoji with a slight random delay/offset
+      emojisToRender.forEach((emoji, index) => {
+        const id = `${data.timestamp}-${data.clientId}-${index}-${Math.random().toString(36).slice(2, 6)}`;
+        const x = 10 + Math.random() * 80; // 10%-90% dari lebar layar
+
+        setTimeout(() => {
+          setFloating((prev) => {
+            const next = [...prev, { id, emoji, x }];
+            return next.length > MAX_FLOATING ? next.slice(-MAX_FLOATING) : next;
+          });
+
+          // Hapus setelah animasi selesai.
+          setTimeout(() => {
+            setFloating((prev) => prev.filter((e) => e.id !== id));
+          }, FLOAT_DURATION_MS);
+        }, index * 100); // 100ms stagger
       });
-
-      // Hapus setelah animasi selesai.
-      setTimeout(() => {
-        setFloating((prev) => prev.filter((e) => e.id !== id));
-      }, FLOAT_DURATION_MS);
     }
 
     void ablyChannel.subscribe("emoji_reaction", handleReaction);
@@ -79,19 +98,32 @@ export default function EmojiReactions({
         setFloating((prev) => prev.filter((e) => e.id !== id));
       }, FLOAT_DURATION_MS);
 
-      try {
-        await fetch("/api/room/react", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomId, clientId: currentClientId, emoji }),
-        });
-      } catch {
-        // ignore — ephemeral
+      // Tambahkan ke buffer untuk dibatch
+      reactionBufferRef.current.push(emoji);
+
+      if (!batchTimerRef.current) {
+        batchTimerRef.current = setTimeout(async () => {
+          const emojisToSend = [...reactionBufferRef.current];
+          reactionBufferRef.current = [];
+          batchTimerRef.current = null;
+
+          if (emojisToSend.length === 0) return;
+
+          try {
+            await fetch("/api/room/react", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ roomId, clientId: currentClientId, emojis: emojisToSend }),
+            });
+          } catch {
+            // ignore — ephemeral
+          }
+        }, 1200);
       }
 
       setTimeout(() => {
         cooldownRef.current = false;
-      }, REACT_COOLDOWN_MS);
+      }, 300); // 300ms local cooldown
     },
     [roomId, currentClientId],
   );
@@ -148,7 +180,6 @@ export default function EmojiReactions({
                 type="button"
                 onClick={() => {
                   void handleReact(emoji);
-                  setIsOpen(false);
                 }}
                 className="chunky-press flex shrink-0 items-center justify-center transition hover:scale-115 w-8 h-8 sm:w-10 sm:h-10 text-sm sm:text-base"
                 style={{

@@ -1,15 +1,18 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { deleteRoom, getRoom, setRoom } from "@/lib/redis";
-import { errorResponse } from "@/lib/room";
+import {
+  addMatchmakingRoom,
+  deleteRoom,
+  getRoom,
+  removeMatchmakingRoom,
+  setRoom,
+} from "@/lib/redis";
+import { errorResponse, MAX_PLAYERS } from "@/lib/room";
 
 /**
  * POST /api/room/leave
  * Body: { roomId, clientId }
- *
- * Jika host yang keluar → room dibatalkan & dihapus dari Redis.
- * Jika bukan host → player dihapus dari list, broadcast `room_updated`.
  */
 export const dynamic = "force-dynamic";
 
@@ -31,24 +34,41 @@ export async function POST(request: NextRequest) {
 
   const room = await getRoom(roomId);
   if (!room) {
-    // Room sudah tidak ada — anggap leave berhasil (idempotent).
     return Response.json({ ok: true, roomDeleted: true });
   }
+
+  const isMatchmaking = !!room.isMatchmaking;
+  const language = room.language ?? "id";
 
   if (clientId === room.hostClientId) {
     const otherPlayers = room.players.filter((p) => p.clientId !== clientId);
     if (otherPlayers.length === 0) {
-      // Publish dulu, baru hapus, supaya semua client masih nyambung
-      // ke channel saat menerima event.
+      // Pembatalan & pembersihan total
       await publishRoomEvent(roomId, "game_cancelled", { reason: "host_left" });
+      if (isMatchmaking) {
+        await removeMatchmakingRoom(language, roomId);
+      }
       await deleteRoom(roomId);
       return Response.json({ ok: true, roomDeleted: true });
     } else {
-      // Promosikan pemain berikutnya menjadi host baru.
+      // Promosikan pemain berikutnya menjadi host baru
       const newHost = otherPlayers[0];
       newHost.isHost = true;
       room.hostClientId = newHost.clientId;
       room.players = otherPlayers;
+
+      // Update matchmaking data jika aktif
+      if (isMatchmaking) {
+        const totalElo = room.players.reduce((sum, p) => sum + (p.elo ?? 1200), 0);
+        room.averageElo = totalElo / room.players.length;
+
+        if (room.players.length < 2) {
+          room.autoStartAt = undefined;
+        }
+        if (room.players.length < MAX_PLAYERS) {
+          await addMatchmakingRoom(language, roomId);
+        }
+      }
 
       await setRoom(room);
       await publishRoomEvent(roomId, "room_updated", { room });
@@ -59,8 +79,19 @@ export async function POST(request: NextRequest) {
   const beforeLen = room.players.length;
   room.players = room.players.filter((p) => p.clientId !== clientId);
   if (room.players.length === beforeLen) {
-    // Pemain memang tidak ada di room — tetap idempotent.
     return Response.json({ ok: true, room });
+  }
+
+  if (isMatchmaking) {
+    const totalElo = room.players.reduce((sum, p) => sum + (p.elo ?? 1200), 0);
+    room.averageElo = totalElo / room.players.length;
+
+    if (room.players.length < 2) {
+      room.autoStartAt = undefined;
+    }
+    if (room.players.length < MAX_PLAYERS) {
+      await addMatchmakingRoom(language, roomId);
+    }
   }
 
   await setRoom(room);

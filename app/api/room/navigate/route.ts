@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getRoom, setRoom } from "@/lib/redis";
+import { calculateEloChanges } from "@/lib/elo";
+import { getRoom, setRoom, updatePlayerStats } from "@/lib/redis";
 import {
-  buildAllRoutes,
   createRouteStep,
   errorResponse,
   findPlayer,
@@ -13,9 +13,6 @@ import {
 /**
  * POST /api/room/navigate
  * Body: { roomId, clientId, article }
- *
- * Catat navigasi pemain ke artikel baru. Jika article === endArticle,
- * pemain dianggap menang dan game selesai.
  */
 export const dynamic = "force-dynamic";
 
@@ -68,14 +65,50 @@ export async function POST(request: NextRequest) {
   player.route.push(step);
   player.currentArticle = article;
 
+  // Jika pemain mencapai artikel akhir -> MENANG!
   if (article === room.endArticle) {
     player.status = "finished";
     player.finishedAt = Date.now();
     room.status = "finished";
 
+    // Hitung perubahan ELO jika ini room Ranked Matchmaking
+    let eloChanges: Record<string, number> = {};
+    if (room.isMatchmaking) {
+      try {
+        const eloData = room.players.map((p) => ({
+          username: p.username,
+          elo: p.elo ?? 1200,
+          status: p.status,
+          finishedAt: p.finishedAt,
+        }));
+
+        eloChanges = calculateEloChanges(eloData);
+
+        // Update database ELO masing-masing pemain
+        for (const p of room.players) {
+          const change = eloChanges[p.username] || 0;
+          const isWin = p.clientId === clientId; // Hanya pemain aktif ini yang menang
+          await updatePlayerStats(p.username, change, isWin);
+        }
+      } catch (err) {
+        console.error("Gagal menghitung ELO:", err);
+      }
+    }
+
+    // Bangun allRoutes dengan payload data ELO tambahan
+    const allRoutes = room.players.map((p) => ({
+      clientId: p.clientId,
+      username: p.username,
+      status: p.status,
+      route: p.route,
+      finishedAt: p.finishedAt,
+      eloChange: eloChanges[p.username] || 0,
+      newElo: (p.elo ?? 1200) + (eloChanges[p.username] || 0),
+    }));
+
     await setRoom(room);
 
-    // Publish update navigasi terakhir, lalu game_won.
+    // Kirim event navigasi terakhir, lalu kirim hasil kemenangan
     await publishRoomEvent(roomId, "player_moved", {
       clientId,
       article,
@@ -83,7 +116,7 @@ export async function POST(request: NextRequest) {
     });
     await publishRoomEvent(roomId, "game_won", {
       winnerId: clientId,
-      allRoutes: buildAllRoutes(room),
+      allRoutes,
     });
 
     return Response.json({ room, won: true });

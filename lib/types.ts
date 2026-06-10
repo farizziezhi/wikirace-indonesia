@@ -25,6 +25,8 @@ export interface Player {
   finishedAt?: number;
   suspendedUntil?: number;
   helpUsed?: boolean;
+  elo?: number;
+  eloChange?: number;
 }
 
 export type RoomStatus = "lobby" | "playing" | "finished";
@@ -47,7 +49,8 @@ export interface ChatMessage {
 }
 
 export interface EmojiReaction {
-  emoji: string;
+  emoji?: string;
+  emojis?: string[];
   clientId: string;
   username: string;
   /** Date.now() ms */
@@ -75,5 +78,8 @@ export interface Room {
   createdAt: number;
   /** Timestamp saat game dimulai (ms). Hanya ada saat status 'playing' / 'finished'. */
   startTime?: number;
+  isMatchmaking?: boolean;
+  autoStartAt?: number;
+  averageElo?: number;
 }
 

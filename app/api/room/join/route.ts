@@ -1,7 +1,13 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getRoom, setRoom } from "@/lib/redis";
+import { getSessionUsername } from "@/lib/auth-server";
+import {
+  getPlayerStats,
+  getRoom,
+  removeMatchmakingRoom,
+  setRoom,
+} from "@/lib/redis";
 import {
   createPlayer,
   errorResponse,
@@ -31,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   const roomId =
     typeof body.roomId === "string" ? body.roomId.trim().toUpperCase() : "";
-  const username =
+  const usernameInput =
     typeof body.username === "string" ? body.username.trim() : "";
   const clientId =
     typeof body.clientId === "string" ? body.clientId.trim() : "";
@@ -40,8 +46,8 @@ export async function POST(request: NextRequest) {
   if (!/^[A-Z0-9]{6}$/.test(roomId)) {
     return errorResponse("Format kode room tidak valid.");
   }
-  if (!username) return errorResponse("username wajib diisi.");
-  if (username.length > MAX_USERNAME_LENGTH) {
+  if (!usernameInput) return errorResponse("username wajib diisi.");
+  if (usernameInput.length > MAX_USERNAME_LENGTH) {
     return errorResponse(`Nama maksimal ${MAX_USERNAME_LENGTH} karakter.`);
   }
   if (!clientId) return errorResponse("clientId wajib diisi.");
@@ -51,6 +57,15 @@ export async function POST(request: NextRequest) {
 
   const room = await getRoom(roomId);
   if (!room) return errorResponse("Room tidak ditemukan.", 404);
+
+  // Jika room bertipe matchmaking, validasi bahwa user harus sudah login
+  const sessionUsername = await getSessionUsername();
+  if (room.isMatchmaking && !sessionUsername) {
+    return errorResponse("Anda harus login untuk bergabung ke room Ranked.", 401);
+  }
+
+  const activeUsername = sessionUsername || usernameInput;
+
   // Reconnect: pemain dengan clientId yang sama tinggal kembali ke room.
   const existing = findPlayer(room, clientId);
   if (!existing) {
@@ -62,13 +77,40 @@ export async function POST(request: NextRequest) {
     }
 
     const usernameTaken = room.players.some(
-      (p) => p.username.toLowerCase() === username.toLowerCase(),
+      (p) => p.username.toLowerCase() === activeUsername.toLowerCase(),
     );
     if (usernameTaken) {
       return errorResponse("Username sudah dipakai di room ini.", 409);
     }
 
-    room.players.push(createPlayer(clientId, username, false));
+    // Ambil ELO jika ber-sesi
+    let userElo = 1200;
+    if (sessionUsername) {
+      try {
+        const stats = await getPlayerStats(sessionUsername);
+        userElo = stats.elo;
+      } catch (err) {
+        console.error("Gagal memuat ELO saat join:", err);
+      }
+    }
+
+    const newPlayer = createPlayer(clientId, activeUsername, false);
+    newPlayer.elo = userElo;
+    room.players.push(newPlayer);
+
+    // Update rata-rata ELO & autoStartAt jika matchmaking
+    if (room.isMatchmaking) {
+      const totalElo = room.players.reduce((sum, p) => sum + (p.elo ?? 1200), 0);
+      room.averageElo = totalElo / room.players.length;
+
+      if (room.players.length >= 2 && !room.autoStartAt) {
+        room.autoStartAt = Date.now() + 15000;
+      }
+      if (room.players.length >= MAX_PLAYERS) {
+        await removeMatchmakingRoom(room.language ?? "id", room.id);
+      }
+    }
+
     await setRoom(room);
   }
 
