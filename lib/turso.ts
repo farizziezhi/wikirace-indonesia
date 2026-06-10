@@ -1,9 +1,32 @@
 import { createClient } from "@libsql/client";
 
-export const turso = createClient({
-  url: process.env.TURSO_DATABASE_URL!,
-  authToken: process.env.TURSO_AUTH_TOKEN!,
-});
+let tursoInstance: ReturnType<typeof createClient> | null = null;
+
+function getTursoClient() {
+  if (!tursoInstance) {
+    const url = process.env.TURSO_DATABASE_URL;
+    const authToken = process.env.TURSO_AUTH_TOKEN;
+    if (!url) {
+      // Selama build Next.js (prerender), environment variable dari Turso bisa kosong.
+      // Kita lempar error hanya jika benar-benar diakses saat runtime.
+      throw new Error("TURSO_DATABASE_URL tidak dikonfigurasi di environment variables.");
+    }
+    tursoInstance = createClient({
+      url,
+      authToken,
+    });
+  }
+  return tursoInstance;
+}
+
+export const turso = {
+  execute(args: any) {
+    return getTursoClient().execute(args);
+  },
+  batch(args: any, mode?: any) {
+    return getTursoClient().batch(args, mode);
+  }
+};
 
 /**
  * Inisialisasi tabel-tabel SQLite di Turso jika belum ada.
