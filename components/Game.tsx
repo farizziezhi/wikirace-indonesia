@@ -200,133 +200,142 @@ const GameHeader = memo(
     showHelpButton: boolean;
     isHelpDisabled: boolean;
     handleHelpClick: () => void;
-  }) => (
-    <header className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2 shrink-0">
-          <span
-            className="shrink-0 bg-lime-accent px-2 py-1 font-bold text-charcoal-text tabular-nums"
-            style={{
-              borderRadius: "var(--radius-button)",
-              fontSize: "13px",
-              letterSpacing: "0.6px",
-            }}
-            title={`Room ${room.id}`}
-          >
-            {room.id}
-          </span>
-          <div className="flex min-w-0 flex-col">
+  }) => {
+    const isMatchmaking = !!room.isMatchmaking;
+    const remaining = isMatchmaking ? Math.max(0, 300 - elapsed) : 0;
+    const timeToDisplay = isMatchmaking ? remaining : elapsed;
+    const isWarning = isMatchmaking && remaining < 30;
+
+    return (
+      <header className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex w-full max-w-[920px] flex-wrap items-center gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 shrink-0">
+            <span
+              className="shrink-0 bg-lime-accent px-2 py-1 font-bold text-charcoal-text tabular-nums"
+              style={{
+                borderRadius: "var(--radius-button)",
+                fontSize: "13px",
+                letterSpacing: "0.6px",
+              }}
+              title={`Room ${room.id}`}
+            >
+              {room.id}
+            </span>
+            <div className="flex min-w-0 flex-col">
+              <span
+                className="font-bold uppercase text-charcoal-text/60"
+                style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+              >
+                Tujuan
+              </span>
+              <span
+                className="truncate font-extrabold text-charcoal-text"
+                style={{
+                  fontSize: "var(--text-subheading)",
+                  lineHeight: 1.1,
+                }}
+                title={room.endArticle}
+              >
+                {room.endArticle}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-col items-end leading-none">
             <span
               className="font-bold uppercase text-charcoal-text/60"
-              style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+              style={{ fontSize: "10px", letterSpacing: "0.6px" }}
             >
-              Tujuan
+              {isMatchmaking ? "Sisa Waktu" : "Waktu"}
             </span>
             <span
-              className="truncate font-extrabold text-charcoal-text"
+              className={`font-extrabold tabular-nums text-charcoal-text ${isWarning ? "timer-pulse-warning" : ""}`}
               style={{
-                fontSize: "var(--text-subheading)",
-                lineHeight: 1.1,
+                fontSize: "20px",
+                lineHeight: 1,
               }}
-              title={room.endArticle}
+              aria-label={isMatchmaking ? "Sisa waktu bermain" : "Waktu yang sudah berjalan"}
             >
-              {room.endArticle}
+              {formatElapsed(timeToDisplay)}
             </span>
           </div>
-        </div>
 
-        <div className="flex shrink-0 flex-col items-end leading-none">
-          <span
-            className="font-bold uppercase text-charcoal-text/60"
-            style={{ fontSize: "10px", letterSpacing: "0.6px" }}
-          >
-            Waktu
-          </span>
-          <span
-            className="font-extrabold tabular-nums text-charcoal-text"
-            style={{
-              fontSize: "20px",
-              lineHeight: 1,
-            }}
-            aria-label="Waktu yang sudah berjalan"
-          >
-            {formatElapsed(elapsed)}
-          </span>
-        </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {showHelpButton && (
+              <button
+                type="button"
+                onClick={handleHelpClick}
+                disabled={isHelpDisabled}
+                className="chunky-press bg-pure-white text-charcoal-text transition disabled:opacity-60 cursor-pointer font-bold"
+                style={{
+                  border: "1px solid var(--color-warm-gray)",
+                  borderRadius: "var(--radius-button)",
+                  padding: "8px 12px",
+                  fontSize: "13px",
+                }}
+                title="Kembali ke awal artikel (denda suspensi)"
+              >
+                Kembali ke Awal 🔁
+              </button>
+            )}
 
-        <div className="flex items-center gap-2 shrink-0">
-          {showHelpButton && (
             <button
               type="button"
-              onClick={handleHelpClick}
-              disabled={isHelpDisabled}
-              className="chunky-press bg-pure-white text-charcoal-text transition disabled:opacity-60 cursor-pointer font-bold"
+              onClick={handleSurrenderClick}
+              disabled={hasSurrendered}
+              className="shrink-0 transition disabled:opacity-60 cursor-pointer"
               style={{
                 border: "1px solid var(--color-warm-gray)",
+                background: hasSurrendered
+                  ? "var(--color-warm-gray)"
+                  : confirmingSurrender
+                    ? "var(--color-charcoal-text)"
+                    : "var(--color-warm-cream)",
+                color: confirmingSurrender
+                  ? "var(--color-warm-cream)"
+                  : "var(--color-charcoal-text)",
                 borderRadius: "var(--radius-button)",
                 padding: "8px 12px",
+                fontWeight: 600,
                 fontSize: "13px",
               }}
-              title="Kembali ke awal artikel (denda suspensi)"
             >
-              Kembali ke Awal 🔁
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleSurrenderClick}
-            disabled={hasSurrendered}
-            className="shrink-0 transition disabled:opacity-60 cursor-pointer"
-            style={{
-              border: "1px solid var(--color-warm-gray)",
-              background: hasSurrendered
-                ? "var(--color-warm-gray)"
+              {hasSurrendered
+                ? "Sudah"
                 : confirmingSurrender
-                  ? "var(--color-charcoal-text)"
-                  : "var(--color-warm-cream)",
-              color: confirmingSurrender
-                ? "var(--color-warm-cream)"
-                : "var(--color-charcoal-text)",
-              borderRadius: "var(--radius-button)",
-              padding: "8px 12px",
-              fontWeight: 600,
-              fontSize: "13px",
-            }}
-          >
-            {hasSurrendered
-              ? "Sudah"
-              : confirmingSurrender
-                ? "Yakin?"
-                : "Menyerah"}
-          </button>
-        </div>
-      </div>
-
-      {liveBadges.length > 0 && (
-        <div className="border-t border-warm-gray bg-light-beige">
-          <div className="mx-auto flex w-full max-w-[920px] gap-2 overflow-x-auto px-4 py-2 sm:px-6">
-            {liveBadges.map((badge) => (
-              <AchievementBadgePill key={badge.id} badge={badge} />
-            ))}
+                  ? "Yakin?"
+                  : "Menyerah"}
+            </button>
           </div>
         </div>
-      )}
 
-      {hasSurrendered && (
-        <div
-          className="border-t border-warm-gray bg-light-beige text-charcoal-text"
-          style={{
-            padding: "8px 16px",
-            fontSize: "13px",
-            textAlign: "center",
-          }}
-        >
-          Kamu sudah menyerah. Menunggu pemain lain selesai…
-        </div>
-      )}
-    </header>
-  ),
+        {liveBadges.length > 0 && (
+          <div className="border-t border-warm-gray bg-light-beige">
+            <div className="mx-auto flex w-full max-w-[920px] gap-2 overflow-x-auto px-4 py-2 sm:px-6">
+              {liveBadges.map((badge) => (
+                <AchievementBadgePill key={badge.id} badge={badge} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hasSurrendered && (
+          <div
+            className="border-t border-warm-gray bg-light-beige text-charcoal-text font-semibold"
+            style={{
+              padding: "8px 16px",
+              fontSize: "13px",
+              textAlign: "center",
+            }}
+          >
+            {isMatchmaking && elapsed >= 300
+              ? "⏰ Waktu habis! Menunggu pemain lain selesai…"
+              : "Kamu sudah menyerah. Menunggu pemain lain selesai…"}
+          </div>
+        )}
+      </header>
+    );
+  },
 );
 GameHeader.displayName = "GameHeader";
 
@@ -599,7 +608,7 @@ export default function Game({
     [hasSurrendered, normalizedStartTime, myArticle, room.id, currentClientId],
   );
 
-  // ------- Action: surrender (two-step confirm) -------
+  // ------- Action: surrender (two-step confirm & auto-timeout) -------
   const surrenderingRef = useRef(false);
   const [confirmingSurrender, setConfirmingSurrender] = useState(false);
   const confirmTimerRef = useRef<number | null>(null);
@@ -619,13 +628,8 @@ export default function Game({
     };
   }, [confirmingSurrender]);
 
-  const handleSurrenderClick = useCallback(async () => {
+  const performSurrender = useCallback(async () => {
     if (hasSurrendered || surrenderingRef.current) return;
-
-    if (!confirmingSurrender) {
-      setConfirmingSurrender(true);
-      return;
-    }
 
     surrenderingRef.current = true;
     setConfirmingSurrender(false);
@@ -652,12 +656,28 @@ export default function Game({
     } finally {
       surrenderingRef.current = false;
     }
-  }, [
-    hasSurrendered,
-    confirmingSurrender,
-    room.id,
-    currentClientId,
-  ]);
+  }, [hasSurrendered, room.id, currentClientId]);
+
+  const handleSurrenderClick = useCallback(() => {
+    if (hasSurrendered || surrenderingRef.current) return;
+
+    if (!confirmingSurrender) {
+      setConfirmingSurrender(true);
+      return;
+    }
+
+    void performSurrender();
+  }, [hasSurrendered, confirmingSurrender, performSurrender]);
+
+  // Auto-surrender saat sisa waktu habis (5 menit) di Ranked Matchmaking
+  useEffect(() => {
+    if (!room.isMatchmaking) return;
+    if (me?.status !== "playing") return;
+
+    if (elapsed >= 300) {
+      void performSurrender();
+    }
+  }, [room.isMatchmaking, me?.status, elapsed, performSurrender]);
 
   const [usingHelp, setUsingHelp] = useState(false);
 

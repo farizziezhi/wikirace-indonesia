@@ -61,6 +61,13 @@ export async function POST(request: NextRequest) {
     return errorResponse("Kamu sedang ditangguhkan (suspended) dan tidak bisa navigasi.", 403);
   }
 
+  if (room.isMatchmaking) {
+    const elapsedSeconds = Math.floor((Date.now() - room.startTime) / 1000);
+    if (elapsedSeconds >= 300) {
+      return errorResponse("Waktu bermain telah habis (maksimal 5 menit).", 403);
+    }
+  }
+
   const step = createRouteStep(article, room.startTime);
   player.route.push(step);
   player.currentArticle = article;

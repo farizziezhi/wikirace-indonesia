@@ -368,6 +368,20 @@ body {
   animation: pd-pulse 1.6s ease-in-out infinite;
 }
 
+@keyframes timer-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.timer-pulse-warning {
+  color: var(--color-burnt-orange) !important;
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+
 /* ============================================================ */
 /* Wiki article — indeterminate progress bar                    */
 /* ============================================================ */
