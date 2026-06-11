@@ -152,7 +152,8 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
   }, []);
 
   async function handleStart() {
-    if (!isHost || starting) return;
+    const canInitiate = room.isMatchmaking || isHost;
+    if (!canInitiate || starting) return;
     setError(null);
     setStarting(true);
 
@@ -330,78 +331,126 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
   return (
     <main className="dot-bg flex flex-1 items-start justify-center bg-playdate-yellow px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex w-full max-w-[820px] flex-col gap-6">
-        {/* ====== Room code poster ====== */}
-        <section
-          className="chunky-lg flex flex-col items-center gap-3 bg-pure-white px-6 py-7 text-center"
-          style={{ borderRadius: "var(--radius-input)" }}
-        >
-          <span
-            className="font-bold uppercase text-charcoal-text/60"
-            style={{ fontSize: "12px", letterSpacing: "0.6px" }}
+        {/* ====== Ranked Matchmaking Header ====== */}
+        {room.isMatchmaking ? (
+          <section
+            className="chunky-lg flex flex-col items-center gap-4 bg-charcoal-text text-warm-cream px-6 py-8 text-center"
+            style={{ borderRadius: "var(--radius-input)", boxShadow: "var(--shadow-floating)" }}
           >
-            Kode room — bagikan ke teman
-          </span>
-          <div
-            className="font-black tabular-nums text-charcoal-text"
-            style={{
-              fontSize: "clamp(48px, 14vw, 104px)",
-              lineHeight: 1,
-              letterSpacing: "0.14em",
-            }}
-            aria-label={`Kode room ${room.id}`}
+            <div className="flex items-center gap-2">
+              <span className="text-2xl" aria-hidden>⚔️</span>
+              <span className="font-extrabold uppercase tracking-widest text-lime-accent" style={{ fontSize: "14px" }}>
+                Ranked Matchmaking
+              </span>
+            </div>
+            
+            <h1 className="font-black tracking-tight" style={{ fontSize: "clamp(24px, 6vw, 42px)", lineHeight: 1.1 }}>
+              BATTLE LOBBY
+            </h1>
+
+            <div className="flex items-center gap-4 border-t border-b border-warm-cream/20 py-3 px-6 my-1">
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] uppercase font-bold text-warm-cream/60 tracking-wider">Rata-rata ELO</span>
+                <span className="font-black text-xl text-lime-accent tabular-nums">{Math.round(room.averageElo ?? 1200)}</span>
+              </div>
+              <div className="w-[1px] h-8 bg-warm-cream/20" />
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] uppercase font-bold text-warm-cream/60 tracking-wider">Pemain</span>
+                <span className="font-black text-xl tabular-nums">{room.players.length}/8</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <button
+                type="button"
+                onClick={handleLeave}
+                disabled={leaving}
+                className="chunky-press bg-burnt-orange text-warm-cream transition hover:bg-burnt-orange/90 font-bold"
+                style={{
+                  border: "1px solid var(--color-charcoal-text)",
+                  borderRadius: "var(--radius-button)",
+                  padding: "8px 16px",
+                  fontSize: "13px",
+                }}
+              >
+                {leaving ? "Batal…" : "Batal Cari Lawan 🚪"}
+              </button>
+            </div>
+          </section>
+        ) : (
+          /* ====== Room code poster (Custom Room) ====== */
+          <section
+            className="chunky-lg flex flex-col items-center gap-3 bg-pure-white px-6 py-7 text-center"
+            style={{ borderRadius: "var(--radius-input)" }}
           >
-            {room.id}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center justify-center gap-2 px-4">
-            <button
-              type="button"
-              onClick={handleCopyCode}
-              className="chunky-press bg-lime-accent text-charcoal-text"
-              style={{
-                border: "1px solid var(--color-lime-accent)",
-                borderRadius: "var(--radius-button)",
-                padding: "10px 16px",
-                fontWeight: 600,
-                fontSize: "14px",
-              }}
+            <span
+              className="font-bold uppercase text-charcoal-text/60"
+              style={{ fontSize: "12px", letterSpacing: "0.6px" }}
             >
-              {copied ? "Tersalin!" : "Salin Kode"}
-            </button>
-            <button
-              type="button"
-              onClick={handleShareLink}
-              className="chunky-press bg-charcoal-text text-warm-cream"
+              Kode room — bagikan ke teman
+            </span>
+            <div
+              className="font-black tabular-nums text-charcoal-text"
               style={{
-                border: "1px solid var(--color-charcoal-text)",
-                borderRadius: "var(--radius-button)",
-                padding: "10px 16px",
-                fontWeight: 600,
-                fontSize: "14px",
+                fontSize: "clamp(48px, 14vw, 104px)",
+                lineHeight: 1,
+                letterSpacing: "0.14em",
               }}
+              aria-label={`Kode room ${room.id}`}
             >
-              {shareStatus === "shared"
-                ? "Terkirim!"
-                : shareStatus === "copied"
-                  ? "Link tersalin!"
-                  : "🔗 Bagikan Link"}
-            </button>
-            <button
-              type="button"
-              onClick={handleLeave}
-              disabled={leaving}
-              className="chunky-press bg-warm-cream text-charcoal-text"
-              style={{
-                border: "1px solid var(--color-warm-gray)",
-                borderRadius: "var(--radius-button)",
-                padding: "10px 16px",
-                fontWeight: 600,
-                fontSize: "14px",
-              }}
-            >
-              {leaving ? "Keluar…" : "Keluar"}
-            </button>
-          </div>
-        </section>
+              {room.id}
+            </div>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-2 px-4">
+              <button
+                type="button"
+                onClick={handleCopyCode}
+                className="chunky-press bg-lime-accent text-charcoal-text"
+                style={{
+                  border: "1px solid var(--color-lime-accent)",
+                  borderRadius: "var(--radius-button)",
+                  padding: "10px 16px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                }}
+              >
+                {copied ? "Tersalin!" : "Salin Kode"}
+              </button>
+              <button
+                type="button"
+                onClick={handleShareLink}
+                className="chunky-press bg-charcoal-text text-warm-cream"
+                style={{
+                  border: "1px solid var(--color-charcoal-text)",
+                  borderRadius: "var(--radius-button)",
+                  padding: "10px 16px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                }}
+              >
+                {shareStatus === "shared"
+                  ? "Terkirim!"
+                  : shareStatus === "copied"
+                    ? "Link tersalin!"
+                    : "🔗 Bagikan Link"}
+              </button>
+              <button
+                type="button"
+                onClick={handleLeave}
+                disabled={leaving}
+                className="chunky-press bg-warm-cream text-charcoal-text"
+                style={{
+                  border: "1px solid var(--color-warm-gray)",
+                  borderRadius: "var(--radius-button)",
+                  padding: "10px 16px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                }}
+              >
+                {leaving ? "Keluar…" : "Keluar"}
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* ====== Topik permainan ====== */}
         <section
@@ -416,9 +465,9 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                 lineHeight: "var(--leading-heading)",
               }}
             >
-              Topik permainan
+              {room.isMatchmaking ? "Rute Pertempuran Ranked" : "Topik permainan"}
             </h2>
-            {isHost && (
+            {isHost && !room.isMatchmaking && (
               <span
                 className="font-bold uppercase text-charcoal-text/60"
                 style={{ fontSize: "11px", letterSpacing: "0.6px" }}
@@ -638,9 +687,11 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
 
           {room.isMatchmaking ? (
             <div
-              className="chunky flex flex-col items-center justify-center gap-3 bg-pure-white text-charcoal-text p-6 text-center"
+              className="chunky flex flex-col items-center justify-center gap-3 text-center p-6"
               style={{
                 borderRadius: "var(--radius-input)",
+                background: room.players.length < 2 ? "var(--color-pure-white)" : "var(--color-lime-accent)",
+                color: "var(--color-charcoal-text)",
               }}
             >
               {room.players.length < 2 ? (
@@ -655,20 +706,20 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
                 </>
               ) : matchmakingTimeLeft !== null ? (
                 <>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center gap-2">
                     <span className="bg-burnt-orange pd-pulse inline-block shrink-0 rounded-full" style={{ width: 10, height: 10 }} />
-                    <span className="font-black text-lg text-charcoal-text">
-                      🏎️ Game dimulai otomatis dalam {matchmakingTimeLeft} detik!
+                    <span className="font-black text-xl text-charcoal-text uppercase tracking-tight">
+                      🏎️ Lawan ditemukan! Game mulai {matchmakingTimeLeft}s
                     </span>
                   </div>
-                  <p className="text-sm text-charcoal-text/75 font-semibold">
-                    Bersiaplah di garis start. Semoga sukses!
+                  <p className="text-sm text-charcoal-text/90 font-bold uppercase tracking-wider">
+                    Bersiaplah di garis start! Semoga sukses!
                   </p>
                 </>
               ) : (
                 <>
                   <div className="border-charcoal-text border-t-transparent animate-spin rounded-full" style={{ width: 20, height: 20, borderWidth: 3 }} />
-                  <span className="font-bold">Memulai game…</span>
+                  <span className="font-black uppercase text-charcoal-text">MEMULAI PERTANDINGAN…</span>
                 </>
               )}
             </div>

@@ -69,6 +69,9 @@ export async function POST(request: NextRequest) {
   // Reconnect: pemain dengan clientId yang sama tinggal kembali ke room.
   const existing = findPlayer(room, clientId);
   if (!existing) {
+    if (room.isMatchmaking) {
+      return errorResponse("Ranked Matchmaking room hanya dapat dimasuki melalui antrean matchmaking otomatis.", 403);
+    }
     if (room.status !== "lobby") {
       return errorResponse("Room sudah memulai permainan.", 409);
     }

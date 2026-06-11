@@ -114,6 +114,7 @@ export default function RoomPage({ params }: RoomPageProps) {
     const channel = client.channels.get(`room:${normalizedRoomId}`);
 
     async function setup() {
+      let initialRoom: Room | undefined = undefined;
       // 1) Join room (idempotent — server kita allow reconnect via clientId).
       try {
         const res = await fetch("/api/room/join", {
@@ -145,7 +146,7 @@ export default function RoomPage({ params }: RoomPageProps) {
 
         if (cancelled) return;
 
-        const initialRoom = data.room;
+        initialRoom = data.room;
         setRoom(initialRoom);
         setGameState(initialRoom.status);
         if (initialRoom.status === "playing" && initialRoom.startTime) {
@@ -162,8 +163,40 @@ export default function RoomPage({ params }: RoomPageProps) {
       try {
         await channel.attach();
         await channel.presence.enter({ username: identity!.username });
+
+        // Bersihkan pemain/host yang offline saat masuk lobby
+        if (initialRoom && initialRoom.status === "lobby") {
+          const members = await channel.presence.get();
+          const presentClientIds = new Set(members.map((m) => m.clientId));
+
+          if (!presentClientIds.has(initialRoom.hostClientId)) {
+            void fetch("/api/room/leave", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                roomId: normalizedRoomId,
+                clientId: initialRoom.hostClientId,
+              }),
+            }).catch(() => {});
+          }
+
+          if (initialRoom.isMatchmaking) {
+            for (const p of initialRoom.players) {
+              if (p.clientId !== identity!.clientId && !presentClientIds.has(p.clientId)) {
+                void fetch("/api/room/leave", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    roomId: normalizedRoomId,
+                    clientId: p.clientId,
+                  }),
+                }).catch(() => {});
+              }
+            }
+          }
+        }
       } catch (err) {
-        console.warn("[room] gagal attach/presence:", err);
+        console.warn("[room] gagal attach/presence/get:", err);
         // Tetap lanjut — message-based events bisa tetap jalan tanpa presence.
       }
 
@@ -387,7 +420,11 @@ export default function RoomPage({ params }: RoomPageProps) {
     function handlePresenceLeave(member: Ably.PresenceMessage) {
       const currentRoom = roomRef.current;
       if (!currentRoom) return;
-      if (member.clientId === currentRoom.hostClientId) {
+
+      const isHost = member.clientId === currentRoom.hostClientId;
+      const isMatchmakingLobby = !!currentRoom.isMatchmaking && currentRoom.status === "lobby";
+
+      if (isHost || isMatchmakingLobby) {
         void fetch("/api/room/leave", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
