@@ -374,6 +374,22 @@ export default function Results({
               </button>
             </>
           )}
+
+          <a
+            href="https://saweria.co/WikiRace"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="chunky-press flex items-center justify-center gap-2 bg-lime-accent text-charcoal-text font-bold transition hover:bg-lime-deep mt-2"
+            style={{
+              border: "1px solid var(--color-charcoal-text)",
+              borderRadius: "var(--radius-button)",
+              padding: "12px 16px",
+              fontSize: "14px",
+              boxShadow: "var(--shadow-raised)",
+            }}
+          >
+            ☕ Dukung Server WikiRace (Saweria)
+          </a>
         </section>
       </div>
       {showReplay && (

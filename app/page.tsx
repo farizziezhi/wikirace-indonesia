@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import {
   getOrCreateClientId,
@@ -60,6 +61,7 @@ export default function HomePage() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"play" | "leaderboard">("play");
+  const [topDonators, setTopDonators] = useState<any[]>([]);
   const [playMode, setPlayMode] = useState<"ranked" | "mabar" | "solo">("ranked");
 
   useEffect(() => {
@@ -95,9 +97,10 @@ export default function HomePage() {
       }
     }, 0);
 
-    // Muat data sesi aktif & leaderboard global
+    // Muat data sesi aktif, leaderboard global & top donatur
     void checkAuthSession();
     void loadLeaderboard();
+    void loadTopDonators();
   }, []);
 
   // Sync username jika user login
@@ -162,6 +165,18 @@ export default function HomePage() {
       console.warn("Gagal memuat leaderboard:", err);
     } finally {
       setLeaderboardLoading(false);
+    }
+  }
+
+  async function loadTopDonators() {
+    try {
+      const res = await fetch("/api/donators");
+      if (res.ok) {
+        const data = await res.json();
+        setTopDonators(data.top || []);
+      }
+    } catch (err) {
+      console.warn("Gagal memuat top donatur:", err);
     }
   }
 
@@ -531,6 +546,57 @@ export default function HomePage() {
             atau masuk room secara santai.
           </p>
 
+          {/* ====== Donatur Highlight Card ====== */}
+          <div
+            className="w-full mt-2 border-2 border-charcoal-text bg-pure-white p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            style={{
+              borderRadius: "var(--radius-button)",
+              boxShadow: "var(--shadow-raised)",
+            }}
+          >
+            <div className="flex flex-col gap-1">
+              <span className="font-extrabold text-[11px] uppercase tracking-wider text-charcoal-text/60 flex items-center gap-1.5">
+                💖 Donatur Teratas
+              </span>
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                {/* Always show Dev */}
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-yellow-accent/70 text-charcoal-text px-2.5 py-1 border border-charcoal-text rounded-md">
+                  👑 farizziezhi (Dev)
+                </span>
+
+                {topDonators.length === 0 ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-light-beige text-charcoal-text/80 px-2.5 py-1 border border-dashed border-warm-gray rounded-md">
+                    ☕ Jadilah Donatur Pertama!
+                  </span>
+                ) : (
+                  topDonators.slice(0, 3).map((donator, idx) => {
+                    const medals = ["🥇", "🥈", "🥉"];
+                    const colors = ["bg-lime-accent/80", "bg-light-beige", "bg-warm-gray/25"];
+                    return (
+                      <span
+                        key={donator.id}
+                        className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 border border-charcoal-text rounded-md ${colors[idx] || "bg-light-beige"}`}
+                      >
+                        {medals[idx] || "☕"} {donator.name}
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+            <Link
+              href="/donatur"
+              className="btn-white text-[11px] font-black py-1.5 px-3 shrink-0 self-start sm:self-center text-center"
+              style={{
+                border: "1px solid var(--color-charcoal-text)",
+                boxShadow: "var(--shadow-flat)",
+                fontSize: "11px",
+              }}
+            >
+              Hall of Fame ➔
+            </Link>
+          </div>
+
           {/* ====== Cara main — desktop only ====== */}
           <section className="mt-2 hidden w-full grid-cols-3 gap-3 lg:grid">
             <HowToCard
@@ -711,9 +777,8 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("play")}
-                    className="flex-1 py-2 text-center font-extrabold transition-all"
+                    className="flex-1 py-2 text-center font-extrabold transition-all text-xs sm:text-sm"
                     style={{
-                      fontSize: "13px",
                       borderRadius: "var(--radius-button)",
                       background: activeTab === "play" ? "var(--color-charcoal-text)" : "transparent",
                       color: activeTab === "play" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
@@ -724,15 +789,14 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("leaderboard")}
-                    className="flex-1 py-2 text-center font-extrabold transition-all"
+                    className="flex-1 py-2 text-center font-extrabold transition-all text-xs sm:text-sm"
                     style={{
-                      fontSize: "13px",
                       borderRadius: "var(--radius-button)",
                       background: activeTab === "leaderboard" ? "var(--color-charcoal-text)" : "transparent",
                       color: activeTab === "leaderboard" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                     }}
                   >
-                    🏆 Leaderboard
+                    🏆 Papan Skor
                   </button>
                 </div>
 
@@ -1001,6 +1065,8 @@ export default function HomePage() {
                     )}
                   </div>
                 )}
+
+
               </>
             )}
           </div>
@@ -1040,21 +1106,38 @@ export default function HomePage() {
           />
         </section>
 
-        <p
-          className="text-center text-charcoal-text/70 lg:col-span-2"
-          style={{ fontSize: "13px" }}
-        >
-          Dibuat dengan ☕ oleh{" "}
+        <div className="flex flex-col items-center gap-3 lg:col-span-2 mt-4">
           <a
-            href="https://github.com/farizziezhi"
+            href="https://saweria.co/WikiRace"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-bold text-charcoal-text underline underline-offset-2 hover:text-lime-soft"
+            className="chunky-press flex items-center gap-2 bg-lime-accent text-charcoal-text font-bold transition hover:bg-lime-deep"
+            style={{
+              border: "1px solid var(--color-charcoal-text)",
+              borderRadius: "var(--radius-button)",
+              padding: "6px 14px",
+              fontSize: "13px",
+              boxShadow: "var(--shadow-raised)",
+            }}
           >
-            @farizziezhi
+            ☕ Dukung Server (Saweria)
           </a>
-          .
-        </p>
+          <p
+            className="text-center text-charcoal-text/70"
+            style={{ fontSize: "13px" }}
+          >
+            Dibuat dengan ☕ oleh{" "}
+            <a
+            href="https://www.muhfarizzi.tech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-charcoal-text underline underline-offset-2 hover:text-lime-soft"
+            >
+              @farizziezhi
+            </a>
+            .
+          </p>
+        </div>
       </div>
 
       {/* ====== AUTH MODAL DIALOG ====== */}

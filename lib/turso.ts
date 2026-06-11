@@ -53,6 +53,14 @@ async function initDb() {
       games_played INTEGER DEFAULT 0,
       wins INTEGER DEFAULT 0,
       losses INTEGER DEFAULT 0
+    );`,
+    // Tabel donators
+    `CREATE TABLE IF NOT EXISTS donators (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      amount INTEGER NOT NULL DEFAULT 0,
+      message TEXT,
+      created_at INTEGER NOT NULL
     );`
   ], "write");
 }
