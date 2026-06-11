@@ -115,10 +115,10 @@ export default function TermsPage() {
               <p>
                 Jika Anda memiliki pertanyaan mengenai syarat dan ketentuan ini, silakan hubungi kami di:{" "}
                 <a
-                  href="mailto:support@wikirace.id"
+                  href="mailto:support@wikiraceid.web.id"
                   className="font-bold underline text-charcoal-text hover:text-burnt-orange"
                 >
-                  support@wikirace.id
+                  support@wikiraceid.web.id
                 </a>
               </p>
             </div>

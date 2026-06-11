@@ -126,7 +126,7 @@ async function fetchArticleHtmlRaw(
 
   const res = await fetch(url.toString(), {
     headers: {
-      "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+      "User-Agent": "WikiRaceID/1.0 (https://wikiraceid.web.id; support@wikiraceid.web.id) NextJS/16",
     },
   });
   if (!res.ok) return null;
@@ -208,7 +208,7 @@ export async function searchArticles(
 
   const res = await fetch(url.toString(), {
     headers: {
-      "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+      "User-Agent": "WikiRaceID/1.0 (https://wikiraceid.web.id; support@wikiraceid.web.id) NextJS/16",
     },
   });
   if (!res.ok) return [];
@@ -236,7 +236,7 @@ export async function fetchRandomArticle(
 
   const res = await fetch(url.toString(), {
     headers: {
-      "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+      "User-Agent": "WikiRaceID/1.0 (https://wikiraceid.web.id; support@wikiraceid.web.id) NextJS/16",
     },
   });
   if (!res.ok) return null;

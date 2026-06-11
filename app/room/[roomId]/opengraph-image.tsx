@@ -210,7 +210,7 @@ export default async function OpengraphImage({
               letterSpacing: 1,
             }}
           >
-            wikirace.id
+            wikiraceid.web.id
           </span>
         </div>
       </div>

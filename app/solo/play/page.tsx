@@ -156,7 +156,7 @@ function SoloPlayContent() {
 Jalur lintasan saya:
 ${route.join(" ➔ ")}
 
-Mainkan gratis di: https://wikirace.id`;
+Mainkan gratis di: https://wikiraceid.web.id`;
 
     void navigator.clipboard.writeText(shareText);
     setCopied(true);

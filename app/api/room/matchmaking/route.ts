@@ -30,7 +30,7 @@ async function fetchWikiLinks(title: string, lang: string): Promise<string[]> {
     const url = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=links&titles=${encodeURIComponent(title)}&pllimit=500&plnamespace=0&format=json&origin=*`;
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+        "User-Agent": "WikiRaceID/1.0 (https://wikiraceid.web.id; support@wikiraceid.web.id) NextJS/16",
       },
       signal: AbortSignal.timeout(3000),
     });

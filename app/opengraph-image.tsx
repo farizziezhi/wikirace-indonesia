@@ -158,7 +158,7 @@ export default function OpengraphImage() {
               letterSpacing: 1,
             }}
           >
-            wikirace.id
+            wikiraceid.web.id
           </span>
         </div>
       </div>

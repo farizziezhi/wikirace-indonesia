@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikirace-indonesia.vercel.app",
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id",
   ),
   title: {
     default: "WikiRace Indonesia - Game Balapan Wikipedia Tercepat",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     title: "WikiRace Indonesia - Game Balapan Wikipedia Tercepat",
     description:
       "Game balapan edukatif online terpopuler di Indonesia. Telusuri Wikipedia hanya dengan klik link biru. Main multiplayer ELO, mabar, atau solo gratis selamanya.",
-    url: "https://wikirace-indonesia.vercel.app",
+    url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id",
     siteName: "WikiRace Indonesia",
     locale: "id_ID",
     type: "website",

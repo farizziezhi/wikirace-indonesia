@@ -39,7 +39,7 @@ async function fetchArticleLinks(
   try {
     const res = await fetch(url.toString(), {
       headers: {
-        "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+        "User-Agent": "WikiRaceID/1.0 (https://wikiraceid.web.id; support@wikiraceid.web.id) NextJS/16",
       },
       signal: AbortSignal.timeout(8000),
     });
@@ -80,7 +80,7 @@ async function checkArticleExists(title: string, lang: WikiLanguage): Promise<bo
   try {
     const res = await fetch(url.toString(), {
       headers: {
-        "User-Agent": "WikiRaceID/1.0 (https://wikirace.id; contact@wikirace.id) NextJS/16",
+        "User-Agent": "WikiRaceID/1.0 (https://wikiraceid.web.id; support@wikiraceid.web.id) NextJS/16",
       },
       signal: AbortSignal.timeout(5000),
     });
