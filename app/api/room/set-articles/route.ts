@@ -46,6 +46,9 @@ export async function POST(request: NextRequest) {
   if (room.hostClientId !== clientId) {
     return errorResponse("Hanya host yang boleh mengatur artikel.", 403);
   }
+  if (room.isMatchmaking) {
+    return errorResponse("Artikel pada Ranked Matchmaking tidak boleh diubah manual.", 403);
+  }
   if (room.status !== "lobby") {
     return errorResponse("Artikel hanya bisa diatur saat di lobby.", 409);
   }

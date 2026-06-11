@@ -335,7 +335,12 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
         {room.isMatchmaking ? (
           <section
             className="chunky-lg flex flex-col items-center gap-4 bg-charcoal-text text-warm-cream px-6 py-8 text-center"
-            style={{ borderRadius: "var(--radius-input)", boxShadow: "var(--shadow-floating)" }}
+            style={{
+              borderRadius: "var(--radius-input)",
+              boxShadow: "var(--shadow-floating)",
+              background: "var(--color-charcoal-text)",
+              color: "var(--color-warm-cream)",
+            }}
           >
             <div className="flex items-center gap-2">
               <span className="text-2xl" aria-hidden>⚔️</span>
@@ -477,7 +482,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             )}
           </div>
 
-          {isHost && (
+          {isHost && !room.isMatchmaking && (
             <section
               className="chunky flex flex-col gap-4 bg-pure-white p-6"
               style={{ borderRadius: "var(--radius-input)" }}
