@@ -61,10 +61,12 @@ export async function POST(request: NextRequest) {
 
         eloChanges = calculateEloChanges(eloData);
 
-        // Update database ELO masing-masing pemain (karena menyerah semua, isWin = false)
+        // Update database ELO masing-masing pemain & update objek room (karena menyerah semua, isWin = false)
         for (const p of room.players) {
           const change = eloChanges[p.username] || 0;
           await updatePlayerStats(p.username, change, false);
+          p.elo = (p.elo ?? 1200) + change;
+          p.eloChange = change;
         }
       } catch (err) {
         console.error("Gagal menghitung ELO saat menyerah:", err);
@@ -78,8 +80,8 @@ export async function POST(request: NextRequest) {
       status: p.status,
       route: p.route,
       finishedAt: p.finishedAt,
-      eloChange: eloChanges[p.username] || 0,
-      newElo: (p.elo ?? 1200) + (eloChanges[p.username] || 0),
+      eloChange: p.eloChange || 0,
+      newElo: p.elo ?? 1200,
     }));
 
     await setRoom(room);

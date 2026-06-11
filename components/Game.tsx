@@ -179,32 +179,90 @@ const MiniLeaderboard = memo(
 );
 MiniLeaderboard.displayName = "MiniLeaderboard";
 
+const TimerDisplay = memo(function TimerDisplay({
+  startTime,
+  isMatchmaking,
+  onTimeout,
+  hasSurrendered,
+}: {
+  startTime: number;
+  isMatchmaking: boolean;
+  onTimeout?: () => void;
+  hasSurrendered: boolean;
+}) {
+  const normalizedStartTime = useMemo(() => normalizeStartTime(startTime), [startTime]);
+  const [elapsed, setElapsed] = useState(() => getElapsedSeconds(normalizedStartTime));
+
+  useEffect(() => {
+    if (hasSurrendered) return;
+
+    let timeoutId: number | null = null;
+
+    function tick() {
+      const next = getElapsedSeconds(normalizedStartTime);
+      setElapsed(next);
+
+      if (isMatchmaking && next >= 300) {
+        if (onTimeout) onTimeout();
+        return;
+      }
+
+      const msUntilNextSecond = 1000 - ((Date.now() - normalizedStartTime) % 1000);
+      timeoutId = window.setTimeout(tick, msUntilNextSecond || 1000);
+    }
+
+    tick();
+
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [normalizedStartTime, isMatchmaking, onTimeout, hasSurrendered]);
+
+  const remaining = isMatchmaking ? Math.max(0, 300 - elapsed) : 0;
+  const timeToDisplay = isMatchmaking ? remaining : elapsed;
+  const isWarning = isMatchmaking && remaining < 30;
+
+  return (
+    <span
+      className={`font-extrabold tabular-nums text-charcoal-text ${isWarning ? "timer-pulse-warning" : ""}`}
+      style={{
+        fontSize: "20px",
+        lineHeight: 1,
+      }}
+      aria-label={isMatchmaking ? "Sisa waktu bermain" : "Waktu yang sudah berjalan"}
+    >
+      {formatElapsed(timeToDisplay)}
+    </span>
+  );
+});
+
 const GameHeader = memo(
   ({
     room,
     hasSurrendered,
     confirmingSurrender,
-    elapsed,
+    startTime,
+    isTimeout,
     liveBadges,
     handleSurrenderClick,
     showHelpButton,
     isHelpDisabled,
     handleHelpClick,
+    onTimeout,
   }: {
     room: Room;
     hasSurrendered: boolean;
     confirmingSurrender: boolean;
-    elapsed: number;
+    startTime: number;
+    isTimeout: boolean;
     liveBadges: AchievementBadge[];
     handleSurrenderClick: () => void;
     showHelpButton: boolean;
     isHelpDisabled: boolean;
     handleHelpClick: () => void;
+    onTimeout?: () => void;
   }) => {
     const isMatchmaking = !!room.isMatchmaking;
-    const remaining = isMatchmaking ? Math.max(0, 300 - elapsed) : 0;
-    const timeToDisplay = isMatchmaking ? remaining : elapsed;
-    const isWarning = isMatchmaking && remaining < 30;
 
     return (
       <header className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream pt-[env(safe-area-inset-top)]">
@@ -248,16 +306,12 @@ const GameHeader = memo(
             >
               {isMatchmaking ? "Sisa Waktu" : "Waktu"}
             </span>
-            <span
-              className={`font-extrabold tabular-nums text-charcoal-text ${isWarning ? "timer-pulse-warning" : ""}`}
-              style={{
-                fontSize: "20px",
-                lineHeight: 1,
-              }}
-              aria-label={isMatchmaking ? "Sisa waktu bermain" : "Waktu yang sudah berjalan"}
-            >
-              {formatElapsed(timeToDisplay)}
-            </span>
+            <TimerDisplay
+              startTime={startTime}
+              isMatchmaking={isMatchmaking}
+              onTimeout={onTimeout}
+              hasSurrendered={hasSurrendered}
+            />
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -273,7 +327,7 @@ const GameHeader = memo(
                   padding: "8px 12px",
                   fontSize: "13px",
                 }}
-                title="Kembali ke awal artikel (denda suspensi)"
+                title="Kembali ke awal artikel (denda suspension)"
               >
                 Kembali ke Awal 🔁
               </button>
@@ -328,7 +382,7 @@ const GameHeader = memo(
               textAlign: "center",
             }}
           >
-            {isMatchmaking && elapsed >= 300
+            {isTimeout
               ? "⏰ Waktu habis! Menunggu pemain lain selesai…"
               : "Kamu sudah menyerah. Menunggu pemain lain selesai…"}
           </div>
@@ -475,26 +529,7 @@ export default function Game({
   }, [me?.currentArticle]);
 
   const normalizedStartTime = normalizeStartTime(startTime);
-  const [elapsed, setElapsed] = useState(() => getElapsedSeconds(normalizedStartTime));
-  useEffect(() => {
-    let timeoutId: number | null = null;
-
-    function tick() {
-      setElapsed((prev) => {
-        const next = getElapsedSeconds(normalizedStartTime);
-        return next === prev ? prev : next;
-      });
-
-      const msUntilNextSecond = 1000 - ((Date.now() - normalizedStartTime) % 1000);
-      timeoutId = window.setTimeout(tick, msUntilNextSecond || 1000);
-    }
-
-    tick();
-
-    return () => {
-      if (timeoutId !== null) window.clearTimeout(timeoutId);
-    };
-  }, [normalizedStartTime]);
+  const [isTimeout, setIsTimeout] = useState(false);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -669,15 +704,10 @@ export default function Game({
     void performSurrender();
   }, [hasSurrendered, confirmingSurrender, performSurrender]);
 
-  // Auto-surrender saat sisa waktu habis (5 menit) di Ranked Matchmaking
-  useEffect(() => {
-    if (!room.isMatchmaking) return;
-    if (me?.status !== "playing") return;
-
-    if (elapsed >= 300) {
-      void performSurrender();
-    }
-  }, [room.isMatchmaking, me?.status, elapsed, performSurrender]);
+  const handleTimeout = useCallback(() => {
+    setIsTimeout(true);
+    void performSurrender();
+  }, [performSurrender]);
 
   const [usingHelp, setUsingHelp] = useState(false);
 
@@ -771,7 +801,9 @@ export default function Game({
         room={room}
         hasSurrendered={hasSurrendered}
         confirmingSurrender={confirmingSurrender}
-        elapsed={elapsed}
+        startTime={startTime}
+        isTimeout={isTimeout}
+        onTimeout={handleTimeout}
         liveBadges={liveBadges}
         handleSurrenderClick={handleSurrenderClick}
         showHelpButton={me ? !me.helpUsed && myArticle !== room.startArticle && me.status === "playing" : false}

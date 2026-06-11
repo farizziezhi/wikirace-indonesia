@@ -76,6 +76,48 @@ export default function Results({
     }
   }, [room.id, currentClientId, onPlayAgain]);
 
+  // ------- Action: matchmaking lagi -------
+  const [matchmakingLoading, setMatchmakingLoading] = useState(false);
+  const [matchmakingError, setMatchmakingError] = useState<string | null>(null);
+
+  const handleMatchmakingAgain = useCallback(async () => {
+    if (matchmakingLoading) return;
+    setMatchmakingLoading(true);
+    setMatchmakingError(null);
+
+    try {
+      await fetch("/api/room/leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: room.id,
+          clientId: currentClientId,
+        }),
+      }).catch((e) => console.warn("Gagal keluar room:", e));
+
+      const res = await fetch("/api/room/matchmaking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: currentClientId,
+          language: room.language ?? "id",
+        }),
+      });
+
+      const data: { roomId?: string; error?: string } = await res.json();
+      if (!res.ok || !data.roomId) {
+        setMatchmakingError(data.error ?? "Gagal mencari lawan baru.");
+        setMatchmakingLoading(false);
+        return;
+      }
+
+      router.push(`/room/${data.roomId}`);
+    } catch {
+      setMatchmakingError("Terjadi kesalahan koneksi internet.");
+      setMatchmakingLoading(false);
+    }
+  }, [room.id, room.language, currentClientId, router, matchmakingLoading]);
+
   // ------- Action: keluar -------
   const leaveBusy = useRef(false);
   const [leaveLoading, setLeaveLoading] = useState(false);
@@ -259,7 +301,7 @@ export default function Results({
 
         {/* ====== Actions ====== */}
         <section className="flex flex-col gap-3">
-          {playAgainError && (
+          {(playAgainError || matchmakingError) && (
             <div
               role="alert"
               className="bg-charcoal-text text-pure-white"
@@ -269,45 +311,69 @@ export default function Results({
                 fontSize: "var(--text-body)",
               }}
             >
-              ⚠ {playAgainError}
+              ⚠ {playAgainError || matchmakingError}
             </div>
           )}
 
-          {isHost ? (
-            <button
-              type="button"
-              onClick={handlePlayAgain}
-              disabled={playAgainLoading || leaveLoading}
-              className="btn-primary"
-            >
-              {playAgainLoading ? "Mereset room…" : "Main Lagi"}
-            </button>
+          {room.isMatchmaking ? (
+            <>
+              <button
+                type="button"
+                onClick={handleMatchmakingAgain}
+                disabled={matchmakingLoading || leaveLoading}
+                className="btn-primary"
+              >
+                {matchmakingLoading ? "Mencari lawan baru…" : "Cari Lawan Lagi 🏎️"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLeave}
+                disabled={leaveLoading || matchmakingLoading}
+                className="btn-white"
+              >
+                {leaveLoading ? "Keluar…" : "Keluar ke Beranda"}
+              </button>
+            </>
           ) : (
-            <div
-              className="chunky flex items-center justify-center gap-3 bg-pure-white text-charcoal-text"
-              style={{
-                borderRadius: "var(--radius-input)",
-                padding: "16px 20px",
-                fontSize: "var(--text-body)",
-              }}
-            >
-              <span
-                className="bg-crank-violet pd-pulse inline-block shrink-0 rounded-full"
-                style={{ width: 10, height: 10 }}
-                aria-hidden
-              />
-              <span>Tunggu host untuk memulai ronde berikutnya…</span>
-            </div>
-          )}
+            <>
+              {isHost ? (
+                <button
+                  type="button"
+                  onClick={handlePlayAgain}
+                  disabled={playAgainLoading || leaveLoading}
+                  className="btn-primary"
+                >
+                  {playAgainLoading ? "Mereset room…" : "Main Lagi"}
+                </button>
+              ) : (
+                <div
+                  className="chunky flex items-center justify-center gap-3 bg-pure-white text-charcoal-text"
+                  style={{
+                    borderRadius: "var(--radius-input)",
+                    padding: "16px 20px",
+                    fontSize: "var(--text-body)",
+                  }}
+                >
+                  <span
+                    className="bg-crank-violet pd-pulse inline-block shrink-0 rounded-full"
+                    style={{ width: 10, height: 10 }}
+                    aria-hidden
+                  />
+                  <span>Tunggu host untuk memulai ronde berikutnya…</span>
+                </div>
+              )}
 
-          <button
-            type="button"
-            onClick={handleLeave}
-            disabled={leaveLoading || playAgainLoading}
-            className="btn-white"
-          >
-            {leaveLoading ? "Keluar…" : "Keluar Room"}
-          </button>
+              <button
+                type="button"
+                onClick={handleLeave}
+                disabled={leaveLoading || playAgainLoading}
+                className="btn-white"
+              >
+                {leaveLoading ? "Keluar…" : "Keluar Room"}
+              </button>
+            </>
+          )}
         </section>
       </div>
       {showReplay && (

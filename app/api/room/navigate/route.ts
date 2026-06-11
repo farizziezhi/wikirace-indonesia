@@ -91,11 +91,13 @@ export async function POST(request: NextRequest) {
 
         eloChanges = calculateEloChanges(eloData);
 
-        // Update database ELO masing-masing pemain
+        // Update database ELO masing-masing pemain & update objek room
         for (const p of room.players) {
           const change = eloChanges[p.username] || 0;
           const isWin = p.clientId === clientId; // Hanya pemain aktif ini yang menang
           await updatePlayerStats(p.username, change, isWin);
+          p.elo = (p.elo ?? 1200) + change;
+          p.eloChange = change;
         }
       } catch (err) {
         console.error("Gagal menghitung ELO:", err);
@@ -109,8 +111,8 @@ export async function POST(request: NextRequest) {
       status: p.status,
       route: p.route,
       finishedAt: p.finishedAt,
-      eloChange: eloChanges[p.username] || 0,
-      newElo: (p.elo ?? 1200) + (eloChanges[p.username] || 0),
+      eloChange: p.eloChange || 0,
+      newElo: p.elo ?? 1200,
     }));
 
     await setRoom(room);

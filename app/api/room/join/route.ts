@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       room.averageElo = totalElo / room.players.length;
 
       if (room.players.length >= 2 && !room.autoStartAt) {
-        room.autoStartAt = Date.now() + 15000;
+        room.autoStartAt = Date.now() + 20000;
       }
       if (room.players.length >= MAX_PLAYERS) {
         await removeMatchmakingRoom(room.language ?? "id", room.id);

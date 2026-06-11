@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
 
       // Pemicu Auto-Start jika pemain >= 2
       if (room.players.length >= 2 && !room.autoStartAt) {
-        room.autoStartAt = Date.now() + 15000; // 15 detik countdown
+        room.autoStartAt = Date.now() + 20000; // 20 detik countdown
       }
 
       // Jika room sekarang penuh, hapus dari antrean matchmaking

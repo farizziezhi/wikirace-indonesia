@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
 
   const room = await getRoom(roomId);
   if (!room) return errorResponse("Room tidak ditemukan.", 404);
+  if (room.isMatchmaking) {
+    return errorResponse("Ranked Matchmaking room tidak bisa direset.", 403);
+  }
   if (room.hostClientId !== clientId) {
     return errorResponse("Hanya host yang boleh mereset room.", 403);
   }
