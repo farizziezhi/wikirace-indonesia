@@ -7,6 +7,7 @@ import { getPacksByLanguage } from "@/lib/challenges";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
+import AdContainer from "./AdContainer";
 
 interface LobbyProps {
   room: Room;
@@ -329,7 +330,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
   const canStart = isHost && articlesValid && enoughPlayers;
 
   return (
-    <main className="dot-bg flex flex-1 items-start justify-center bg-playdate-yellow px-4 py-8 sm:px-6 sm:py-10">
+    <main className="dot-bg flex flex-1 items-start justify-center bg-playdate-yellow px-4 pt-8 pb-32 sm:px-6 sm:pt-10 sm:pb-36">
       <div className="flex w-full max-w-[820px] flex-col gap-6">
         {/* ====== Ranked Matchmaking Header ====== */}
         {room.isMatchmaking ? (
@@ -773,6 +774,9 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
             </div>
           )}
         </section>
+
+        {/* Iklan Banner Lobi */}
+        <AdContainer type="lobby-banner" className="w-full mt-2" />
       </div>
     </main>
   );

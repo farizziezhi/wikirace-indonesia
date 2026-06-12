@@ -20,6 +20,7 @@ import { playCountdownBeep, playCheatAlarm } from "@/lib/race-audio";
 import type { Room } from "@/lib/types";
 
 import WikiArticle from "./WikiArticle";
+import AdContainer from "./AdContainer";
 
 interface GameProps {
   room: Room;
@@ -737,6 +738,15 @@ export default function Game({
 
   return (
     <div className="flex flex-1 flex-col bg-warm-cream">
+      {/* Skyscraper Kiri */}
+      <div className="fixed left-2 top-1/2 -translate-y-1/2 z-30 hidden xl:block">
+        <AdContainer type="skyscraper-left" />
+      </div>
+
+      {/* Skyscraper Kanan */}
+      <div className="fixed right-2 top-1/2 -translate-y-1/2 z-30 hidden xl:block">
+        <AdContainer type="skyscraper-right" />
+      </div>
       {suspensionNotice && (
         <div
           className="pointer-events-none fixed inset-x-0 top-18 z-50 flex flex-col items-center px-4"

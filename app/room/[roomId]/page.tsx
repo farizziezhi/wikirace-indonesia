@@ -12,6 +12,7 @@ import Results from "@/components/Results";
 import { getOrCreateClientId, getSavedUsername } from "@/lib/client-id";
 import { unlockRaceAudio } from "@/lib/race-audio";
 import type { Player, Room, RouteStep } from "@/lib/types";
+import AdContainer from "@/components/AdContainer";
 
 type GameState = "lobby" | "playing" | "finished";
 
@@ -577,6 +578,11 @@ export default function RoomPage({ params }: RoomPageProps) {
             isChatExpanded={isChatExpanded}
           />
         </>
+      )}
+
+      {/* Sticky Footer Ad Slot (Tersembunyi otomatis saat gameplay aktif) */}
+      {gameState !== "playing" && (
+        <AdContainer type="sticky-footer" />
       )}
     </>
   );

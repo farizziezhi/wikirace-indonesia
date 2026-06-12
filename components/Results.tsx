@@ -8,6 +8,7 @@ import { avatarColor, initials } from "@/lib/avatar";
 import type { Player, Room, RouteStep } from "@/lib/types";
 
 import RouteReplay from "./RouteReplay";
+import AdContainer from "./AdContainer";
 
 interface ResultsProps {
   room: Room;
@@ -301,6 +302,10 @@ export default function Results({
 
         {/* ====== Actions ====== */}
         <section className="flex flex-col gap-3">
+          <div className="flex justify-center mb-2">
+            <AdContainer type="results-banner" />
+          </div>
+
           {(playAgainError || matchmakingError) && (
             <div
               role="alert"

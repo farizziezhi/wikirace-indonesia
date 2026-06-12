@@ -12,6 +12,7 @@ import {
 import { isRaceAudioUnlocked, unlockRaceAudio } from "@/lib/race-audio";
 import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS } from "@/lib/wikipedia";
+import AdContainer from "@/components/AdContainer";
 
 const MAX_USERNAME_LENGTH = 20;
 
@@ -1087,6 +1088,9 @@ export default function HomePage() {
           )}
         </section>
 
+        {/* Iklan Kolom Kanan (di bawah form) */}
+        <AdContainer type="homepage-banner" className="mt-2 w-full" />
+
         {/* ====== Cara main — mobile only ====== */}
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:hidden">
           <HowToCard
@@ -1257,6 +1261,9 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Sticky Footer Ad Slot (Floating di bawah layar) */}
+      <AdContainer type="sticky-footer" />
     </main>
   );
 }
