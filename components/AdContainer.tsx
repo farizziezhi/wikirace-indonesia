@@ -58,117 +58,6 @@ export default function AdContainer({ type, className = "" }: AdContainerProps) 
     }
   }, [hydrated, isAdSenseEnabled, isClosed]);
 
-  // Efek untuk memicu iklan Adsterra secara dinamis jika AdSense tidak aktif
-  useEffect(() => {
-    if (!hydrated || isAdSenseEnabled || isClosed || !containerRef.current) return;
-
-    // Bersihkan kontainer sebelum merender
-    containerRef.current.innerHTML = "";
-
-    let key = "";
-    let width = 0;
-    let height = 0;
-
-    switch (type) {
-      case "homepage-banner":
-        key = "c1e217e605ed0f620368784a1d47e979";
-        width = 300;
-        height = 250;
-        break;
-      case "results-banner":
-        key = "c1e217e605ed0f620368784a1d47e979"; // Gunakan key banner 300x250 untuk layar hasil
-        width = 300;
-        height = 250;
-        break;
-      case "lobby-banner":
-      case "sticky-footer":
-        key = "37fb2cc3c9984cf60441480e40a18713";
-        width = 728;
-        height = 90;
-        break;
-      case "skyscraper-left":
-      case "skyscraper-right":
-        key = "596058e2ffebb086794b033f1c3bb100";
-        width = 160;
-        height = 600;
-        break;
-    }
-
-    if (!key) return;
-
-    // Buat container ID unik berbasis tipe slot iklan untuk digunakan di dalam iframe
-    const containerId = `atContainer-${type}`;
-
-    // Buat iframe ter-sandbox untuk mengisolasi script iklan sepenuhnya
-    const iframe = document.createElement("iframe");
-    iframe.width = `${width}`;
-    iframe.height = `${height}`;
-    iframe.style.border = "none";
-    iframe.style.overflow = "hidden";
-    iframe.style.display = "block";
-    iframe.style.margin = "0 auto";
-    iframe.style.maxWidth = "100%";
-    
-    // Jangan gunakan 'allow-top-navigation' agar iframe tidak bisa me-redirect halaman utama (wikiraceid.web.id)
-    // Jangan gunakan 'allow-same-origin' agar script di dalam iframe dianggap cross-origin
-    // dan tidak bisa mengakses window.parent atau memanipulasi DOM halaman utama.
-    iframe.setAttribute(
-      "sandbox",
-      "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms"
-    );
-
-    iframe.srcdoc = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body {
-              margin: 0;
-              padding: 0;
-              overflow: hidden;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              background: transparent;
-              width: 100%;
-              height: 100%;
-            }
-            #${containerId} {
-              width: 100%;
-              height: 100%;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            }
-          </style>
-        </head>
-        <body>
-          <div id="${containerId}"></div>
-          <script type="text/javascript">
-            window.atAsyncOptions = [];
-            window.atAsyncOptions.push({
-              key: "${key}",
-              format: "js",
-              async: true,
-              container: "${containerId}",
-              params: {}
-            });
-          </script>
-          <script type="text/javascript" src="https://www.highperformanceformat.com/${key}/invoke.js" async></script>
-        </body>
-      </html>
-    `;
-
-    containerRef.current.appendChild(iframe);
-
-    return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
-    };
-  }, [hydrated, isAdSenseEnabled, isClosed, type]);
-
   if (!hydrated || isClosed) {
     return null; // Hindari mismatch saat SSR atau jika ditutup
   }
@@ -226,8 +115,24 @@ export default function AdContainer({ type, className = "" }: AdContainerProps) 
             />
           </div>
         ) : (
-          /* Render Adsterra secara dinamis melalui containerRef */
-          <div ref={containerRef} className="w-full max-w-[728px] h-[50px] sm:h-[90px]" />
+          <div
+            className="relative flex flex-col items-center justify-center bg-[#eae8e4] text-charcoal-text border-2 border-charcoal-text select-none w-full h-[50px] sm:h-[90px]"
+            style={{
+              borderRadius: "var(--radius-input)",
+              backgroundImage: "radial-gradient(var(--color-warm-gray) 1px, transparent 1.2px)",
+              backgroundSize: "10px 10px",
+              boxShadow: "var(--shadow-flat)",
+            }}
+          >
+            <div className="flex flex-col items-center gap-1 bg-pure-white border border-charcoal-text px-3 py-1 rounded-sm shadow-[1px_1px_0px_#000]">
+              <span className="text-[9px] font-black uppercase tracking-wider text-charcoal-text/50">
+                Ruang Iklan / Ad Space
+              </span>
+              <span className="text-[10px] font-extrabold text-charcoal-text tabular-nums">
+                {dimensionsLabel}
+              </span>
+            </div>
+          </div>
         )}
       </div>
     );
@@ -272,11 +177,26 @@ export default function AdContainer({ type, className = "" }: AdContainerProps) 
     );
   }
 
-  // Render Adsterra secara dinamis melalui containerRef sebagai fallback aktif
+  // Desain neobrutalist placeholder untuk mode pengembangan / pra-approval jika Google AdSense belum diaktifkan
   return (
     <div
       ref={containerRef}
-      className={`ad-wrapper overflow-hidden ${sizeClasses} ${className}`}
-    />
+      className={`relative flex flex-col items-center justify-center bg-[#eae8e4] text-charcoal-text border-2 border-charcoal-text select-none ${sizeClasses} ${className}`}
+      style={{
+        borderRadius: "var(--radius-input)",
+        backgroundImage: "radial-gradient(var(--color-warm-gray) 1px, transparent 1.2px)",
+        backgroundSize: "10px 10px",
+        boxShadow: "var(--shadow-flat)",
+      }}
+    >
+      <div className="flex flex-col items-center gap-1 bg-pure-white border border-charcoal-text px-3 py-1.5 rounded-sm shadow-[2px_2px_0px_#000]">
+        <span className="text-[10px] font-black uppercase tracking-wider text-charcoal-text/50">
+          Ruang Iklan / Ad Space
+        </span>
+        <span className="text-[11px] font-extrabold text-charcoal-text tabular-nums">
+          {dimensionsLabel}
+        </span>
+      </div>
+    </div>
   );
 }
