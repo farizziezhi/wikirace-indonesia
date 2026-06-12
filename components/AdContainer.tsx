@@ -96,28 +96,37 @@ export default function AdContainer({ type, className = "" }: AdContainerProps) 
 
     if (!key) return;
 
-    const adEl = document.createElement("div");
-    adEl.className = "flex items-center justify-center w-full h-full";
+    // Buat container ID unik berbasis tipe slot iklan untuk menghindari duplikasi ID di halaman yang sama
+    const containerId = `atContainer-${type}`;
 
-    const scriptOpt = document.createElement("script");
-    scriptOpt.type = "text/javascript";
-    scriptOpt.innerHTML = `
-      atOptions = {
-        'key' : '${key}',
-        'format' : 'iframe',
-        'height' : ${height},
-        'width' : ${width},
-        'params' : {}
-      };
+    const adEl = document.createElement("div");
+    adEl.id = containerId;
+    adEl.className = "flex items-center justify-center w-full h-full";
+    containerRef.current.appendChild(adEl);
+
+    // Konfigurasi atAsyncOptions yang direkomendasikan untuk React/SPA
+    const atOptions = {
+      key: key,
+      format: "js",
+      async: true,
+      container: containerId,
+      params: {},
+    };
+
+    const conf = document.createElement("script");
+    conf.type = "text/javascript";
+    conf.innerHTML = `
+      window.atAsyncOptions = typeof window.atAsyncOptions !== 'object' ? [] : window.atAsyncOptions;
+      window.atAsyncOptions.push(${JSON.stringify(atOptions)});
     `;
 
     const scriptSrc = document.createElement("script");
     scriptSrc.type = "text/javascript";
+    scriptSrc.async = true;
     scriptSrc.src = `https://www.highperformanceformat.com/${key}/invoke.js`;
 
-    adEl.appendChild(scriptOpt);
-    adEl.appendChild(scriptSrc);
-    containerRef.current.appendChild(adEl);
+    containerRef.current.appendChild(conf);
+    containerRef.current.appendChild(scriptSrc);
 
     return () => {
       if (containerRef.current) {
