@@ -96,37 +96,71 @@ export default function AdContainer({ type, className = "" }: AdContainerProps) 
 
     if (!key) return;
 
-    // Buat container ID unik berbasis tipe slot iklan untuk menghindari duplikasi ID di halaman yang sama
+    // Buat container ID unik berbasis tipe slot iklan untuk digunakan di dalam iframe
     const containerId = `atContainer-${type}`;
 
-    const adEl = document.createElement("div");
-    adEl.id = containerId;
-    adEl.className = "flex items-center justify-center w-full h-full";
-    containerRef.current.appendChild(adEl);
+    // Buat iframe ter-sandbox untuk mengisolasi script iklan sepenuhnya
+    const iframe = document.createElement("iframe");
+    iframe.width = `${width}`;
+    iframe.height = `${height}`;
+    iframe.style.border = "none";
+    iframe.style.overflow = "hidden";
+    iframe.style.display = "block";
+    iframe.style.margin = "0 auto";
+    iframe.style.maxWidth = "100%";
+    
+    // Jangan gunakan 'allow-top-navigation' agar iframe tidak bisa me-redirect halaman utama (wikiraceid.web.id)
+    // Jangan gunakan 'allow-same-origin' agar script di dalam iframe dianggap cross-origin
+    // dan tidak bisa mengakses window.parent atau memanipulasi DOM halaman utama.
+    iframe.setAttribute(
+      "sandbox",
+      "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms"
+    );
 
-    // Konfigurasi atAsyncOptions yang direkomendasikan untuk React/SPA
-    const atOptions = {
-      key: key,
-      format: "js",
-      async: true,
-      container: containerId,
-      params: {},
-    };
-
-    const conf = document.createElement("script");
-    conf.type = "text/javascript";
-    conf.innerHTML = `
-      window.atAsyncOptions = typeof window.atAsyncOptions !== 'object' ? [] : window.atAsyncOptions;
-      window.atAsyncOptions.push(${JSON.stringify(atOptions)});
+    iframe.srcdoc = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              background: transparent;
+              width: 100%;
+              height: 100%;
+            }
+            #${containerId} {
+              width: 100%;
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="${containerId}"></div>
+          <script type="text/javascript">
+            window.atAsyncOptions = [];
+            window.atAsyncOptions.push({
+              key: "${key}",
+              format: "js",
+              async: true,
+              container: "${containerId}",
+              params: {}
+            });
+          </script>
+          <script type="text/javascript" src="https://www.highperformanceformat.com/${key}/invoke.js" async></script>
+        </body>
+      </html>
     `;
 
-    const scriptSrc = document.createElement("script");
-    scriptSrc.type = "text/javascript";
-    scriptSrc.async = true;
-    scriptSrc.src = `https://www.highperformanceformat.com/${key}/invoke.js`;
-
-    containerRef.current.appendChild(conf);
-    containerRef.current.appendChild(scriptSrc);
+    containerRef.current.appendChild(iframe);
 
     return () => {
       if (containerRef.current) {
