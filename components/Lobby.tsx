@@ -12,13 +12,14 @@ import AdContainer from "./AdContainer";
 interface LobbyProps {
   room: Room;
   currentClientId: string;
+  clockOffset?: number;
 }
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 8;
 const SAVE_DEBOUNCE_MS = 600;
 
-export default function Lobby({ room, currentClientId }: LobbyProps) {
+export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyProps) {
   const router = useRouter();
   const isHost = room.hostClientId === currentClientId;
 
@@ -45,7 +46,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     }
 
     const interval = setInterval(() => {
-      const diff = room.autoStartAt! - Date.now();
+      const diff = room.autoStartAt! - (Date.now() + clockOffset);
       const seconds = Math.max(0, Math.ceil(diff / 1000));
       setMatchmakingTimeLeft(seconds);
 
@@ -63,7 +64,7 @@ export default function Lobby({ room, currentClientId }: LobbyProps) {
     }, 500);
 
     return () => clearInterval(interval);
-  }, [room.isMatchmaking, room.autoStartAt, room.players.length, room.status, currentClientId, room.hostClientId]);
+  }, [room.isMatchmaking, room.autoStartAt, room.players.length, room.status, currentClientId, room.hostClientId, clockOffset]);
 
   // Re-sync kalau update datang dari server.
   const lastSyncedRef = useRef({

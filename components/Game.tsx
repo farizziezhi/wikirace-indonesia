@@ -28,6 +28,7 @@ interface GameProps {
   ablyChannel: Ably.RealtimeChannel;
   /** Timestamp ms saat game dimulai. */
   startTime: number;
+  clockOffset?: number;
 }
 
 const MiniLeaderboard = memo(
@@ -185,14 +186,16 @@ const TimerDisplay = memo(function TimerDisplay({
   isMatchmaking,
   onTimeout,
   hasSurrendered,
+  clockOffset = 0,
 }: {
   startTime: number;
   isMatchmaking: boolean;
   onTimeout?: () => void;
   hasSurrendered: boolean;
+  clockOffset?: number;
 }) {
   const normalizedStartTime = useMemo(() => normalizeStartTime(startTime), [startTime]);
-  const [elapsed, setElapsed] = useState(() => getElapsedSeconds(normalizedStartTime));
+  const [elapsed, setElapsed] = useState(() => getElapsedSeconds(normalizedStartTime, clockOffset));
 
   useEffect(() => {
     if (hasSurrendered) return;
@@ -200,7 +203,7 @@ const TimerDisplay = memo(function TimerDisplay({
     let timeoutId: number | null = null;
 
     function tick() {
-      const next = getElapsedSeconds(normalizedStartTime);
+      const next = getElapsedSeconds(normalizedStartTime, clockOffset);
       setElapsed(next);
 
       if (isMatchmaking && next >= 300) {
@@ -208,7 +211,7 @@ const TimerDisplay = memo(function TimerDisplay({
         return;
       }
 
-      const msUntilNextSecond = 1000 - ((Date.now() - normalizedStartTime) % 1000);
+      const msUntilNextSecond = 1000 - (((Date.now() + clockOffset) - normalizedStartTime) % 1000);
       timeoutId = window.setTimeout(tick, msUntilNextSecond || 1000);
     }
 
@@ -217,7 +220,7 @@ const TimerDisplay = memo(function TimerDisplay({
     return () => {
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, [normalizedStartTime, isMatchmaking, onTimeout, hasSurrendered]);
+  }, [normalizedStartTime, isMatchmaking, onTimeout, hasSurrendered, clockOffset]);
 
   const remaining = isMatchmaking ? Math.max(0, 300 - elapsed) : 0;
   const timeToDisplay = isMatchmaking ? remaining : elapsed;
@@ -250,6 +253,7 @@ const GameHeader = memo(
     isHelpDisabled,
     handleHelpClick,
     onTimeout,
+    clockOffset = 0,
   }: {
     room: Room;
     hasSurrendered: boolean;
@@ -262,6 +266,7 @@ const GameHeader = memo(
     isHelpDisabled: boolean;
     handleHelpClick: () => void;
     onTimeout?: () => void;
+    clockOffset?: number;
   }) => {
     const isMatchmaking = !!room.isMatchmaking;
 
@@ -312,6 +317,7 @@ const GameHeader = memo(
               isMatchmaking={isMatchmaking}
               onTimeout={onTimeout}
               hasSurrendered={hasSurrendered}
+              clockOffset={clockOffset}
             />
           </div>
 
@@ -414,6 +420,7 @@ export default function Game({
   currentClientId,
   ablyChannel,
   startTime,
+  clockOffset = 0,
 }: GameProps) {
   const router = useRouter();
 
@@ -468,7 +475,7 @@ export default function Game({
     }
 
     const interval = window.setInterval(() => {
-      const msLeft = current - Date.now();
+      const msLeft = current - (Date.now() + clockOffset);
       if (msLeft <= 0) {
         setSuspensionTimeLeft(0);
         setMySuspensionReason(null);
@@ -478,7 +485,7 @@ export default function Game({
     }, 250);
 
     return () => window.clearInterval(interval);
-  }, [me?.suspendedUntil]);
+  }, [me?.suspendedUntil, clockOffset]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -492,7 +499,7 @@ export default function Game({
         e.stopPropagation();
         
         // Cek jika sedang disuspensi untuk menghindari request dobel
-        const isSuspendedNow = me?.suspendedUntil && Date.now() < me.suspendedUntil;
+        const isSuspendedNow = me?.suspendedUntil && Date.now() + clockOffset < me.suspendedUntil;
         if (isSuspendedNow) return;
 
         // Panggil endpoint suspensi server
@@ -512,7 +519,7 @@ export default function Game({
     return () => {
       window.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [ablyChannel, me?.suspendedUntil, room.id, currentClientId]);
+  }, [ablyChannel, me?.suspendedUntil, room.id, currentClientId, clockOffset]);
 
   // ------- Current article (saya) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
@@ -532,16 +539,16 @@ export default function Game({
   const normalizedStartTime = normalizeStartTime(startTime);
   const [isTimeout, setIsTimeout] = useState(false);
 
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now() + clockOffset);
   useEffect(() => {
-    if (Date.now() >= normalizedStartTime) return;
+    if (Date.now() + clockOffset >= normalizedStartTime) return;
 
     const id = window.setInterval(() => {
-      setNow(Date.now());
+      setNow(Date.now() + clockOffset);
     }, 100);
 
     return () => window.clearInterval(id);
-  }, [normalizedStartTime]);
+  }, [normalizedStartTime, clockOffset]);
 
   const countdownLabel = getCountdownLabel(normalizedStartTime, now);
   const countdownActive = countdownLabel !== null;
@@ -613,7 +620,7 @@ export default function Game({
     async (article: string) => {
       if (navigatingRef.current) return;
       if (hasSurrendered) return;
-      if (Date.now() < normalizedStartTime) return;
+      if (Date.now() + clockOffset < normalizedStartTime) return;
       if (article === myArticle) return;
 
       navigatingRef.current = true;
@@ -641,7 +648,7 @@ export default function Game({
         navigatingRef.current = false;
       }
     },
-    [hasSurrendered, normalizedStartTime, myArticle, room.id, currentClientId],
+    [hasSurrendered, normalizedStartTime, myArticle, room.id, currentClientId, clockOffset],
   );
 
   // ------- Action: surrender (two-step confirm & auto-timeout) -------
@@ -819,6 +826,7 @@ export default function Game({
         showHelpButton={me ? !me.helpUsed && myArticle !== room.startArticle && me.status === "playing" : false}
         isHelpDisabled={usingHelp || (suspensionTimeLeft > 0)}
         handleHelpClick={handleHelpClick}
+        clockOffset={clockOffset}
       />
 
       {/* ============================================================ */}
@@ -900,8 +908,8 @@ function normalizeStartTime(value: number): number {
   return value < 1_000_000_000_000 ? value * 1000 : value;
 }
 
-function getElapsedSeconds(startTime: number): number {
-  return Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+function getElapsedSeconds(startTime: number, clockOffset = 0): number {
+  return Math.max(0, Math.floor(((Date.now() + clockOffset) - startTime) / 1000));
 }
 
 function getCountdownLabel(

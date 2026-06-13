@@ -77,6 +77,7 @@ export default function RoomPage({ params }: RoomPageProps) {
   const [room, setRoom] = useState<Room | null>(null);
   const [gameState, setGameState] = useState<GameState>("lobby");
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [clockOffset, setClockOffset] = useState<number>(0);
   const [finishedSnapshot, setFinishedSnapshot] =
     useState<FinishedSnapshot | null>(null);
   const [fatalError, setFatalError] = useState<string | null>(null);
@@ -127,7 +128,7 @@ export default function RoomPage({ params }: RoomPageProps) {
             clientId: identity!.clientId,
           }),
         });
-        const data: { room?: Room; error?: string } = await res
+        const data: { room?: Room; serverTime?: number; error?: string } = await res
           .json()
           .catch(() => ({}));
 
@@ -150,6 +151,9 @@ export default function RoomPage({ params }: RoomPageProps) {
         initialRoom = data.room;
         setRoom(initialRoom);
         setGameState(initialRoom.status);
+        if (data.serverTime) {
+          setClockOffset(data.serverTime - Date.now());
+        }
         if (initialRoom.status === "playing" && initialRoom.startTime) {
           setStartTime(initialRoom.startTime);
         }
@@ -550,6 +554,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           currentClientId={identity.clientId}
           ablyChannel={ablyChannel}
           startTime={startTime}
+          clockOffset={clockOffset}
         />
       ) : gameState === "finished" ? (
         <Results
@@ -560,7 +565,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           onPlayAgain={handlePlayAgain}
         />
       ) : (
-        <Lobby room={room} currentClientId={identity.clientId} />
+        <Lobby room={room} currentClientId={identity.clientId} clockOffset={clockOffset} />
       )}
       {showChatAndEmoji && (
         <>

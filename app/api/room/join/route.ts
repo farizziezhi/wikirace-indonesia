@@ -119,5 +119,5 @@ export async function POST(request: NextRequest) {
 
   await publishRoomEvent(roomId, "room_updated", { room });
 
-  return Response.json({ room });
+  return Response.json({ room, serverTime: Date.now() });
 }
