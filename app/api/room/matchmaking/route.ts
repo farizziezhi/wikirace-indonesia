@@ -1,4 +1,4 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, after } from "next/server";
 
 import { getSessionUsername } from "@/lib/auth-server";
 import { getPacksByLanguage } from "@/lib/challenges";
@@ -118,6 +118,14 @@ export async function POST(request: NextRequest) {
     const userStats = await getPlayerStats(username);
     const userElo = userStats.elo;
 
+    // Pilih tingkat kesulitan berdasarkan ELO pemain
+    let targetDifficulty: "easy" | "medium" | "hard" = "easy";
+    if (userElo >= 1300) {
+      targetDifficulty = "hard";
+    } else if (userElo >= 1100) {
+      targetDifficulty = "medium";
+    }
+
     // 3. Cari room matchmaking yang aktif dari Valkey
     const matchmakingRoomIds = await getMatchmakingRooms(language);
     let bestRoom: Room | null = null;
@@ -181,17 +189,24 @@ export async function POST(request: NextRequest) {
       await setRoom(room);
       await publishRoomEvent(room.id, "room_updated", { room });
 
+      after(async () => {
+        try {
+          const size = await getMatchmakingPoolSize(language, targetDifficulty);
+          if (size < 3) {
+            const newPath = await generateRandomWalkPath(language, userElo);
+            if (newPath) {
+              await pushMatchmakingPath(language, targetDifficulty, newPath);
+            }
+          }
+        } catch (err) {
+          console.warn("Gagal mengisi kembali pool matchmaking:", err);
+        }
+      });
+
       return Response.json({ roomId: room.id, room });
     }
 
     // 5. Jika tidak ditemukan room, buat room matchmaking baru!
-    // Pilih tingkat kesulitan berdasarkan ELO pemain
-    let targetDifficulty: "easy" | "medium" | "hard" = "easy";
-    if (userElo >= 1300) {
-      targetDifficulty = "hard";
-    } else if (userElo >= 1100) {
-      targetDifficulty = "medium";
-    }
 
     let startArticle = "";
     let endArticle = "";
@@ -246,17 +261,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // D. Trigger pengisian kembali pool secara asinkronus (fire-and-forget)
-    void getMatchmakingPoolSize(language, targetDifficulty)
-      .then(async (size) => {
-        if (size < 3) {
-          const newPath = await generateRandomWalkPath(language, userElo);
-          if (newPath) {
-            await pushMatchmakingPath(language, targetDifficulty, newPath);
-          }
-        }
-      })
-      .catch((err) => console.warn("Gagal mengisi kembali pool matchmaking:", err));
+
 
     // Generate roomId yang unik
     let roomId = generateRoomId();
@@ -285,6 +290,20 @@ export async function POST(request: NextRequest) {
 
     await setRoom(newRoom);
     await addMatchmakingRoom(language, roomId);
+
+    after(async () => {
+      try {
+        const size = await getMatchmakingPoolSize(language, targetDifficulty);
+        if (size < 3) {
+          const newPath = await generateRandomWalkPath(language, userElo);
+          if (newPath) {
+            await pushMatchmakingPath(language, targetDifficulty, newPath);
+          }
+        }
+      } catch (err) {
+        console.warn("Gagal mengisi kembali pool matchmaking:", err);
+      }
+    });
 
     return Response.json({ roomId, room: newRoom });
   } catch (err) {
