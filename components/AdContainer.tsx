@@ -58,8 +58,8 @@ export default function AdContainer({ type, className = "" }: AdContainerProps) 
     }
   }, [hydrated, isAdSenseEnabled, isClosed]);
 
-  if (!hydrated || isClosed) {
-    return null; // Hindari mismatch saat SSR atau jika ditutup
+  if (!hydrated || isClosed || !isAdSenseEnabled) {
+    return null; // Hindari mismatch saat SSR, jika ditutup, atau jika AdSense dinonaktifkan
   }
 
   // Tentukan dimensi visual untuk placeholder neobrutalism (jika mode dev murni/tidak ada iklan sama sekali)
