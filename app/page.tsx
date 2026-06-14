@@ -8,6 +8,8 @@ import {
   getOrCreateClientId,
   getSavedUsername,
   saveUsername,
+  getSavedLanguage,
+  saveLanguage,
 } from "@/lib/client-id";
 import { isRaceAudioUnlocked, unlockRaceAudio } from "@/lib/race-audio";
 import type { Room, WikiLanguage } from "@/lib/types";
@@ -70,6 +72,7 @@ export default function HomePage() {
 
     window.setTimeout(() => {
       setUsername(getSavedUsername());
+      setLanguage(getSavedLanguage());
       setHydrated(true);
       setAudioUnlocked(isRaceAudioUnlocked());
 
@@ -523,14 +526,14 @@ export default function HomePage() {
                 border: "1px solid var(--color-warm-gray)",
               }}
             >
-              artikel A
+              {language === "en" ? "Article A" : "artikel A"}
             </span>{" "}
-            ke{" "}
+            {language === "en" ? "to" : "ke"}{" "}
             <span
               className="inline-block bg-charcoal-text text-warm-cream px-2"
               style={{ borderRadius: 8 }}
             >
-              artikel B
+              {language === "en" ? "Article B" : "artikel B"}
             </span>
             .
           </h1>
@@ -543,8 +546,9 @@ export default function HomePage() {
               maxWidth: 460,
             }}
           >
-            Multiplayer realtime di Wikipedia Bahasa Indonesia. Daftar untuk main Ranked
-            atau masuk room secara santai.
+            {language === "en"
+              ? "Real-time multiplayer speedrun on Wikipedia. Sign up to play Ranked ELO matches or join custom rooms."
+              : "Multiplayer realtime di Wikipedia Bahasa Indonesia. Daftar untuk main Ranked atau masuk room secara santai."}
           </p>
 
           {/* ====== Donatur Highlight Card ====== */}
@@ -557,7 +561,7 @@ export default function HomePage() {
           >
             <div className="flex flex-col gap-1">
               <span className="font-extrabold text-[11px] uppercase tracking-wider text-charcoal-text/60 flex items-center gap-1.5">
-                💖 Donatur Teratas
+                💖 {language === "en" ? "Top Donators" : "Donatur Teratas"}
               </span>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 {/* Always show Dev */}
@@ -567,7 +571,7 @@ export default function HomePage() {
 
                 {topDonators.length === 0 ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-light-beige text-charcoal-text/80 px-2.5 py-1 border border-dashed border-warm-gray rounded-md">
-                    ☕ Jadilah Donatur Pertama!
+                    ☕ {language === "en" ? "Be the First Donator!" : "Jadilah Donatur Pertama!"}
                   </span>
                 ) : (
                   topDonators.slice(0, 3).map((donator, idx) => {
@@ -594,7 +598,7 @@ export default function HomePage() {
                 fontSize: "11px",
               }}
             >
-              Hall of Fame ➔
+              {language === "en" ? "Hall of Fame ➔" : "Hall of Fame ➔"}
             </Link>
           </div>
 
@@ -602,18 +606,18 @@ export default function HomePage() {
           <section className="mt-2 hidden w-full grid-cols-3 gap-3 lg:grid">
             <HowToCard
               n={1}
-              title="Pilih nama"
-              body="Main instan atau login untuk menyimpan rating ELO."
+              title={language === "en" ? "Choose name" : "Pilih nama"}
+              body={language === "en" ? "Play instantly or log in to save your ELO rating." : "Main instan atau login untuk menyimpan rating ELO."}
             />
             <HowToCard
               n={2}
-              title="Cari Lawan"
-              body="Klik Matchmaking untuk bertanding otomatis dengan lawan seimbang."
+              title={language === "en" ? "Matchmaking" : "Cari Lawan"}
+              body={language === "en" ? "Click Matchmaking to automatically play against players of similar skill." : "Klik Matchmaking untuk bertanding otomatis dengan lawan seimbang."}
             />
             <HowToCard
               n={3}
-              title="Klik & lari"
-              body="Hanya boleh klik tautan dalam artikel. Sampai duluan, ELO naik!"
+              title={language === "en" ? "Click & run" : "Klik & lari"}
+              body={language === "en" ? "Only click hyperlinks inside articles. Reach the target first to gain ELO!" : "Hanya boleh klik tautan dalam artikel. Sampai duluan, ELO naik!"}
             />
           </section>
         </header>
@@ -635,7 +639,7 @@ export default function HomePage() {
                 style={{ borderRadius: "var(--radius-input)" }}
               >
                 <div className="text-[11px] font-bold text-charcoal-text/40 leading-relaxed">
-                  Memeriksa sesi...
+                  {language === "en" ? "Checking session..." : "Memeriksa sesi..."}
                 </div>
                 <div className="flex gap-1.5 shrink-0 opacity-40">
                   <button
@@ -643,14 +647,14 @@ export default function HomePage() {
                     className="btn-primary"
                     style={{ padding: "6px 12px", fontSize: "11px", whiteSpace: "nowrap" }}
                   >
-                    Masuk
+                    {language === "en" ? "Log In" : "Masuk"}
                   </button>
                   <button
                     disabled
                     className="btn-white"
                     style={{ padding: "6px 12px", fontSize: "11px", whiteSpace: "nowrap" }}
                   >
-                    Daftar
+                    {language === "en" ? "Sign Up" : "Daftar"}
                   </button>
                 </div>
               </div>
@@ -684,7 +688,7 @@ export default function HomePage() {
                         🏆 {user.stats?.elo ?? 1200} ELO
                       </span>
                       <span>•</span>
-                      <span>{user.stats?.wins ?? 0} Win</span>
+                      <span>{user.stats?.wins ?? 0} {language === "en" ? "Wins" : "Win"}</span>
                     </div>
                   </div>
                 </div>
@@ -693,7 +697,7 @@ export default function HomePage() {
                   className="btn-secondary"
                   style={{ padding: "6px 12px", fontSize: "11px", height: "fit-content" }}
                 >
-                  Keluar
+                  {language === "en" ? "Log Out" : "Keluar"}
                 </button>
               </div>
             ) : (
@@ -702,7 +706,7 @@ export default function HomePage() {
                 style={{ borderRadius: "var(--radius-input)" }}
               >
                 <div className="text-[11px] font-bold text-charcoal-text/80 max-w-[200px] leading-relaxed">
-                  Masuk atau Daftar untuk menyimpan skor ELO & masuk Papan Peringkat.
+                  {language === "en" ? "Log in or Sign up to save ELO score & enter the Leaderboard." : "Masuk atau Daftar untuk menyimpan skor ELO & masuk Papan Peringkat."}
                 </div>
                 <div className="flex gap-1.5 shrink-0">
                   <button
@@ -710,14 +714,14 @@ export default function HomePage() {
                     className="btn-primary"
                     style={{ padding: "6px 12px", fontSize: "11px", whiteSpace: "nowrap" }}
                   >
-                    Masuk
+                    {language === "en" ? "Log In" : "Masuk"}
                   </button>
                   <button
                     onClick={() => openAuth("register")}
                     className="btn-white"
                     style={{ padding: "6px 12px", fontSize: "11px", whiteSpace: "nowrap" }}
                   >
-                    Daftar
+                    {language === "en" ? "Sign Up" : "Daftar"}
                   </button>
                 </div>
               </div>
@@ -729,12 +733,12 @@ export default function HomePage() {
             {invitedTo ? (
               <div className="flex flex-col gap-4">
                 <div className="bg-lime-accent/20 border border-lime-accent p-3.5 text-xs text-charcoal-text" style={{ borderRadius: "var(--radius-input)" }}>
-                  <span className="font-extrabold block mb-1 text-[13px]">📬 Undangan Room: {invitedTo}</span>
-                  Masukkan nama Anda di bawah untuk langsung bergabung ke balapan.
+                  <span className="font-extrabold block mb-1 text-[13px]">{language === "en" ? "📬 Room Invitation: " : "📬 Undangan Room: "}{invitedTo}</span>
+                  {language === "en" ? "Enter your name below to join the race immediately." : "Masukkan nama Anda di bawah untuk langsung bergabung ke balapan."}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="username" className="font-bold text-charcoal-text text-sm">Nama kamu</label>
+                  <label htmlFor="username" className="font-bold text-charcoal-text text-sm">{language === "en" ? "Your name" : "Nama kamu"}</label>
                   <input
                     id="username"
                     type="text"
@@ -743,7 +747,7 @@ export default function HomePage() {
                     maxLength={MAX_USERNAME_LENGTH}
                     autoComplete="off"
                     spellCheck={false}
-                    placeholder="Contoh: Andi"
+                    placeholder={language === "en" ? "e.g. Andi" : "Contoh: Andi"}
                     disabled={busy || !hydrated || !!user}
                     className="pd-input"
                   />
@@ -756,7 +760,7 @@ export default function HomePage() {
                   className="btn-primary w-full"
                   style={{ padding: "12px 18px", fontSize: "15px" }}
                 >
-                  {mode === "joining" ? "Bergabung..." : "Gabung Sekarang"}
+                  {mode === "joining" ? (language === "en" ? "Joining..." : "Bergabung...") : (language === "en" ? "Join Now" : "Gabung Sekarang")}
                 </button>
 
                 <button
@@ -768,7 +772,7 @@ export default function HomePage() {
                   className="btn-white w-full"
                   style={{ padding: "8px 14px", fontSize: "12px" }}
                 >
-                  Batal & Main Mode Lain
+                  {language === "en" ? "Cancel & Play Other Mode" : "Batal & Main Mode Lain"}
                 </button>
               </div>
             ) : (
@@ -785,7 +789,7 @@ export default function HomePage() {
                       color: activeTab === "play" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                     }}
                   >
-                    🎮 Bermain
+                    {language === "en" ? "🎮 Play" : "🎮 Bermain"}
                   </button>
                   <button
                     type="button"
@@ -797,7 +801,7 @@ export default function HomePage() {
                       color: activeTab === "leaderboard" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                     }}
                   >
-                    🏆 Papan Skor
+                    {language === "en" ? "🏆 Leaderboard" : "🏆 Papan Skor"}
                   </button>
                 </div>
 
@@ -810,7 +814,7 @@ export default function HomePage() {
                         htmlFor="username"
                         className="font-bold text-charcoal-text text-sm"
                       >
-                        Nama kamu
+                        {language === "en" ? "Your name" : "Nama kamu"}
                       </label>
                       <input
                         id="username"
@@ -820,13 +824,13 @@ export default function HomePage() {
                         maxLength={MAX_USERNAME_LENGTH}
                         autoComplete="off"
                         spellCheck={false}
-                        placeholder="Contoh: Andi"
+                        placeholder={language === "en" ? "e.g. Andi" : "Contoh: Andi"}
                         disabled={busy || !hydrated || !!user}
                         className="pd-input"
                       />
                       {!user && (
                         <div className="flex justify-between items-center text-[11px] text-charcoal-text/50">
-                          <span>💡 Tip: Login untuk simpan ELO</span>
+                          <span>{language === "en" ? "💡 Tip: Log in to save ELO" : "💡 Tip: Login untuk simpan ELO"}</span>
                           <span>{username.length}/{MAX_USERNAME_LENGTH}</span>
                         </div>
                       )}
@@ -835,7 +839,7 @@ export default function HomePage() {
                     {/* Pilihan bahasa */}
                     <div className="flex flex-col gap-1.5">
                       <span className="font-bold text-charcoal-text text-sm">
-                        Bahasa Wikipedia
+                        {language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
                       </span>
                       <div
                         className="grid grid-cols-2 gap-1 bg-light-beige p-1"
@@ -844,7 +848,7 @@ export default function HomePage() {
                           border: "1px solid var(--color-warm-gray)",
                         }}
                         role="radiogroup"
-                        aria-label="Bahasa Wikipedia"
+                        aria-label={language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
                       >
                         {LANGUAGE_OPTIONS.map((opt) => {
                           const active = opt.value === language;
@@ -854,7 +858,10 @@ export default function HomePage() {
                               type="button"
                               role="radio"
                               aria-checked={active}
-                              onClick={() => setLanguage(opt.value)}
+                              onClick={() => {
+                                setLanguage(opt.value);
+                                saveLanguage(opt.value);
+                              }}
                               disabled={busy}
                               className="flex items-center justify-center gap-1.5 transition disabled:opacity-60"
                               style={{
@@ -904,7 +911,7 @@ export default function HomePage() {
                           color: playMode === "mabar" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                         }}
                       >
-                        👥 Mabar
+                        {language === "en" ? "👥 Party" : "👥 Mabar"}
                       </button>
                       <button
                         type="button"
@@ -916,7 +923,7 @@ export default function HomePage() {
                           color: playMode === "solo" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                         }}
                       >
-                        🏎️ Solo
+                        {language === "en" ? "🏎️ Solo" : "🏎️ Solo"}
                       </button>
                     </div>
 
@@ -936,10 +943,14 @@ export default function HomePage() {
                             padding: "12px 18px",
                           }}
                         >
-                          {mode === "matchmaking" ? "⚡ Mencari Lawan..." : "⚡ Cari Lawan (Ranked)"}
+                          {mode === "matchmaking"
+                            ? (language === "en" ? "⚡ Finding Opponent..." : "⚡ Mencari Lawan...")
+                            : (language === "en" ? "⚡ Find Opponent (Ranked)" : "⚡ Cari Lawan (Ranked)")}
                         </button>
                         <p className="text-[11px] text-charcoal-text/60 text-center leading-relaxed">
-                          Cari lawan seimbang secara realtime. Skor ELO Anda akan naik/turun sesuai hasil permainan.
+                          {language === "en"
+                            ? "Find a balanced opponent in real-time. Your ELO rating will change based on match results."
+                            : "Cari lawan seimbang secara realtime. Skor ELO Anda akan naik/turun sesuai hasil permainan."}
                         </p>
                       </div>
                     )}
@@ -953,12 +964,16 @@ export default function HomePage() {
                           className="btn-primary w-full"
                           style={{ padding: "12px 18px", fontSize: "15px" }}
                         >
-                          {mode === "creating" ? "Membuat room…" : "Buat Room Mabar Baru"}
+                          {mode === "creating"
+                            ? (language === "en" ? "Creating room..." : "Membuat room…")
+                            : (language === "en" ? "Create New Party Room" : "Buat Room Mabar Baru")}
                         </button>
 
                         <div className="flex items-center gap-2" aria-hidden>
                           <div className="h-px flex-1 bg-parchment/60" />
-                          <span className="font-bold text-[10px] uppercase text-charcoal-text/50">atau gabung room</span>
+                          <span className="font-bold text-[10px] uppercase text-charcoal-text/50">
+                            {language === "en" ? "or join room" : "atau gabung room"}
+                          </span>
                           <div className="h-px flex-1 bg-parchment/60" />
                         </div>
 
@@ -978,7 +993,7 @@ export default function HomePage() {
                             autoComplete="off"
                             autoCapitalize="characters"
                             spellCheck={false}
-                            placeholder="KODE"
+                            placeholder={language === "en" ? "CODE" : "KODE"}
                             disabled={busy || !hydrated}
                             className="pd-input"
                             style={{
@@ -996,7 +1011,9 @@ export default function HomePage() {
                             className="btn-yellow"
                             style={{ padding: "10px 18px", fontSize: "14px" }}
                           >
-                            {mode === "joining" ? "Gabung…" : "Gabung"}
+                            {mode === "joining"
+                              ? (language === "en" ? "Joining..." : "Gabung…")
+                              : (language === "en" ? "Join" : "Gabung")}
                           </button>
                         </div>
                       </div>
@@ -1011,10 +1028,12 @@ export default function HomePage() {
                           className="btn-secondary w-full"
                           style={{ padding: "12px 18px", fontSize: "15px" }}
                         >
-                          🏎️ Mulai Latihan Solo
+                          {language === "en" ? "🏎️ Start Solo Practice" : "🏎️ Mulai Latihan Solo"}
                         </button>
                         <p className="text-[11px] text-charcoal-text/60 text-center leading-relaxed">
-                          Latihan mandiri tanpa memengaruhi ELO. Sempurna untuk latihan rute Wikipedia secara santai.
+                          {language === "en"
+                            ? "Practice solo without affecting ELO. Perfect for casual Wikipedia route training."
+                            : "Latihan mandiri tanpa memengaruhi ELO. Sempurna untuk latihan rute Wikipedia secara santai."}
                         </p>
                       </div>
                     )}
@@ -1027,14 +1046,18 @@ export default function HomePage() {
                     <div className="flex items-center gap-2 mb-1">
                       <span style={{ fontSize: 20 }}>🏆</span>
                       <h3 className="font-extrabold text-charcoal-text" style={{ fontSize: "15px" }}>
-                        Peringkat ELO Global
+                        {language === "en" ? "Global ELO Rankings" : "Peringkat ELO Global"}
                       </h3>
                     </div>
 
                     {leaderboardLoading ? (
-                      <div className="flex justify-center py-8 text-charcoal-text/60 text-xs">Memuat peringkat...</div>
+                      <div className="flex justify-center py-8 text-charcoal-text/60 text-xs">
+                        {language === "en" ? "Loading rankings..." : "Memuat peringkat..."}
+                      </div>
                     ) : leaderboard.length === 0 ? (
-                      <div className="text-center py-8 text-charcoal-text/60 text-xs">Belum ada data peringkat.</div>
+                      <div className="text-center py-8 text-charcoal-text/60 text-xs">
+                        {language === "en" ? "No ranking data yet." : "Belum ada data peringkat."}
+                      </div>
                     ) : (
                       <div className="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
                         {leaderboard.map((entry, index) => {
@@ -1054,7 +1077,7 @@ export default function HomePage() {
                                 <span className="font-bold text-charcoal-text">{entry.username}</span>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className="text-charcoal-text/70 text-xs">{entry.wins} Win</span>
+                                <span className="text-charcoal-text/70 text-xs">{entry.wins} {language === "en" ? "Wins" : "Win"}</span>
                                 <span className="font-bold text-charcoal-text bg-lime-accent/70 px-2 py-0.5 rounded text-xs">
                                   {entry.elo} ELO
                                 </span>
@@ -1095,19 +1118,171 @@ export default function HomePage() {
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:hidden">
           <HowToCard
             n={1}
-            title="Pilih nama"
-            body="Main instan atau login untuk menyimpan rating ELO."
+            title={language === "en" ? "Choose name" : "Pilih nama"}
+            body={language === "en" ? "Play instantly or log in to save your ELO rating." : "Main instan atau login untuk menyimpan rating ELO."}
           />
           <HowToCard
             n={2}
-            title="Cari Lawan"
-            body="Klik Matchmaking untuk bertanding otomatis dengan lawan seimbang."
+            title={language === "en" ? "Matchmaking" : "Cari Lawan"}
+            body={language === "en" ? "Click Matchmaking to automatically play against players of similar skill." : "Klik Matchmaking untuk bertanding otomatis dengan lawan seimbang."}
           />
           <HowToCard
             n={3}
-            title="Klik & lari"
-            body="Hanya boleh klik tautan dalam artikel. Sampai duluan, ELO naik!"
+            title={language === "en" ? "Click & run" : "Klik & lari"}
+            body={language === "en" ? "Only click hyperlinks inside articles. Reach the target first to gain ELO!" : "Hanya boleh klik tautan dalam artikel. Sampai duluan, ELO naik!"}
           />
+        </section>
+
+        {/* ====== Rich Bilingual SEO Content (Static Guide & FAQ) ====== */}
+        <section
+          className="lg:col-span-2 mt-4 flex flex-col gap-6 text-charcoal-text bg-pure-white p-6 sm:p-8"
+          style={{
+            border: "2px solid var(--color-charcoal-text)",
+            borderRadius: "var(--radius-input)",
+            boxShadow: "var(--shadow-lifted)"
+          }}
+        >
+          {/* Indonesian SEO Content */}
+          <div className={language === "id" ? "flex flex-col gap-6" : "hidden"}>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
+                📖 Tentang WikiRace Indonesia
+              </h2>
+              <p className="text-sm sm:text-base text-charcoal-text/85 leading-relaxed font-medium">
+                WikiRace Indonesia (dikenal juga sebagai <strong>Wikipedia Game</strong> atau <strong>Wiki Speedrun</strong>) adalah sebuah permainan edukatif gratis di mana Anda berlomba menelusuri artikel Wikipedia dari satu artikel awal menuju artikel target yang telah ditentukan secepat mungkin, hanya dengan mengklik link biru di dalam artikel tersebut. Game ini melatih kecepatan navigasi, pemahaman logika, dan wawasan umum.
+              </p>
+            </div>
+            
+            <div className="h-px bg-warm-gray/30 w-full" />
+            
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
+                🏁 Panduan & Cara Bermain Balapan Wikipedia
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-light-beige/40 p-4 border border-charcoal-text/30 rounded-xl" style={{ borderRadius: "var(--radius-input)" }}>
+                  <span className="bg-lime-accent text-charcoal-text font-black px-2.5 py-0.5 rounded text-xs">Langkah 1</span>
+                  <h3 className="font-extrabold text-sm mt-2 text-charcoal-text">Isi Nama & Mulai</h3>
+                  <p className="text-xs text-charcoal-text/80 mt-1.5 leading-relaxed">
+                    Masukkan nama Anda secara instan atau gunakan login Google untuk menyimpan statistik serta rating ELO kompetitif Anda.
+                  </p>
+                </div>
+                <div className="bg-light-beige/40 p-4 border border-charcoal-text/30 rounded-xl" style={{ borderRadius: "var(--radius-input)" }}>
+                  <span className="bg-lime-accent text-charcoal-text font-black px-2.5 py-0.5 rounded text-xs">Langkah 2</span>
+                  <h3 className="font-extrabold text-sm mt-2 text-charcoal-text">Pilih Mode Permainan</h3>
+                  <p className="text-xs text-charcoal-text/80 mt-1.5 leading-relaxed">
+                    Pilih <strong>Ranked</strong> untuk bertanding 1v1 multiplayer secara adil, <strong>Mabar</strong> untuk bermain kustom bersama teman, atau <strong>Solo Training</strong> untuk latihan santai.
+                  </p>
+                </div>
+                <div className="bg-light-beige/40 p-4 border border-charcoal-text/30 rounded-xl" style={{ borderRadius: "var(--radius-input)" }}>
+                  <span className="bg-lime-accent text-charcoal-text font-black px-2.5 py-0.5 rounded text-xs">Langkah 3</span>
+                  <h3 className="font-extrabold text-sm mt-2 text-charcoal-text">Klik Link & Lari</h3>
+                  <p className="text-xs text-charcoal-text/80 mt-1.5 leading-relaxed">
+                    Telusuri artikel Wikipedia hanya dengan mengklik link biru. Dilarang keras menggunakan fitur pencarian internal Wikipedia (search bar) atau tombol Ctrl+F!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-warm-gray/30 w-full" />
+
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
+                ❓ Pertanyaan Umum (FAQ)
+              </h2>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h4 className="font-black text-sm text-charcoal-text">Apakah WikiRace Indonesia gratis dimainkan?</h4>
+                  <p className="text-xs sm:text-sm text-charcoal-text/75 mt-1">
+                    Ya, game WikiRace Indonesia sepenuhnya 100% gratis dimainkan selamanya, bebas dari iklan spanduk yang mengganggu, serta tidak menjual data pribadi Anda.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-charcoal-text">Apakah mendukung rute Wikipedia Bahasa Inggris?</h4>
+                  <p className="text-xs sm:text-sm text-charcoal-text/75 mt-1">
+                    Tentu saja! Anda cukup mengganti pilihan <strong>Bahasa Wikipedia</strong> ke bendera 🇺🇸 (English) di form bermain untuk bertanding menggunakan database Wikipedia versi global.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-charcoal-text">Bagaimana sistem penentuan peringkat ELO dihitung?</h4>
+                  <p className="text-xs sm:text-sm text-charcoal-text/75 mt-1">
+                    Setiap kali Anda menang di mode Ranked multiplayer, rating ELO Anda akan meningkat. Sebaliknya jika kalah, ELO Anda akan berkurang. Peringkat di Papan Skor diurutkan berdasarkan ELO tertinggi secara global.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* English SEO Content */}
+          <div className={language === "en" ? "flex flex-col gap-6" : "hidden"}>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
+                📖 About WikiRace Indonesia
+              </h2>
+              <p className="text-sm sm:text-base text-charcoal-text/85 leading-relaxed font-medium">
+                WikiRace Indonesia (widely known as the <strong>Wikipedia Game</strong> or <strong>Wiki Speedrun</strong>) is a free online educational game where players race to navigate through Wikipedia articles from a random start page to a designated target page. The catch? You can only click the blue hyperlinks inside the articles. It tests your speed, logic, and general knowledge.
+              </p>
+            </div>
+            
+            <div className="h-px bg-warm-gray/30 w-full" />
+            
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
+                🏁 Wikipedia Game Guide & How to Play
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-light-beige/40 p-4 border border-charcoal-text/30 rounded-xl" style={{ borderRadius: "var(--radius-input)" }}>
+                  <span className="bg-lime-accent text-charcoal-text font-black px-2.5 py-0.5 rounded text-xs">Step 1</span>
+                  <h3 className="font-extrabold text-sm mt-2 text-charcoal-text">Choose Name & Enter</h3>
+                  <p className="text-xs text-charcoal-text/80 mt-1.5 leading-relaxed">
+                    Choose a quick nickname or register using Google login to save ELO points and track your match history.
+                  </p>
+                </div>
+                <div className="bg-light-beige/40 p-4 border border-charcoal-text/30 rounded-xl" style={{ borderRadius: "var(--radius-input)" }}>
+                  <span className="bg-lime-accent text-charcoal-text font-black px-2.5 py-0.5 rounded text-xs">Step 2</span>
+                  <h3 className="font-extrabold text-sm mt-2 text-charcoal-text">Select Game Mode</h3>
+                  <p className="text-xs text-charcoal-text/80 mt-1.5 leading-relaxed">
+                    Play <strong>Ranked</strong> matchmaking to challenge online opponents, create a <strong>Party (Mabar)</strong> to play with friends, or select <strong>Solo</strong> for pressure-free practice.
+                  </p>
+                </div>
+                <div className="bg-light-beige/40 p-4 border border-charcoal-text/30 rounded-xl" style={{ borderRadius: "var(--radius-input)" }}>
+                  <span className="bg-lime-accent text-charcoal-text font-black px-2.5 py-0.5 rounded text-xs">Step 3</span>
+                  <h3 className="font-extrabold text-sm mt-2 text-charcoal-text">Click Links to Destination</h3>
+                  <p className="text-xs text-charcoal-text/80 mt-1.5 leading-relaxed">
+                    Navigate only by clicking the blue hyperlinks inside Wikipedia pages. Using Wikipedia's search bar or Ctrl+F is strictly forbidden!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-warm-gray/30 w-full" />
+
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
+                ❓ Frequently Asked Questions (FAQ)
+              </h2>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h4 className="font-black text-sm text-charcoal-text">Is the Wikipedia Game free to play?</h4>
+                  <p className="text-xs sm:text-sm text-charcoal-text/75 mt-1">
+                    Yes, WikiRace Indonesia is 100% free with no intrusive ads, paying limits, or hidden fees.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-charcoal-text">Does it support English Wikipedia routes?</h4>
+                  <p className="text-xs sm:text-sm text-charcoal-text/75 mt-1">
+                    Yes! You can toggle the <strong>Wikipedia Language</strong> to the US flag 🇺🇸 (English) on the main lobby form to play with the global English Wikipedia database.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-charcoal-text">How does the ELO rating system work?</h4>
+                  <p className="text-xs sm:text-sm text-charcoal-text/75 mt-1">
+                    Winning in Ranked matchmaking mode grants you ELO rating points, while losing decreases them. The global leaderboard displays players based on their ELO ratings.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <div className="flex flex-col items-center gap-3 lg:col-span-2 mt-4">
@@ -1124,13 +1299,13 @@ export default function HomePage() {
               boxShadow: "var(--shadow-raised)",
             }}
           >
-            ☕ Dukung Server (Saweria)
+            {language === "en" ? "☕ Support Server (Saweria)" : "☕ Dukung Server (Saweria)"}
           </a>
           <p
             className="text-center text-charcoal-text/70"
             style={{ fontSize: "13px" }}
           >
-            Dibuat dengan ☕ oleh{" "}
+            {language === "en" ? "Made with ☕ by " : "Dibuat dengan ☕ oleh "}{" "}
             <a
             href="https://www.muhfarizzi.tech"
               target="_blank"

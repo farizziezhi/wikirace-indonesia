@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { getSavedLanguage } from "@/lib/client-id";
 
 interface Donator {
   id: number;
@@ -15,8 +16,10 @@ export default function DonatorsPage() {
   const [topDonators, setTopDonators] = useState<Donator[]>([]);
   const [recentDonators, setRecentDonators] = useState<Donator[]>([]);
   const [loading, setLoading] = useState(true);
+  const [language, setLanguage] = useState<"id" | "en">("id");
 
   useEffect(() => {
+    setLanguage(getSavedLanguage());
     async function fetchDonators() {
       try {
         const res = await fetch("/api/donators");
@@ -44,7 +47,7 @@ export default function DonatorsPage() {
   };
 
   const formatDate = (epochSecs: number) => {
-    return new Date(epochSecs * 1000).toLocaleDateString("id-ID", {
+    return new Date(epochSecs * 1000).toLocaleDateString(language === "en" ? "en-US" : "id-ID", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -67,7 +70,7 @@ export default function DonatorsPage() {
             href="/"
             className="flex items-center gap-2 text-charcoal-text/70 hover:text-charcoal-text font-bold transition text-sm"
           >
-            ← Kembali ke Beranda
+            {language === "en" ? "← Back to Homepage" : "← Kembali ke Beranda"}
           </Link>
           <span className="font-extrabold uppercase text-charcoal-text text-[11px] tracking-wider bg-light-beige border border-warm-gray/60 px-3 py-1 rounded-full">
             💖 Hall of Fame
@@ -88,10 +91,12 @@ export default function DonatorsPage() {
               className="font-black text-charcoal-text tracking-tight"
               style={{ fontSize: "clamp(26px, 4vw, 36px)", lineHeight: 1.1 }}
             >
-              Hall of Fame Donatur 💖
+              {language === "en" ? "Donator Hall of Fame 💖" : "Hall of Fame Donatur 💖"}
             </h1>
             <p className="text-sm sm:text-base text-charcoal-text/80 leading-relaxed font-medium">
-              WikiRace Indonesia sepenuhnya gratis dimainkan, bebas dari iklan yang mengganggu, serta tidak menjual data pengguna. Donasi Anda membantu kami membayar biaya server (VPS), websocket database realtime (Ably), database ELO (Turso), dan hosting.
+              {language === "en"
+                ? "WikiRace Indonesia is completely free to play, free of annoying ads, and does not sell user data. Your donations help us pay for server costs (VPS), realtime websocket database (Ably), ELO database (Turso), and hosting."
+                : "WikiRace Indonesia sepenuhnya gratis dimainkan, bebas dari iklan yang mengganggu, serta tidak menjual data pengguna. Donasi Anda membantu kami membayar biaya server (VPS), websocket database realtime (Ably), database ELO (Turso), dan hosting."}
             </p>
           </div>
           <div className="w-full sm:w-auto shrink-0">
@@ -107,8 +112,10 @@ export default function DonatorsPage() {
               }}
             >
               <span className="text-2xl mb-1">☕</span>
-              <span className="text-sm">Dukung via Saweria</span>
-              <span className="text-[10px] opacity-70 mt-0.5">Mulai Rp 10.000</span>
+              <span className="text-sm">{language === "en" ? "Support via Saweria" : "Dukung via Saweria"}</span>
+              <span className="text-[10px] opacity-70 mt-0.5">
+                {language === "en" ? "Starts at Rp 10,000" : "Mulai Rp 10.000"}
+              </span>
             </a>
           </div>
         </section>
@@ -116,12 +123,14 @@ export default function DonatorsPage() {
         {/* Podium Highlight (Top 3 Donators) */}
         <section className="flex flex-col gap-4">
           <h2 className="font-black text-xl text-charcoal-text flex items-center gap-2">
-            🏆 Donatur Utama
+            {language === "en" ? "🏆 Top Donators" : "🏆 Donatur Utama"}
           </h2>
 
           {loading ? (
             <div className="flex justify-center items-center py-20 bg-pure-white border-2 border-charcoal-text rounded-xl animate-pulse">
-              <span className="text-charcoal-text/50 font-bold text-sm">Memuat data donatur...</span>
+              <span className="text-charcoal-text/50 font-bold text-sm">
+                {language === "en" ? "Loading donator data..." : "Memuat data donatur..."}
+              </span>
             </div>
           ) : !gold && !silver && !bronze ? (
             /* Empty State */
@@ -134,9 +143,13 @@ export default function DonatorsPage() {
               }}
             >
               <span className="text-4xl">👑</span>
-              <h3 className="font-extrabold text-charcoal-text text-base">Belum Ada Donatur Terdaftar</h3>
+              <h3 className="font-extrabold text-charcoal-text text-base">
+                {language === "en" ? "No Donators Registered Yet" : "Belum Ada Donatur Terdaftar"}
+              </h3>
               <p className="text-xs text-charcoal-text/70 max-w-[320px] leading-relaxed">
-                Jadilah pendukung pertama! Klik tombol Saweria di atas dan nama Anda akan langsung di-highlight sebagai raja podium pertama!
+                {language === "en"
+                  ? "Be the first supporter! Click the Saweria button above and your name will be highlighted directly as the first place on the podium!"
+                  : "Jadilah pendukung pertama! Klik tombol Saweria di atas dan nama Anda akan langsung di-highlight sebagai raja podium pertama!"}
               </p>
             </div>
           ) : (
@@ -154,7 +167,7 @@ export default function DonatorsPage() {
                     }}
                   >
                     <div className="absolute -top-3 left-4 bg-charcoal-text text-warm-cream font-black text-xs px-2.5 py-0.5 rounded-full border border-charcoal-text">
-                      🥈 PERINGKAT 2
+                      🥈 {language === "en" ? "RANK 2" : "PERINGKAT 2"}
                     </div>
                     <div className="mt-2">
                       <h3 className="font-black text-charcoal-text text-lg truncate">{silver.name}</h3>
@@ -168,7 +181,7 @@ export default function DonatorsPage() {
                       </p>
                     )}
                     <span className="text-[10px] text-charcoal-text/50 font-bold mt-auto">
-                      Diterima: {formatDate(silver.createdAt)}
+                      {language === "en" ? "Received: " : "Diterima: "} {formatDate(silver.createdAt)}
                     </span>
                   </div>
                 ) : (
@@ -177,7 +190,9 @@ export default function DonatorsPage() {
                     style={{ minHeight: "180px" }}
                   >
                     <span className="text-xl">🥈</span>
-                    <span className="text-xs font-bold text-charcoal-text/60 mt-1">Belum Ada</span>
+                    <span className="text-xs font-bold text-charcoal-text/60 mt-1">
+                      {language === "en" ? "None" : "Belum Ada"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -195,7 +210,7 @@ export default function DonatorsPage() {
                   >
                     {/* Crown Graphic / Badge */}
                     <div className="absolute -top-3 right-4 bg-charcoal-text text-yellow-accent font-black text-xs px-3 py-1 rounded-full border-2 border-charcoal-text flex items-center gap-1">
-                      👑 PERINGKAT 1
+                      👑 {language === "en" ? "RANK 1" : "PERINGKAT 1"}
                     </div>
                     
                     <div className="mt-2">
@@ -210,7 +225,7 @@ export default function DonatorsPage() {
                       </p>
                     )}
                     <span className="text-[10px] text-charcoal-text/60 font-bold mt-auto">
-                      Diterima: {formatDate(gold.createdAt)}
+                      {language === "en" ? "Received: " : "Diterima: "} {formatDate(gold.createdAt)}
                     </span>
                   </div>
                 ) : (
@@ -219,7 +234,9 @@ export default function DonatorsPage() {
                     style={{ minHeight: "220px" }}
                   >
                     <span className="text-2xl">👑</span>
-                    <span className="text-xs font-bold text-charcoal-text/60 mt-1">Belum Ada</span>
+                    <span className="text-xs font-bold text-charcoal-text/60 mt-1">
+                      {language === "en" ? "None" : "Belum Ada"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -236,7 +253,7 @@ export default function DonatorsPage() {
                     }}
                   >
                     <div className="absolute -top-3 left-4 bg-charcoal-text text-warm-cream font-black text-xs px-2.5 py-0.5 rounded-full border border-charcoal-text">
-                      🥉 PERINGKAT 3
+                      🥉 {language === "en" ? "RANK 3" : "PERINGKAT 3"}
                     </div>
                     <div className="mt-2">
                       <h3 className="font-black text-charcoal-text text-lg truncate">{bronze.name}</h3>
@@ -250,7 +267,7 @@ export default function DonatorsPage() {
                       </p>
                     )}
                     <span className="text-[10px] text-charcoal-text/50 font-bold mt-auto">
-                      Diterima: {formatDate(bronze.createdAt)}
+                      {language === "en" ? "Received: " : "Diterima: "} {formatDate(bronze.createdAt)}
                     </span>
                   </div>
                 ) : (
@@ -259,7 +276,9 @@ export default function DonatorsPage() {
                     style={{ minHeight: "180px" }}
                   >
                     <span className="text-xl">🥉</span>
-                    <span className="text-xs font-bold text-charcoal-text/60 mt-1">Belum Ada</span>
+                    <span className="text-xs font-bold text-charcoal-text/60 mt-1">
+                      {language === "en" ? "None" : "Belum Ada"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -279,10 +298,12 @@ export default function DonatorsPage() {
           >
             <div>
               <h2 className="font-black text-lg text-charcoal-text">
-                💬 Pesan Pendukung Lainnya
+                {language === "en" ? "💬 Other Supporters' Messages" : "💬 Pesan Pendukung Lainnya"}
               </h2>
               <p className="text-xs text-charcoal-text/60 font-semibold mt-0.5">
-                Daftar donasi beserta pesan hangat dari para kontributor.
+                {language === "en"
+                  ? "List of donations along with warm messages from contributors."
+                  : "Daftar donasi beserta pesan hangat dari para kontributor."}
               </p>
             </div>
 

@@ -18,26 +18,27 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id",
   ),
   title: {
-    default: "WikiRace Indonesia - Game Balapan Wikipedia Tercepat",
+    default: "WikiRace Indonesia - Play Wikipedia Game | Balapan Wikipedia Online",
     template: "%s | WikiRace Indonesia",
   },
   description:
-    "Game balapan edukatif online terpopuler di Indonesia. Telusuri Wikipedia dari satu artikel ke artikel lain hanya dengan klik link biru. Main multiplayer (Ranked ELO), mabar bersama teman, atau solo training gratis selamanya.",
+    "WikiRace Indonesia is a free online Wikipedia speedrun game. Race multiplayer or practice solo. / Game balapan edukatif Wikipedia gratis. Main multiplayer atau solo.",
   keywords: [
     "wikirace",
     "wikirace indonesia",
     "wikipedia game",
+    "wikipedia speedrun",
+    "wikipedia game online",
     "wikipedia game indonesia",
-    "game edukasi",
     "balapan wikipedia",
     "main wikirace gratis",
     "wikirace multiplayer",
-    "game asah otak",
+    "wiki speedrun",
   ],
   openGraph: {
-    title: "WikiRace Indonesia - Game Balapan Wikipedia Tercepat",
+    title: "WikiRace Indonesia - Play Wikipedia Game | Balapan Wikipedia Online",
     description:
-      "Game balapan edukatif online terpopuler di Indonesia. Telusuri Wikipedia hanya dengan klik link biru. Main multiplayer ELO, mabar, atau solo gratis selamanya.",
+      "WikiRace Indonesia is a free online Wikipedia speedrun game. Race multiplayer or practice solo. / Game balapan edukatif Wikipedia gratis. Main multiplayer atau solo.",
     url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id",
     siteName: "WikiRace Indonesia",
     locale: "id_ID",
@@ -45,9 +46,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "WikiRace Indonesia - Game Balapan Wikipedia Tercepat",
+    title: "WikiRace Indonesia - Play Wikipedia Game | Balapan Wikipedia Online",
     description:
-      "Game balapan edukatif online terpopuler di Indonesia. Telusuri Wikipedia hanya dengan klik link biru. Main multiplayer ELO, mabar, atau solo gratis selamanya.",
+      "WikiRace Indonesia is a free online Wikipedia speedrun game. Race multiplayer or practice solo. / Game balapan edukatif Wikipedia gratis. Main multiplayer atau solo.",
   },
   robots: {
     index: true,
@@ -77,7 +78,7 @@ export default function RootLayout({
           "priceCurrency": "IDR",
         },
         "description":
-          "WikiRace Indonesia adalah game balapan edukatif multiplayer di mana pemain berlomba menelusuri artikel Wikipedia dengan hanya mengklik tautan (link) dari artikel awal hingga mencapai artikel tujuan secepat mungkin.",
+          "WikiRace Indonesia is a free online multiplayer Wikipedia game (speedrun). Players race to navigate from a start article to a target article using only blue links. / Game balapan edukatif multiplayer untuk menelusuri artikel Wikipedia secepat mungkin.",
       },
       {
         "@type": "FAQPage",
@@ -94,11 +95,29 @@ export default function RootLayout({
           },
           {
             "@type": "Question",
+            "name": "What is WikiRace Indonesia (Wikipedia Game)?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text":
+                "WikiRace Indonesia (also known as the Wikipedia Game) is a free online speedrun game where you navigate from a starting Wikipedia article to a destination article using only the blue hyperlinks inside the articles.",
+            },
+          },
+          {
+            "@type": "Question",
             "name": "Bagaimana cara bermain WikiRace Indonesia?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text":
                 "Anda diberikan sebuah artikel awal dan artikel tujuan. Klik link biru di dalam halaman Wikipedia untuk berpindah artikel sampai Anda menemukan artikel tujuan. Pemain dengan waktu tercepat atau jumlah klik paling sedikit memenangkan permainan.",
+            },
+          },
+          {
+            "@type": "Question",
+            "name": "How do you play the Wikipedia Game (WikiRace)?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text":
+                "You are given a starting article and a target article. Click the blue hyperlinks within the Wikipedia pages to move from article to article until you reach the target. The player who reaches the target first or with the fewest clicks wins.",
             },
           },
           {
@@ -112,11 +131,11 @@ export default function RootLayout({
           },
           {
             "@type": "Question",
-            "name": "Apakah ada mode multiplayer?",
+            "name": "Is WikiRace Indonesia free to play?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text":
-                "Tentu saja! Anda bisa bermain di mode 'Cari Lawan' (Ranked Matchmaking) berbasis ELO atau membuat room custom ('Mabar') untuk bermain bersama teman secara real-time.",
+                "Yes, WikiRace Indonesia is 100% free to play with no intrusive ads or hidden subscription fees.",
             },
           },
         ],

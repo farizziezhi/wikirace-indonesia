@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
 import { SOLO_THEMES, SoloTheme, CURATED_ARTICLES } from "@/lib/solo-curated";
+import { getSavedLanguage, saveLanguage } from "@/lib/client-id";
 
 type SoloMode = "time-attack" | "free-roam";
 type SelectionModule = "curated" | "wild" | "custom";
@@ -13,15 +14,23 @@ function SoloPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Mode & Language states
-  const [selectedMode, setSelectedMode] = useState<SoloMode>("time-attack");
-  const [language, setLanguage] = useState<WikiLanguage>(() => {
+  const [language, setLanguage] = useState<WikiLanguage>("id");
+
+  // Load language choice from localStorage if not provided in search parameters
+  useEffect(() => {
     const param = searchParams.get("lang");
-    return param === "en" ? "en" : "id";
-  });
+    if (param === "en" || param === "id") {
+      setLanguage(param);
+    } else {
+      setLanguage(getSavedLanguage());
+    }
+  }, [searchParams]);
 
   // Module state: curated themes vs wild random vs custom inputs
   const [activeModule, setActiveModule] = useState<SelectionModule>("curated");
+
+  // Mode state
+  const [selectedMode, setSelectedMode] = useState<SoloMode>("time-attack");
 
   // Curated theme & difficulty states
   const [selectedTheme, setSelectedTheme] = useState<Exclude<SoloTheme, "all">>("history-geo");
@@ -196,7 +205,7 @@ function SoloPageContent() {
             className="flex items-center gap-2 text-charcoal-text/70 hover:text-charcoal-text font-semibold transition"
             style={{ fontSize: "14px" }}
           >
-            ← Kembali ke home
+            {language === "en" ? "← Back to home" : "← Kembali ke home"}
           </button>
 
           <div className="flex items-center gap-3">
@@ -204,7 +213,7 @@ function SoloPageContent() {
               className="font-black text-charcoal-text"
               style={{ fontSize: "clamp(32px, 5vw, 42px)", lineHeight: 1.1 }}
             >
-              🏎️ Latihan Solo
+              {language === "en" ? "🏎️ Solo Practice" : "🏎️ Latihan Solo"}
             </h1>
           </div>
 
@@ -212,7 +221,9 @@ function SoloPageContent() {
             className="text-charcoal-text/80"
             style={{ fontSize: "15px", lineHeight: 1.5 }}
           >
-            Latih kecepatan navigasi Wikipedia Anda sendiri tanpa pemain lain.
+            {language === "en"
+              ? "Train your Wikipedia navigation speed on your own, without other players."
+              : "Latih kecepatan navigasi Wikipedia Anda sendiri tanpa pemain lain."}
           </p>
         </header>
 
@@ -227,7 +238,7 @@ function SoloPageContent() {
                 className="bg-charcoal-text text-lime-accent text-xs font-bold uppercase tracking-wider px-3 py-1"
                 style={{ borderRadius: "var(--radius-pill)" }}
               >
-                🏁 Rute Balapan Siap
+                {language === "en" ? "🏁 Race Route Ready" : "🏁 Rute Balapan Siap"}
               </span>
             </div>
 
@@ -236,7 +247,9 @@ function SoloPageContent() {
                 className="bg-warm-cream p-4 flex flex-col items-center text-center justify-center relative"
                 style={{ borderRadius: "var(--radius-input)", border: "1px solid var(--color-warm-gray)" }}
               >
-                <span className="text-[11px] font-bold text-charcoal-text/60 uppercase tracking-wide">Mulai Dari</span>
+                <span className="text-[11px] font-bold text-charcoal-text/60 uppercase tracking-wide">
+                  {language === "en" ? "Start From" : "Mulai Dari"}
+                </span>
                 <span className="font-extrabold text-charcoal-text text-lg mt-1 break-all px-2">{previewResult.startArticle}</span>
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-charcoal-text text-warm-cream text-xs w-6 h-6 rounded-full hidden md:flex items-center justify-center font-bold z-10">
                   →
@@ -250,23 +263,25 @@ function SoloPageContent() {
                   border: "1px solid var(--color-lime-soft)",
                 }}
               >
-                <span className="text-[11px] font-bold text-charcoal-text/60 uppercase tracking-wide">Tujuan Akhir</span>
+                <span className="text-[11px] font-bold text-charcoal-text/60 uppercase tracking-wide">
+                  {language === "en" ? "Final Destination" : "Tujuan Akhir"}
+                </span>
                 <span className="font-extrabold text-charcoal-text text-lg mt-1 break-all px-2">{previewResult.endArticle}</span>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-4 border-warm-gray">
               <div className="text-center sm:text-left">
-                <span className="text-charcoal-text/70 text-sm block">Estimasi Rute Terpendek:</span>
+                <span className="text-charcoal-text/70 text-sm block">{language === "en" ? "Estimated Shortest Route:" : "Estimasi Rute Terpendek:"}</span>
                 <span className="font-black text-charcoal-text text-base">
                   {previewResult.estimatedDepth === -1
-                    ? "Rute Kustom (Bebas)"
-                    : `~${previewResult.estimatedDepth} klik`}
+                    ? (language === "en" ? "Custom Route (Free)" : "Rute Kustom (Bebas)")
+                    : `~${previewResult.estimatedDepth} ${language === "en" ? "clicks" : "klik"}`}
                 </span>
               </div>
 
               <div className="text-center sm:text-right">
-                <span className="text-charcoal-text/70 text-sm block">Mode & Bahasa:</span>
+                <span className="text-charcoal-text/70 text-sm block">{language === "en" ? "Mode & Language:" : "Mode & Bahasa:"}</span>
                 <span className="font-bold text-charcoal-text text-sm uppercase">
                   {selectedMode === "time-attack" ? "⏱️ Time Attack" : "🧭 Free Roam"} ({language.toUpperCase()})
                 </span>
@@ -280,14 +295,14 @@ function SoloPageContent() {
                 className="btn-primary flex-1 py-4 text-base tracking-wide"
                 style={{ border: "2px solid var(--color-charcoal-text)", boxShadow: "0 4px 0 var(--color-charcoal-text)" }}
               >
-                MULAI BALAPAN 🏁
+                {language === "en" ? "START RACE 🏁" : "MULAI BALAPAN 🏁"}
               </button>
               <button
                 type="button"
                 onClick={() => setPreviewResult(null)}
                 className="btn-white py-4 text-base"
               >
-                Ubah Pengaturan
+                {language === "en" ? "Change Settings" : "Ubah Pengaturan"}
               </button>
             </div>
           </section>
@@ -300,7 +315,7 @@ function SoloPageContent() {
             {/* 1. Module Selector: Curated / Wild / Custom */}
             <div className="flex flex-col gap-2">
               <label className="font-bold text-charcoal-text" style={{ fontSize: "15px" }}>
-                Pilih Modul Pencarian Artikel
+                {language === "en" ? "Choose Article Search Module" : "Pilih Modul Pencarian Artikel"}
               </label>
               <div
                 className="grid grid-cols-3 gap-1 bg-light-beige p-1"
@@ -314,7 +329,7 @@ function SoloPageContent() {
                   }}
                   className={`py-2 text-xs sm:text-sm rounded font-bold transition ${activeModule === "curated" ? "bg-charcoal-text text-warm-cream" : "text-charcoal-text hover:bg-warm-gray/30"}`}
                 >
-                  🎯 Populer
+                  {language === "en" ? "🎯 Popular" : "🎯 Populer"}
                 </button>
                 <button
                   type="button"
@@ -324,7 +339,7 @@ function SoloPageContent() {
                   }}
                   className={`py-2 text-xs sm:text-sm rounded font-bold transition ${activeModule === "wild" ? "bg-charcoal-text text-warm-cream" : "text-charcoal-text hover:bg-warm-gray/30"}`}
                 >
-                  🌀 Acak (Liar)
+                  {language === "en" ? "🌀 Random" : "🌀 Acak (Liar)"}
                 </button>
                 <button
                   type="button"
@@ -334,7 +349,7 @@ function SoloPageContent() {
                   }}
                   className={`py-2 text-xs sm:text-sm rounded font-bold transition ${activeModule === "custom" ? "bg-charcoal-text text-warm-cream" : "text-charcoal-text hover:bg-warm-gray/30"}`}
                 >
-                  🛠️ Kustom
+                  {language === "en" ? "🛠️ Custom" : "🛠️ Kustom"}
                 </button>
               </div>
             </div>
@@ -344,7 +359,9 @@ function SoloPageContent() {
               <div className="flex flex-col gap-4 animate-fade-in">
                 {/* Theme selection grid */}
                 <div className="flex flex-col gap-2">
-                  <span className="font-bold text-charcoal-text text-sm">Pilih Kategori Kategori</span>
+                  <span className="font-bold text-charcoal-text text-sm">
+                    {language === "en" ? "Choose Category" : "Pilih Kategori Kategori"}
+                  </span>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {SOLO_THEMES.filter((t) => t.value !== "all").map((themeItem) => {
                       const active = selectedTheme === themeItem.value;
@@ -372,11 +389,17 @@ function SoloPageContent() {
 
                 {/* Difficulty selector */}
                 <div className="flex flex-col gap-2">
-                  <span className="font-bold text-charcoal-text text-sm">Tingkat Kesulitan</span>
+                  <span className="font-bold text-charcoal-text text-sm">
+                    {language === "en" ? "Difficulty Level" : "Tingkat Kesulitan"}
+                  </span>
                   <div className="grid grid-cols-3 gap-2">
                     {(["easy", "medium", "hard"] as const).map((level) => {
                       const active = difficulty === level;
-                      const label = level === "easy" ? "Mudah (2 klik)" : level === "hard" ? "Sulit (4 klik)" : "Sedang (3 klik)";
+                      const label = level === "easy" 
+                        ? (language === "en" ? "Easy (2 clicks)" : "Mudah (2 klik)") 
+                        : level === "hard" 
+                          ? (language === "en" ? "Hard (4 clicks)" : "Sulit (4 klik)") 
+                          : (language === "en" ? "Medium (3 clicks)" : "Sedang (3 klik)");
                       return (
                         <button
                           key={level}
@@ -402,16 +425,24 @@ function SoloPageContent() {
             {activeModule === "wild" && (
               <div className="flex flex-col gap-4 animate-fade-in bg-paper-white p-4 border border-dashed border-warm-gray rounded-lg">
                 <p className="text-charcoal-text/80 text-sm leading-relaxed">
-                  🌀 <strong>Wikipedia Liar</strong> akan mencocokkan artikel awal secara acak total dari seluruh isi Wikipedia bahasa yang Anda pilih. Jalur mungkin akan sulit karena topiknya sangat bervariasi!
+                  {language === "en"
+                    ? "🌀 Wild Wikipedia will pick a completely random starting article from the language you chose. Paths might be harder because topics vary widely!"
+                    : "🌀 Wikipedia Liar akan mencocokkan artikel awal secara acak total dari seluruh isi Wikipedia bahasa yang Anda pilih. Jalur mungkin akan sulit karena topiknya sangat bervariasi!"}
                 </p>
 
                 {/* Difficulty selector */}
                 <div className="flex flex-col gap-2">
-                  <span className="font-bold text-charcoal-text text-sm">Tingkat Kesulitan</span>
+                  <span className="font-bold text-charcoal-text text-sm">
+                    {language === "en" ? "Difficulty Level" : "Tingkat Kesulitan"}
+                  </span>
                   <div className="grid grid-cols-3 gap-2">
                     {(["easy", "medium", "hard"] as const).map((level) => {
                       const active = difficulty === level;
-                      const label = level === "easy" ? "Mudah" : level === "hard" ? "Sulit" : "Sedang";
+                      const label = level === "easy" 
+                        ? (language === "en" ? "Easy" : "Mudah") 
+                        : level === "hard" 
+                          ? (language === "en" ? "Hard" : "Sulit") 
+                          : (language === "en" ? "Medium" : "Sedang");
                       return (
                         <button
                           key={level}
@@ -439,7 +470,7 @@ function SoloPageContent() {
                 {/* Custom Start Article Input */}
                 <div className="flex flex-col gap-2 relative">
                   <label htmlFor="customStart" className="font-bold text-charcoal-text text-sm">
-                    Artikel Awal (Start)
+                    {language === "en" ? "Starting Article (Start)" : "Artikel Awal (Start)"}
                   </label>
                   <input
                     id="customStart"
@@ -451,7 +482,7 @@ function SoloPageContent() {
                     }}
                     onFocus={() => setShowStartSuggest(true)}
                     onBlur={() => setTimeout(() => setShowStartSuggest(false), 200)}
-                    placeholder="Ketik artikel Wikipedia... (misal: Kucing)"
+                    placeholder={language === "en" ? "Type Wikipedia article... (e.g. Cat)" : "Ketik artikel Wikipedia... (misal: Kucing)"}
                     className="pd-input"
                     autoComplete="off"
                   />
@@ -482,7 +513,7 @@ function SoloPageContent() {
                 {/* Custom Target Article Input */}
                 <div className="flex flex-col gap-2 relative">
                   <label htmlFor="customEnd" className="font-bold text-charcoal-text text-sm">
-                    Artikel Akhir (Target)
+                    {language === "en" ? "Ending Article (Target)" : "Artikel Akhir (Target)"}
                   </label>
                   <input
                     id="customEnd"
@@ -494,7 +525,7 @@ function SoloPageContent() {
                     }}
                     onFocus={() => setShowEndSuggest(true)}
                     onBlur={() => setTimeout(() => setShowEndSuggest(false), 200)}
-                    placeholder="Ketik artikel Wikipedia... (misal: Perang Dunia II)"
+                    placeholder={language === "en" ? "Type Wikipedia article... (e.g. World War II)" : "Ketik artikel Wikipedia... (misal: Perang Dunia II)"}
                     className="pd-input"
                     autoComplete="off"
                   />
@@ -527,7 +558,7 @@ function SoloPageContent() {
             {/* 2. Choose Game Mode */}
             <div className="flex flex-col gap-3 border-t pt-4 border-warm-gray">
               <label className="font-bold text-charcoal-text" style={{ fontSize: "15px" }}>
-                Pilih Mode Permainan
+                {language === "en" ? "Select Game Mode" : "Pilih Mode Permainan"}
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -546,7 +577,9 @@ function SoloPageContent() {
                   <div className="flex flex-col">
                     <span className="font-bold text-charcoal-text text-sm">Time Attack</span>
                     <span className="text-charcoal-text/70 text-xs mt-0.5 leading-snug">
-                      Timer berjalan. Cari rute tercepat untuk finis.
+                      {language === "en"
+                        ? "Timer counts up. Find the fastest route to finish."
+                        : "Timer berjalan. Cari rute tercepat untuk finis."}
                     </span>
                   </div>
                 </button>
@@ -566,7 +599,9 @@ function SoloPageContent() {
                   <div className="flex flex-col">
                     <span className="font-bold text-charcoal-text text-sm">Free Roam</span>
                     <span className="text-charcoal-text/70 text-xs mt-0.5 leading-snug">
-                      Tanpa batas waktu. Eksplorasi bebas, hanya jumlah klik yang dihitung.
+                      {language === "en"
+                        ? "No time limit. Explore freely, only click count is tracked."
+                        : "Tanpa batas waktu. Eksplorasi bebas, hanya jumlah klik yang dihitung."}
                     </span>
                   </div>
                 </button>
@@ -576,7 +611,7 @@ function SoloPageContent() {
             {/* 3. Language picker */}
             <div className="flex flex-col gap-2">
               <label className="font-bold text-charcoal-text text-sm">
-                Bahasa Wikipedia
+                {language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
               </label>
               <div
                 className="grid grid-cols-2 gap-2 bg-light-beige p-1"
@@ -585,7 +620,7 @@ function SoloPageContent() {
                   border: "1px solid var(--color-warm-gray)",
                 }}
                 role="radiogroup"
-                aria-label="Bahasa Wikipedia"
+                aria-label={language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
               >
                 {LANGUAGE_OPTIONS.map((opt) => {
                   const active = opt.value === language;
@@ -597,6 +632,7 @@ function SoloPageContent() {
                       aria-checked={active}
                       onClick={() => {
                         setLanguage(opt.value);
+                        saveLanguage(opt.value);
                         // Reset kustom jika ganti bahasa
                         setCustomStart("");
                         setCustomEnd("");
@@ -631,10 +667,10 @@ function SoloPageContent() {
                     className="border-charcoal-text border-t-transparent animate-spin w-5 h-5"
                     style={{ borderWidth: 3, borderRadius: "50%" }}
                   />
-                  <span>Menyiapkan Rute...</span>
+                  <span>{language === "en" ? "Preparing Route..." : "Menyiapkan Rute..."}</span>
                 </div>
               ) : (
-                "🏁 Dapatkan Tantangan Rute"
+                language === "en" ? "🏁 Get Route Challenge" : "🏁 Dapatkan Tantangan Rute"
               )}
             </button>
 
