@@ -34,3 +34,19 @@ export function saveUsername(username: string): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(USERNAME_KEY, username);
 }
+
+const LANGUAGE_KEY = "wikirace:language";
+
+/** Ambil bahasa terpilih terakhir dari localStorage (default 'id'). */
+export function getSavedLanguage(): "id" | "en" {
+  if (typeof window === "undefined") return "id";
+  const val = window.localStorage.getItem(LANGUAGE_KEY);
+  return val === "en" ? "en" : "id";
+}
+
+/** Simpan pilihan bahasa pengguna. */
+export function saveLanguage(lang: "id" | "en"): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LANGUAGE_KEY, lang);
+}
+
