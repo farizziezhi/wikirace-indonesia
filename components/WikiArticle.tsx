@@ -4,6 +4,7 @@ import { memo, useEffect, useRef, useState } from "react";
 
 import type { WikiLanguage } from "@/lib/types";
 import { extractArticleTitle, fetchArticleHtml } from "@/lib/wikipedia";
+import { translations } from "@/lib/translations";
 
 interface WikiArticleProps {
   /** Judul artikel yang sedang ditampilkan ke pemain. */
@@ -17,6 +18,7 @@ interface WikiArticleProps {
    * Parent (Game.tsx) bertanggung jawab POST /api/room/navigate.
    */
   onNavigate: (article: string) => void;
+  uiLanguage: "id" | "en";
 }
 
 /**
@@ -33,12 +35,15 @@ function WikiArticle({
   endArticle,
   language,
   onNavigate,
+  uiLanguage,
 }: WikiArticleProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayedArticle, setDisplayedArticle] = useState(currentArticle);
   const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const t = translations[uiLanguage];
 
   // Fetch HTML artikel setiap kali currentArticle / language berubah.
   useEffect(() => {
@@ -52,7 +57,7 @@ function WikiArticle({
         .then((result) => {
           if (cancelled) return;
           if (!result) {
-            setError("Artikel tidak bisa dimuat. Coba klik tautan lain.");
+            setError(t.loadError);
             setLoading(false);
             return;
           }
@@ -62,7 +67,7 @@ function WikiArticle({
         })
         .catch(() => {
           if (cancelled) return;
-          setError("Gagal terhubung ke Wikipedia. Periksa koneksi.");
+          setError(t.networkError);
           setLoading(false);
         });
     }, 0);
@@ -71,7 +76,7 @@ function WikiArticle({
       cancelled = true;
       window.clearTimeout(id);
     };
-  }, [currentArticle, language]);
+  }, [currentArticle, language, t]);
 
   // Scroll ke atas page setiap kali konten artikel benar-benar diganti.
   useEffect(() => {
@@ -148,7 +153,7 @@ function WikiArticle({
           className="font-bold uppercase text-charcoal-text/60"
           style={{ fontSize: "11px", letterSpacing: "0.6px" }}
         >
-          Sedang dibuka
+          {t.currentlyOpen}
         </div>
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2
@@ -164,7 +169,7 @@ function WikiArticle({
             className="flex items-center gap-2 text-charcoal-text/70"
             style={{ fontSize: "13px" }}
           >
-            <span>menuju</span>
+            <span>{t.towards}</span>
             <span
               className="bg-lime-accent px-2 py-0.5 font-bold text-charcoal-text"
               style={{ borderRadius: "var(--radius-button)" }}
@@ -192,7 +197,7 @@ function WikiArticle({
               }}
             />
             <span style={{ fontSize: "var(--text-body)" }}>
-              Memuat artikel…
+              {t.loadingArticle}
             </span>
           </div>
         )}

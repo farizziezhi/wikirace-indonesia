@@ -9,7 +9,7 @@ import EmojiReactions from "@/components/EmojiReactions";
 import Game from "@/components/Game";
 import Lobby from "@/components/Lobby";
 import Results from "@/components/Results";
-import { getOrCreateClientId, getSavedUsername } from "@/lib/client-id";
+import { getOrCreateClientId, getSavedUsername, getSavedLanguage } from "@/lib/client-id";
 import { unlockRaceAudio } from "@/lib/race-audio";
 import type { Player, Room, RouteStep } from "@/lib/types";
 import AdContainer from "@/components/AdContainer";
@@ -35,16 +35,19 @@ export default function RoomPage({ params }: RoomPageProps) {
     clientId: string;
     username: string;
   } | null>(null);
+  const [language, setLanguage] = useState<"id" | "en">("id");
 
   useEffect(() => {
     const id = window.setTimeout(() => {
       const clientId = getOrCreateClientId();
       const username = getSavedUsername();
+      const lang = getSavedLanguage();
+      setLanguage(lang);
       if (!clientId || !username) {
         try {
           window.sessionStorage.setItem(
             "wikirace:toast",
-            "Masukkan nama dulu sebelum gabung room.",
+            lang === "en" ? "Please enter your name before joining the room." : "Masukkan nama dulu sebelum gabung room.",
           );
         } catch {
           // ignore
@@ -497,6 +500,9 @@ export default function RoomPage({ params }: RoomPageProps) {
   }, [room, identity]);
 
   if (fatalError) {
+    const translatedError = fatalError === "Tidak bisa terhubung ke server. Periksa koneksi."
+      ? (language === "en" ? "Cannot connect to the server. Check your connection." : "Tidak bisa terhubung ke server. Periksa koneksi.")
+      : fatalError;
     return (
       <main className="dot-bg flex flex-1 items-center justify-center bg-playdate-yellow px-6 py-12">
         <div
@@ -507,13 +513,13 @@ export default function RoomPage({ params }: RoomPageProps) {
             width: "100%",
           }}
         >
-          <p style={{ fontSize: "var(--text-body)" }}>{fatalError}</p>
+          <p style={{ fontSize: "var(--text-body)" }}>{translatedError}</p>
           <button
             type="button"
             onClick={() => router.replace("/")}
             className="btn-yellow mt-4"
           >
-            Kembali ke Beranda
+            {language === "en" ? "Back to Homepage" : "Kembali ke Beranda"}
           </button>
         </div>
       </main>
@@ -537,7 +543,9 @@ export default function RoomPage({ params }: RoomPageProps) {
             }}
           />
           <span style={{ fontSize: "var(--text-body)" }}>
-            Menghubungkan ke room {normalizedRoomId}…
+            {language === "en"
+              ? `Connecting to room ${normalizedRoomId}…`
+              : `Menghubungkan ke room ${normalizedRoomId}…`}
           </span>
         </div>
       </main>
@@ -555,6 +563,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           ablyChannel={ablyChannel}
           startTime={startTime}
           clockOffset={clockOffset}
+          language={language}
         />
       ) : gameState === "finished" ? (
         <Results
@@ -563,9 +572,15 @@ export default function RoomPage({ params }: RoomPageProps) {
           allRoutes={finishedSnapshot?.allRoutes ?? {}}
           winnerId={finishedSnapshot?.winnerId ?? null}
           onPlayAgain={handlePlayAgain}
+          language={language}
         />
       ) : (
-        <Lobby room={room} currentClientId={identity.clientId} clockOffset={clockOffset} />
+        <Lobby
+          room={room}
+          currentClientId={identity.clientId}
+          clockOffset={clockOffset}
+          language={language}
+        />
       )}
       {showChatAndEmoji && (
         <>
@@ -575,12 +590,14 @@ export default function RoomPage({ params }: RoomPageProps) {
             ablyChannel={ablyChannel}
             isExpanded={isChatExpanded}
             onToggleExpand={() => setIsChatExpanded((prev) => !prev)}
+            language={language}
           />
           <EmojiReactions
             roomId={normalizedRoomId}
             currentClientId={identity.clientId}
             ablyChannel={ablyChannel}
             isChatExpanded={isChatExpanded}
+            language={language}
           />
         </>
       )}

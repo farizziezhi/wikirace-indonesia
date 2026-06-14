@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { computeResultBadges, type AchievementBadge } from "@/lib/achievements";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { Player, Room, RouteStep } from "@/lib/types";
+import { translations } from "@/lib/translations";
 
 import RouteReplay from "./RouteReplay";
 import AdContainer from "./AdContainer";
@@ -19,6 +20,7 @@ interface ResultsProps {
   winnerId: string | null;
   /** Dipanggil setelah `/api/room/play-again` sukses. */
   onPlayAgain: () => void;
+  language: "id" | "en";
 }
 
 export default function Results({
@@ -27,6 +29,7 @@ export default function Results({
   allRoutes,
   winnerId,
   onPlayAgain,
+  language,
 }: ResultsProps) {
   const router = useRouter();
   const isHost = currentClientId === room.hostClientId;
@@ -144,6 +147,8 @@ export default function Results({
     }
   }, [room.id, currentClientId, router]);
 
+  const t = translations[language];
+
   return (
     <main className="dot-bg flex flex-1 flex-col items-center bg-playdate-yellow px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex w-full max-w-[820px] flex-col gap-6">
@@ -156,7 +161,7 @@ export default function Results({
             className="font-bold uppercase text-charcoal-text/60"
             style={{ fontSize: "12px", letterSpacing: "0.6px" }}
           >
-            Hasil — Room {room.id}{room.isMatchmaking ? " • Ranked Matchmaking (ELO)" : ""}
+            {t.resultsRoom}{room.id}{room.isMatchmaking ? (language === "en" ? " • Ranked Matchmaking (ELO)" : " • Ranked Matchmaking (ELO)") : ""}
           </span>
 
           {winner ? (
@@ -171,16 +176,16 @@ export default function Results({
                 <span aria-hidden>🏆</span>
                 <span>{winner.player.username}</span>
                 <span className="font-extrabold text-charcoal-text">
-                  Menang!
+                  {t.wins}
                 </span>
               </h1>
               <p
                 className="text-charcoal-text/80"
                 style={{ fontSize: "var(--text-body)" }}
               >
-                Selesai dalam{" "}
-                <strong>{formatTime(winner.finishTimeSec ?? 0)}</strong> dengan{" "}
-                <strong>{winner.steps} klik</strong>.
+                {t.finishedIn
+                  .replace("{time}", formatTime(winner.finishTimeSec ?? 0))
+                  .replace("{clicks}", String(winner.steps))}
               </p>
             </>
           ) : (
@@ -192,13 +197,13 @@ export default function Results({
                   lineHeight: "var(--leading-heading-lg)",
                 }}
               >
-                Semua menyerah!
+                {t.allSurrendered}
               </h1>
               <p
                 className="text-charcoal-text/80"
                 style={{ fontSize: "var(--text-body)" }}
               >
-                Tidak ada pemenang. Lihat rute masing-masing pemain di bawah.
+                {t.noWinner}
               </p>
             </>
           )}
@@ -225,7 +230,7 @@ export default function Results({
 
         {/* ====== Podium top-3 ====== */}
         {podium.length >= 2 && winner && (
-          <Podium podium={podium} currentClientId={currentClientId} />
+          <Podium podium={podium} currentClientId={currentClientId} language={language} />
         )}
 
         {/* ====== Leaderboard penuh ====== */}
@@ -240,7 +245,7 @@ export default function Results({
               lineHeight: "var(--leading-heading)",
             }}
           >
-            Klasemen
+            {t.standings}
           </h2>
 
           <ol className="flex flex-col gap-2">
@@ -252,6 +257,7 @@ export default function Results({
                 isMe={row.player.clientId === currentClientId}
                 isWinner={winnerId === row.player.clientId}
                 winnerId={winnerId}
+                language={language}
               />
             ))}
           </ol>
@@ -270,7 +276,7 @@ export default function Results({
                 lineHeight: "var(--leading-heading)",
               }}
             >
-              Rute pemain
+              {t.playerRoutes}
             </h2>
             <button
               type="button"
@@ -283,7 +289,7 @@ export default function Results({
                 fontSize: "14px",
               }}
             >
-              Bandingkan Rute
+              {t.compareRoutes}
             </button>
           </div>
 
@@ -295,6 +301,7 @@ export default function Results({
                 openByDefault={winnerId === row.player.clientId}
                 isMe={row.player.clientId === currentClientId}
                 winnerId={winnerId}
+                language={language}
               />
             ))}
           </div>
@@ -328,7 +335,7 @@ export default function Results({
                 disabled={matchmakingLoading || leaveLoading}
                 className="btn-primary"
               >
-                {matchmakingLoading ? "Mencari lawan baru…" : "Cari Lawan Lagi 🏎️"}
+                {matchmakingLoading ? t.findingNewOpponent : t.findOpponentAgain}
               </button>
 
               <button
@@ -337,7 +344,7 @@ export default function Results({
                 disabled={leaveLoading || matchmakingLoading}
                 className="btn-white"
               >
-                {leaveLoading ? "Keluar…" : "Keluar ke Beranda"}
+                {leaveLoading ? t.leaving : t.leaveToHomepage}
               </button>
             </>
           ) : (
@@ -349,7 +356,7 @@ export default function Results({
                   disabled={playAgainLoading || leaveLoading}
                   className="btn-primary"
                 >
-                  {playAgainLoading ? "Mereset room…" : "Main Lagi"}
+                  {playAgainLoading ? t.resettingRoom : t.playAgain}
                 </button>
               ) : (
                 <div
@@ -365,7 +372,7 @@ export default function Results({
                     style={{ width: 10, height: 10 }}
                     aria-hidden
                   />
-                  <span>Tunggu host untuk memulai ronde berikutnya…</span>
+                  <span>{t.waitingHostNext}</span>
                 </div>
               )}
 
@@ -375,7 +382,7 @@ export default function Results({
                 disabled={leaveLoading || playAgainLoading}
                 className="btn-white"
               >
-                {leaveLoading ? "Keluar…" : "Keluar Room"}
+                {leaveLoading ? t.leaving : t.leaveRoom}
               </button>
             </>
           )}
@@ -393,7 +400,7 @@ export default function Results({
               boxShadow: "var(--shadow-raised)",
             }}
           >
-            ☕ Dukung Server WikiRace (Saweria)
+            {t.supportServer}
           </a>
         </section>
       </div>
@@ -402,6 +409,7 @@ export default function Results({
           rows={ranked}
           winnerId={winnerId}
           onClose={() => setShowReplay(false)}
+          language={language}
         />
       )}
     </main>
@@ -415,9 +423,11 @@ export default function Results({
 function Podium({
   podium,
   currentClientId,
+  language,
 }: {
   podium: RankedPlayer[];
   currentClientId: string;
+  language: "id" | "en";
 }) {
   // Tampilkan urutan: 2 - 1 - 3 supaya juara di tengah.
   const arranged = [podium[1] ?? null, podium[0] ?? null, podium[2] ?? null];
@@ -475,7 +485,7 @@ function Podium({
                     letterSpacing: "0.3px",
                   }}
                 >
-                  (kamu)
+                  {language === "en" ? "(you)" : "(kamu)"}
                 </span>
               )}
               {row.player.elo !== undefined && (
@@ -526,7 +536,7 @@ function Podium({
                   className="font-bold text-charcoal-text/80"
                   style={{ fontSize: 12 }}
                 >
-                  {row.steps} klik
+                  {row.steps} {language === "en" ? "clicks" : "klik"}
                 </span>
               )}
             </div>
@@ -547,6 +557,7 @@ interface LeaderboardRowProps {
   isMe: boolean;
   isWinner: boolean;
   winnerId: string | null;
+  language: "id" | "en";
 }
 
 function LeaderboardRow({
@@ -555,6 +566,7 @@ function LeaderboardRow({
   isMe,
   isWinner,
   winnerId,
+  language,
 }: LeaderboardRowProps) {
   const { player, steps, finishTimeSec } = row;
   const color = avatarColor(player.username);
@@ -570,10 +582,10 @@ function LeaderboardRow({
     badgeLabel = "Finish";
     badgeBg = "var(--color-seafoam-teal)";
   } else if (player.status === "surrendered") {
-    badgeLabel = "Menyerah";
+    badgeLabel = language === "en" ? "Surrendered" : "Menyerah";
     badgeBg = "var(--color-stone-gray)";
   } else if (player.status === "playing") {
-    badgeLabel = "Tidak finish";
+    badgeLabel = language === "en" ? "Not finished" : "Tidak finish";
     badgeBg = "var(--color-parchment)";
   }
 
@@ -636,7 +648,7 @@ function LeaderboardRow({
                 letterSpacing: "0.4px",
               }}
             >
-              KAMU
+              {language === "en" ? "YOU" : "KAMU"}
             </span>
           )}
           {player.isHost && (
@@ -649,7 +661,7 @@ function LeaderboardRow({
           )}
         </div>
         <div className="text-charcoal-text/80 flex flex-wrap items-center gap-x-2" style={{ fontSize: "14px" }}>
-          <span className="tabular-nums">{steps} klik</span>
+          <span className="tabular-nums">{steps} {language === "en" ? "clicks" : "klik"}</span>
           {finishTimeSec !== undefined && (
             <>
               <span className="opacity-50">·</span>
@@ -709,6 +721,7 @@ interface RouteAccordionProps {
   openByDefault: boolean;
   isMe: boolean;
   winnerId: string | null;
+  language: "id" | "en";
 }
 
 function RouteAccordion({
@@ -716,6 +729,7 @@ function RouteAccordion({
   openByDefault,
   isMe,
   winnerId,
+  language,
 }: RouteAccordionProps) {
   const { player, route, steps, finishTimeSec } = row;
   const finished = player.status === "finished";
@@ -765,12 +779,12 @@ function RouteAccordion({
                 className="text-charcoal-text/70 font-bold"
                 style={{ fontSize: "10px", letterSpacing: "0.4px" }}
               >
-                KAMU
+                {language === "en" ? "YOU" : "KAMU"}
               </span>
             )}
           </div>
           <div className="text-charcoal-text/70 flex flex-wrap items-center gap-x-2" style={{ fontSize: "13px" }}>
-            <span className="tabular-nums">{steps} klik</span>
+            <span className="tabular-nums">{steps} {language === "en" ? "clicks" : "klik"}</span>
             {finishTimeSec !== undefined && (
               <>
                 <span className="opacity-50">·</span>
@@ -782,7 +796,7 @@ function RouteAccordion({
             {surrendered && (
               <>
                 <span className="opacity-50">·</span>
-                <span>menyerah</span>
+                <span>{language === "en" ? "surrendered" : "menyerah"}</span>
               </>
             )}
             {player.elo !== undefined && (
@@ -826,7 +840,7 @@ function RouteAccordion({
       <div className="border-t border-parchment px-4 py-3">
         {route.length === 0 ? (
           <p className="text-charcoal-text/70" style={{ fontSize: "14px" }}>
-            Pemain tidak sempat membuka artikel apa pun.
+            {language === "en" ? "Player did not open any articles." : "Pemain tidak sempat membuka artikel apa pun."}
           </p>
         ) : (
           <ol className="flex flex-wrap items-center gap-x-1 gap-y-2">
@@ -864,7 +878,7 @@ function RouteAccordion({
                       className="text-charcoal-text/70 italic"
                       style={{ fontSize: "12px" }}
                     >
-                      (berhenti di sini)
+                      {language === "en" ? "(stopped here)" : "(berhenti di sini)"}
                     </span>
                   )}
                   {!isLast && (

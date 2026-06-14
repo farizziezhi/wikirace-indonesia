@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { computeResultBadges, type AchievementBadge } from "@/lib/achievements";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { RouteStep } from "@/lib/types";
+import { translations } from "@/lib/translations";
 
 import type { RankedPlayer } from "./Results";
 
@@ -12,6 +13,7 @@ interface RouteReplayProps {
   rows: RankedPlayer[];
   winnerId: string | null;
   onClose: () => void;
+  language: "id" | "en";
 }
 
 type Speed = 1 | 2 | 4;
@@ -21,6 +23,7 @@ export default function RouteReplay({
   rows,
   winnerId,
   onClose,
+  language,
 }: RouteReplayProps) {
   const playableRows = useMemo(
     () => rows.filter((row) => row.route.length > 0),
@@ -111,12 +114,14 @@ export default function RouteReplay({
     setSpeed((current) => (current === 1 ? 2 : current === 2 ? 4 : 1));
   }
 
+  const t = translations[language];
+
   return (
     <div
       className="fixed inset-0 z-50 flex bg-charcoal-text/95 px-4 py-4 text-warm-cream sm:px-6 sm:py-6"
       role="dialog"
       aria-modal="true"
-      aria-label="Bandingkan rute pemain"
+      aria-label={t.compareDesc}
     >
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 overflow-hidden">
         <header className="flex flex-wrap items-center justify-between gap-3">
@@ -125,10 +130,10 @@ export default function RouteReplay({
               className="font-black text-warm-cream"
               style={{ fontSize: "var(--text-heading)", lineHeight: 1 }}
             >
-              Bandingkan Rute
+              {t.compareTitle}
             </div>
             <p className="mt-1 text-warm-cream/70" style={{ fontSize: "14px" }}>
-              Replay langkah pemain secara bersamaan.
+              {t.compareDesc}
             </p>
           </div>
           <button
@@ -142,7 +147,7 @@ export default function RouteReplay({
               fontSize: "14px",
             }}
           >
-            Tutup
+            {t.close}
           </button>
         </header>
 
@@ -177,6 +182,7 @@ export default function RouteReplay({
               row={row}
               winnerId={winnerId}
               visibleIndex={stepIndexes[row.player.clientId] ?? 0}
+              language={language}
             />
           ))}
         </div>
@@ -201,15 +207,21 @@ function ReplayColumn({
   row,
   winnerId,
   visibleIndex,
+  language,
 }: {
   row: RankedPlayer;
   winnerId: string | null;
   visibleIndex: number;
+  language: "id" | "en";
 }) {
   const { player, route } = row;
   const color = avatarColor(player.username);
   const badges = computeResultBadges({ player, route, winnerId });
-  const statusLabel = player.status === "finished" ? "✓ Finish" : player.status === "surrendered" ? "■ Menyerah" : "● Playing";
+  const statusLabel = player.status === "finished"
+    ? "✓ Finish"
+    : player.status === "surrendered"
+      ? (language === "en" ? "■ Surrendered" : "■ Menyerah")
+      : (language === "en" ? "● Playing" : "● Playing");
 
   return (
     <section

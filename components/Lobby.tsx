@@ -8,18 +8,21 @@ import { avatarColor, initials } from "@/lib/avatar";
 import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
 import AdContainer from "./AdContainer";
+import { translations } from "@/lib/translations";
 
 interface LobbyProps {
   room: Room;
   currentClientId: string;
   clockOffset?: number;
+  language: "id" | "en";
 }
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 8;
 const SAVE_DEBOUNCE_MS = 600;
 
-export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyProps) {
+export default function Lobby({ room, currentClientId, clockOffset = 0, language: uiLanguage }: LobbyProps) {
+  const t = translations[uiLanguage];
   const router = useRouter();
   const isHost = room.hostClientId === currentClientId;
 
@@ -357,12 +360,12 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
 
             <div className="flex items-center gap-4 border-t border-b border-warm-cream/20 py-3 px-6 my-1">
               <div className="flex flex-col items-center">
-                <span className="text-[10px] uppercase font-bold text-warm-cream/60 tracking-wider">Rata-rata ELO</span>
+                <span className="text-[10px] uppercase font-bold text-warm-cream/60 tracking-wider">{t.averageElo}</span>
                 <span className="font-black text-xl text-lime-accent tabular-nums">{Math.round(room.averageElo ?? 1200)}</span>
               </div>
               <div className="w-[1px] h-8 bg-warm-cream/20" />
               <div className="flex flex-col items-center">
-                <span className="text-[10px] uppercase font-bold text-warm-cream/60 tracking-wider">Pemain</span>
+                <span className="text-[10px] uppercase font-bold text-warm-cream/60 tracking-wider">{t.players}</span>
                 <span className="font-black text-xl tabular-nums">{room.players.length}/8</span>
               </div>
             </div>
@@ -380,7 +383,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   fontSize: "13px",
                 }}
               >
-                {leaving ? "Batal…" : "Batal Cari Lawan 🚪"}
+                {leaving ? (uiLanguage === "en" ? "Cancelling..." : "Batal…") : t.cancelMatchmaking}
               </button>
             </div>
           </section>
@@ -394,7 +397,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
               className="font-bold uppercase text-charcoal-text/60"
               style={{ fontSize: "12px", letterSpacing: "0.6px" }}
             >
-              Kode room — bagikan ke teman
+              {t.roomCodeShare}
             </span>
             <div
               className="font-black tabular-nums text-charcoal-text"
@@ -420,7 +423,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   fontSize: "14px",
                 }}
               >
-                {copied ? "Tersalin!" : "Salin Kode"}
+                {copied ? t.copied : t.copyCode}
               </button>
               <button
                 type="button"
@@ -435,10 +438,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 }}
               >
                 {shareStatus === "shared"
-                  ? "Terkirim!"
+                  ? t.shared
                   : shareStatus === "copied"
-                    ? "Link tersalin!"
-                    : "🔗 Bagikan Link"}
+                    ? t.linkCopied
+                    : `🔗 ${t.shareLink}`}
               </button>
               <button
                 type="button"
@@ -453,7 +456,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   fontSize: "14px",
                 }}
               >
-                {leaving ? "Keluar…" : "Keluar"}
+                {leaving ? t.leaving : t.leave}
               </button>
             </div>
           </section>
@@ -472,42 +475,46 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 lineHeight: "var(--leading-heading)",
               }}
             >
-              {room.isMatchmaking ? "Rute Pertempuran Ranked" : "Topik permainan"}
+              {room.isMatchmaking ? (uiLanguage === "en" ? "Ranked Battle Route" : "Rute Pertempuran Ranked") : t.gameTopic}
             </h2>
             {isHost && !room.isMatchmaking && (
               <span
                 className="font-bold uppercase text-charcoal-text/60"
                 style={{ fontSize: "11px", letterSpacing: "0.6px" }}
               >
-                Pengaturan host
+                {t.hostSettings}
               </span>
             )}
           </div>
 
           {isHost && !room.isMatchmaking && (
             <section
-              className="chunky flex flex-col gap-4 bg-pure-white p-6"
+              className="chunky flex flex-col gap-3 bg-pure-white p-6"
               style={{ borderRadius: "var(--radius-input)" }}
             >
               <h3 className="text-xl font-extrabold text-charcoal-text">
-                Tantangan Siap Pakai
+                {t.readyChallenges}
               </h3>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <select
+                id="challenge-select"
+                disabled={starting}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    void handleSelectPack(e.target.value);
+                  }
+                }}
+                className="pd-input cursor-pointer font-bold bg-pure-white"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  {uiLanguage === "en" ? "Select a challenge..." : "Pilih tantangan..."}
+                </option>
                 {getPacksByLanguage(language).map((pack) => (
-                  <button
-                    key={pack.id}
-                    onClick={() => void handleSelectPack(pack.id)}
-                    className="chunky text-left p-3 transition hover:bg-lime-accent/10"
-                  >
-                    <div className="font-bold text-charcoal-text">
-                      {pack.name}
-                    </div>
-                    <div className="text-sm text-charcoal-text/70">
-                      {pack.description}
-                    </div>
-                  </button>
+                  <option key={pack.id} value={pack.id}>
+                    {pack.name} — {pack.description}
+                  </option>
                 ))}
-              </div>
+              </select>
             </section>
           )}
 
@@ -522,17 +529,41 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                     ⚔️ Ranked Matchmaking
                   </span>
                 </div>
-                <LanguagePill language={language} />
-                <GameModePill gameMode={gameMode} />
+                <LanguagePill language={language} uiLanguage={uiLanguage} />
+                <GameModePill gameMode={gameMode} uiLanguage={uiLanguage} />
               </div>
               <ArticlePreview
                 start={room.startArticle}
                 end={room.endArticle}
-                empty="Memuat artikel..."
+                empty={t.loadingArticle}
+                uiLanguage={uiLanguage}
               />
             </div>
           ) : isHost ? (
             <div className="flex flex-col gap-4">
+              <div
+                className="bg-light-beige/60 text-charcoal-text border border-warm-gray/60 p-3.5"
+                style={{
+                  borderRadius: "var(--radius-input)",
+                  fontSize: "13px",
+                  lineHeight: "1.45",
+                }}
+              >
+                💡{" "}
+                <span className="font-bold">
+                  {uiLanguage === "en" ? "How to set up the game:" : "Cara mengatur permainan:"}
+                </span>{" "}
+                {uiLanguage === "en" ? (
+                  <>
+                    Select from the <strong>Ready-to-use Challenges</strong> dropdown, click <strong>🎲 Surprise Me</strong> for random articles, or <strong>search and type your own</strong> starting and destination articles manually.
+                  </>
+                ) : (
+                  <>
+                    Pilih dari menu dropdown <strong>Tantangan Siap Pakai</strong>, klik <strong>🎲 Surprise Me</strong> untuk acak artikel, atau <strong>cari dan ketik sendiri</strong> artikel awal dan tujuan secara manual.
+                  </>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <LanguageToggle
                   value={language}
@@ -547,6 +578,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                     void saveArticles("", "", next, gameMode);
                   }}
                   disabled={starting}
+                  uiLanguage={uiLanguage}
                 />
                 <GameModeToggle
                   value={gameMode}
@@ -559,6 +591,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                     void saveArticles(startArticle, endArticle, language, next);
                   }}
                   disabled={starting}
+                  uiLanguage={uiLanguage}
                 />
               </div>
 
@@ -575,12 +608,12 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   fontSize: "14px",
                 }}
               >
-                {surprising ? "Mencari…" : "🎲 Surprise Me"}
+                {surprising ? t.searching : t.surpriseMe}
               </button>
 
               <ArticleAutocomplete
                 id="start-article"
-                label="Artikel awal"
+                label={t.startArticle}
                 placeholder={
                   language === "en" ? "e.g. Fried Rice" : "Contoh: Nasi Goreng"
                 }
@@ -591,10 +624,11 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   scheduleSave(next, endArticle, language, gameMode);
                 }}
                 disabled={starting}
+                uiLanguage={uiLanguage}
               />
               <ArticleAutocomplete
                 id="end-article"
-                label="Artikel tujuan"
+                label={t.destinationArticle}
                 placeholder={
                   language === "en" ? "e.g. Sukarno" : "Contoh: Soekarno"
                 }
@@ -605,30 +639,31 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   scheduleSave(startArticle, next, language, gameMode);
                 }}
                 disabled={starting}
+                uiLanguage={uiLanguage}
               />
               {!articlesValid && (trimmedStart || trimmedEnd) && (
                 <p
                   className="text-charcoal-text/70"
                   style={{ fontSize: "14px" }}
                 >
-                  Pilih dua artikel berbeda yang ada di Wikipedia{" "}
-                  {language === "en" ? "English" : "Bahasa Indonesia"}.
+                  {t.chooseDifferent}
                 </p>
               )}
               {articlesValid && (
-                <ArticlePreview start={trimmedStart} end={trimmedEnd} />
+                <ArticlePreview start={trimmedStart} end={trimmedEnd} uiLanguage={uiLanguage} />
               )}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-3">
-                <LanguagePill language={room.language ?? "id"} />
-                <GameModePill gameMode={room.gameMode ?? "competitive"} />
+                <LanguagePill language={room.language ?? "id"} uiLanguage={uiLanguage} />
+                <GameModePill gameMode={room.gameMode ?? "competitive"} uiLanguage={uiLanguage} />
               </div>
               <ArticlePreview
                 start={room.startArticle}
                 end={room.endArticle}
-                empty="Host belum memilih artikel."
+                empty={t.hostNotChosen}
+                uiLanguage={uiLanguage}
               />
             </div>
           )}
@@ -647,7 +682,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 lineHeight: "var(--leading-heading)",
               }}
             >
-              Pemain
+              {t.players}
             </h2>
             <span
               className="font-bold tabular-nums text-charcoal-text/70"
@@ -665,12 +700,13 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 isMe={p.clientId === currentClientId}
                 isHost={p.isHost}
                 elo={p.elo}
+                uiLanguage={uiLanguage}
               />
             ))}
             {/* Empty slots */}
             {Array.from({ length: MAX_PLAYERS - room.players.length }).map(
               (_, i) => (
-                <EmptySlot key={`empty-${i}`} />
+                <EmptySlot key={`empty-${i}`} uiLanguage={uiLanguage} />
               ),
             )}
           </ul>
@@ -705,10 +741,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 <>
                   <div className="flex items-center gap-2">
                     <span className="bg-lime-soft pd-pulse inline-block shrink-0 rounded-full" style={{ width: 10, height: 10 }} />
-                    <span className="font-extrabold text-charcoal-text">Mencari lawan...</span>
+                    <span className="font-extrabold text-charcoal-text">{t.findingOpponent}</span>
                   </div>
                   <p className="text-sm text-charcoal-text/75 mt-1">
-                    Menunggu pemain lain bergabung. Minimal 2 pemain untuk memulai otomatis.
+                    {t.waitingPlayers}
                   </p>
                 </>
               ) : matchmakingTimeLeft !== null ? (
@@ -716,17 +752,17 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   <div className="flex items-center justify-center gap-2">
                     <span className="bg-burnt-orange pd-pulse inline-block shrink-0 rounded-full" style={{ width: 10, height: 10 }} />
                     <span className="font-black text-xl text-charcoal-text uppercase tracking-tight">
-                      🏎️ Lawan ditemukan! Game mulai {matchmakingTimeLeft}s
+                      🏎️ {t.opponentFound}{matchmakingTimeLeft}{t.opponentFoundEnd}
                     </span>
                   </div>
                   <p className="text-sm text-charcoal-text/90 font-bold uppercase tracking-wider">
-                    Bersiaplah di garis start! Semoga sukses!
+                    {t.prepareStart}
                   </p>
                 </>
               ) : (
                 <>
                   <div className="border-charcoal-text border-t-transparent animate-spin rounded-full" style={{ width: 20, height: 20, borderWidth: 3 }} />
-                  <span className="font-black uppercase text-charcoal-text">MEMULAI PERTANDINGAN…</span>
+                  <span className="font-black uppercase text-charcoal-text">{t.startingMatch}</span>
                 </>
               )}
             </div>
@@ -738,14 +774,14 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 disabled={!canStart || starting}
                 className="btn-primary"
               >
-                {starting ? "Memulai…" : "Mulai Game"}
+                {starting ? (uiLanguage === "en" ? "Starting..." : "Memulai…") : t.startGame}
               </button>
               {!enoughPlayers && (
                 <p
                   className="text-center text-charcoal-text/80"
                   style={{ fontSize: "14px" }}
                 >
-                  Butuh minimal {MIN_PLAYERS} pemain untuk memulai.
+                  {t.needMinPlayers.replace("{count}", String(MIN_PLAYERS))}
                 </p>
               )}
               {enoughPlayers && !articlesValid && (
@@ -753,7 +789,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   className="text-center text-charcoal-text/80"
                   style={{ fontSize: "14px" }}
                 >
-                  Tentukan dulu artikel start dan finish.
+                  {t.determineArticles}
                 </p>
               )}
             </>
@@ -771,7 +807,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 style={{ width: 10, height: 10 }}
                 aria-hidden
               />
-              <span>Tunggu host memulai game…</span>
+              <span>{t.waitingHost}</span>
             </div>
           )}
         </section>
@@ -791,24 +827,27 @@ function LanguageToggle({
   value,
   onChange,
   disabled,
+  uiLanguage,
 }: {
   value: WikiLanguage;
   onChange: (next: WikiLanguage) => void;
   disabled?: boolean;
+  uiLanguage: "id" | "en";
 }) {
+  const t = translations[uiLanguage];
   return (
     <div className="flex flex-col gap-2">
       <span
         className="font-bold text-charcoal-text"
         style={{ fontSize: "var(--text-body)" }}
       >
-        Bahasa Wikipedia
+        {t.wikipediaLanguage}
       </span>
       <div
         className="grid grid-cols-2 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
         style={{ borderRadius: "var(--radius-input)" }}
         role="radiogroup"
-        aria-label="Bahasa Wikipedia"
+        aria-label={t.wikipediaLanguage}
       >
         {LANGUAGE_OPTIONS.map((opt) => {
           const active = opt.value === value;
@@ -846,7 +885,7 @@ function LanguageToggle({
   );
 }
 
-function LanguagePill({ language }: { language: WikiLanguage }) {
+function LanguagePill({ language, uiLanguage }: { language: WikiLanguage; uiLanguage: "id" | "en" }) {
   const opt = LANGUAGE_OPTIONS.find((o) => o.value === language);
   if (!opt) return null;
   return (
@@ -855,7 +894,7 @@ function LanguagePill({ language }: { language: WikiLanguage }) {
         className="font-bold uppercase text-charcoal-text/60"
         style={{ fontSize: "11px", letterSpacing: "0.6px" }}
       >
-        Bahasa
+        {uiLanguage === "en" ? "Language" : "Bahasa"}
       </span>
       <span
         className="chunky-sm bg-paper-white px-2 py-1 font-bold text-charcoal-text"
@@ -877,24 +916,27 @@ function GameModeToggle({
   value,
   onChange,
   disabled,
+  uiLanguage,
 }: {
   value: "competitive" | "casual";
   onChange: (next: "competitive" | "casual") => void;
   disabled?: boolean;
+  uiLanguage: "id" | "en";
 }) {
+  const t = translations[uiLanguage];
   return (
     <div className="flex flex-col gap-2">
       <span
         className="font-bold text-charcoal-text"
         style={{ fontSize: "var(--text-body)" }}
       >
-        Mode Permainan
+        {t.gameMode}
       </span>
       <div
         className="grid grid-cols-2 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
         style={{ borderRadius: "var(--radius-input)" }}
         role="radiogroup"
-        aria-label="Mode Permainan"
+        aria-label={t.gameMode}
       >
         <button
           type="button"
@@ -940,15 +982,16 @@ function GameModeToggle({
           }}
         >
           <span aria-hidden style={{ fontSize: 18 }}>☕</span>
-          <span>Santai</span>
+          <span>{t.casual}</span>
         </button>
       </div>
     </div>
   );
 }
 
-function GameModePill({ gameMode }: { gameMode: "competitive" | "casual" }) {
+function GameModePill({ gameMode, uiLanguage }: { gameMode: "competitive" | "casual"; uiLanguage: "id" | "en" }) {
   const isCompetitive = gameMode === "competitive";
+  const t = translations[uiLanguage];
   return (
     <div className="flex items-center gap-2">
       <span
@@ -967,7 +1010,7 @@ function GameModePill({ gameMode }: { gameMode: "competitive" | "casual" }) {
         <span aria-hidden style={{ marginRight: 4 }}>
           {isCompetitive ? "🏆" : "☕"}
         </span>
-        {isCompetitive ? "Competitive" : "Santai"}
+        {isCompetitive ? t.competitive : t.casual}
       </span>
     </div>
   );
@@ -978,11 +1021,13 @@ function PlayerSlot({
   isMe,
   isHost,
   elo,
+  uiLanguage,
 }: {
   username: string;
   isMe: boolean;
   isHost: boolean;
   elo?: number;
+  uiLanguage: "id" | "en";
 }) {
   const color = avatarColor(username);
   return (
@@ -1026,7 +1071,7 @@ function PlayerSlot({
                 letterSpacing: "0.4px",
               }}
             >
-              KAMU
+              {uiLanguage === "en" ? "YOU" : "KAMU"}
             </span>
           )}
         </div>
@@ -1034,7 +1079,7 @@ function PlayerSlot({
           className="flex items-center gap-1.5 text-charcoal-text/70"
           style={{ fontSize: "12px" }}
         >
-          <span>{isHost ? "👑 Host" : "Siap bermain"}</span>
+          <span>{isHost ? "👑 Host" : (uiLanguage === "en" ? "Ready to play" : "Siap bermain")}</span>
           {elo !== undefined && (
             <span className="font-bold text-charcoal-text bg-lime-accent/40 px-1.5 py-0.5 rounded ml-1" style={{ fontSize: "10px" }}>
               {elo} ELO
@@ -1046,7 +1091,8 @@ function PlayerSlot({
   );
 }
 
-function EmptySlot() {
+function EmptySlot({ uiLanguage }: { uiLanguage: "id" | "en" }) {
+  const t = translations[uiLanguage];
   return (
     <li
       className="flex items-center gap-3 border-2 border-dashed border-stone-gray bg-pure-white/40 p-3"
@@ -1069,7 +1115,7 @@ function EmptySlot() {
         className="text-charcoal-text/50 italic"
         style={{ fontSize: "14px" }}
       >
-        Slot kosong
+        {t.emptySlot}
       </span>
     </li>
   );
@@ -1079,11 +1125,14 @@ function ArticlePreview({
   start,
   end,
   empty = "",
+  uiLanguage,
 }: {
   start: string;
   end: string;
   empty?: string;
+  uiLanguage: "id" | "en";
 }) {
+  const t = translations[uiLanguage];
   if (!start || !end) {
     if (empty) {
       return (
@@ -1103,7 +1152,7 @@ function ArticlePreview({
         className="font-bold uppercase text-charcoal-text/60"
         style={{ fontSize: "11px", letterSpacing: "0.6px" }}
       >
-        Pratinjau
+        {t.preview}
       </span>
       <span
         className="chunky-sm bg-paper-white px-3 py-1 font-bold text-charcoal-text"
@@ -1138,6 +1187,7 @@ interface ArticleAutocompleteProps {
   language: WikiLanguage;
   onChange: (next: string) => void;
   disabled?: boolean;
+  uiLanguage: "id" | "en";
 }
 
 function ArticleAutocomplete({
@@ -1148,6 +1198,7 @@ function ArticleAutocomplete({
   language,
   onChange,
   disabled,
+  uiLanguage,
 }: ArticleAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -1223,7 +1274,7 @@ function ArticleAutocomplete({
               className="px-3 py-2 text-charcoal-text/60"
               style={{ fontSize: "14px" }}
             >
-              Mencari…
+              {translations[uiLanguage].searching}
             </li>
           )}
           {suggestions.map((title) => (

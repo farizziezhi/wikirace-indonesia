@@ -11,6 +11,7 @@ interface EmojiReactionsProps {
   currentClientId: string;
   ablyChannel: Ably.RealtimeChannel;
   isChatExpanded: boolean;
+  language: "id" | "en";
 }
 
 /** Cooldown antar kirim emoji (ms). */
@@ -31,6 +32,7 @@ export default function EmojiReactions({
   currentClientId,
   ablyChannel,
   isChatExpanded,
+  language,
 }: EmojiReactionsProps) {
   const [floating, setFloating] = useState<FloatingEmoji[]>([]);
   const cooldownRef = useRef(false);
@@ -185,7 +187,7 @@ export default function EmojiReactions({
                 style={{
                   borderRadius: "9999px",
                 }}
-                aria-label={`Kirim reaksi ${emoji}`}
+                aria-label={language === "en" ? `Send reaction ${emoji}` : `Kirim reaksi ${emoji}`}
               >
                 {emoji}
               </button>
@@ -202,7 +204,7 @@ export default function EmojiReactions({
             borderRadius: "9999px",
             boxShadow: "var(--shadow-floating)",
           }}
-          aria-label="Buka Pilihan Reaksi"
+          aria-label={language === "en" ? "Open Reactions Menu" : "Buka Pilihan Reaksi"}
         >
           {isOpen ? "✕" : "😀"}
         </button>

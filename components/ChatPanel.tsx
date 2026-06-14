@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { ChatMessage, Room } from "@/lib/types";
 import { MAX_CHAT_LENGTH } from "@/lib/room";
+import { translations } from "@/lib/translations";
 
 interface ChatPanelProps {
   room: Room;
@@ -13,6 +14,7 @@ interface ChatPanelProps {
   ablyChannel: Ably.RealtimeChannel;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  language: "id" | "en";
 }
 
 /** Maks pesan di buffer lokal (ring buffer). */
@@ -26,6 +28,7 @@ export default function ChatPanel({
   ablyChannel,
   isExpanded,
   onToggleExpand,
+  language,
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
@@ -136,6 +139,7 @@ export default function ChatPanel({
   }
 
   const canSend = inputText.trim().length > 0 && !sendCooldown;
+  const t = translations[language];
 
   // ------- Collapsed mode -------
   if (!isExpanded) {
@@ -148,12 +152,12 @@ export default function ChatPanel({
           borderRadius: "var(--radius-pill)",
           boxShadow: "var(--shadow-floating)",
         }}
-        aria-label={`Buka obrolan${unreadCount > 0 ? `, ${unreadCount} pesan baru` : ""}`}
+        aria-label={language === "en" ? `Open chat${unreadCount > 0 ? `, ${unreadCount} new messages` : ""}` : `Buka obrolan${unreadCount > 0 ? `, ${unreadCount} pesan baru` : ""}`}
       >
         <span aria-hidden style={{ fontSize: 16 }}>
           💬
         </span>
-        <span>Obrolan</span>
+        <span>{t.chat}</span>
         {unreadCount > 0 && (
           <span
             className="bg-lime-accent text-charcoal-text inline-flex items-center justify-center font-extrabold"
@@ -196,14 +200,14 @@ export default function ChatPanel({
           className="font-extrabold text-charcoal-text"
           style={{ fontSize: "14px" }}
         >
-          💬 Obrolan
+          💬 {t.chat}
         </span>
         <button
           type="button"
           onClick={toggleExpand}
           className="text-charcoal-text/60 hover:text-charcoal-text transition"
           style={{ fontSize: 18, lineHeight: 1 }}
-          aria-label="Tutup obrolan"
+          aria-label={language === "en" ? "Close chat" : "Tutup obrolan"}
         >
           ✕
         </button>
@@ -215,7 +219,7 @@ export default function ChatPanel({
         onScroll={handleScroll}
         role="log"
         aria-live="polite"
-        aria-label="Pesan obrolan"
+        aria-label={language === "en" ? "Chat messages" : "Pesan obrolan"}
         className="flex-1 overflow-y-auto px-3 py-2"
         style={{ minHeight: 120 }}
       >
@@ -224,7 +228,7 @@ export default function ChatPanel({
             className="py-4 text-center italic text-charcoal-text/50"
             style={{ fontSize: "13px" }}
           >
-            Belum ada pesan. Pesan bersifat sementara.
+            {t.noMessages}
           </p>
         ) : (
           messages.map((msg) => (
@@ -247,7 +251,7 @@ export default function ChatPanel({
             value={inputText}
             onChange={(e) => setInputText(e.target.value.slice(0, MAX_CHAT_LENGTH))}
             onKeyDown={handleKeyDown}
-            placeholder="Ketik pesan..."
+            placeholder={t.typeMessage}
             maxLength={MAX_CHAT_LENGTH}
             className="flex-1 border-none bg-warm-cream text-charcoal-text outline-none"
             style={{
@@ -270,7 +274,7 @@ export default function ChatPanel({
               cursor: canSend ? "pointer" : "not-allowed",
             }}
           >
-            Kirim
+            {t.send}
           </button>
         </div>
         {inputText.length > MAX_CHAT_LENGTH * 0.8 && (

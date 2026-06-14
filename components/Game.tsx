@@ -21,6 +21,7 @@ import type { Room } from "@/lib/types";
 
 import WikiArticle from "./WikiArticle";
 import AdContainer from "./AdContainer";
+import { translations } from "@/lib/translations";
 
 interface GameProps {
   room: Room;
@@ -29,6 +30,7 @@ interface GameProps {
   /** Timestamp ms saat game dimulai. */
   startTime: number;
   clockOffset?: number;
+  language: "id" | "en";
 }
 
 const MiniLeaderboard = memo(
@@ -36,10 +38,12 @@ const MiniLeaderboard = memo(
     players,
     currentClientId,
     hasBadges,
+    language,
   }: {
     players: Room["players"];
     currentClientId: string;
     hasBadges: boolean;
+    language: "id" | "en";
   }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -92,7 +96,7 @@ const MiniLeaderboard = memo(
             borderRadius: "9999px",
             boxShadow: "var(--shadow-floating)",
           }}
-          aria-label="Buka Papan Skor"
+          aria-label={language === "en" ? "Open Scoreboard" : "Buka Papan Skor"}
         >
           <span style={{ fontSize: 16 }}>🏆</span>
           <span
@@ -124,14 +128,14 @@ const MiniLeaderboard = memo(
             className="font-bold uppercase text-warm-cream/70"
             style={{ fontSize: "10px", letterSpacing: "0.5px" }}
           >
-            Papan Skor
+            {translations[language].scoreboard}
           </div>
           <button
             type="button"
             onClick={() => setIsExpanded(false)}
             className="text-warm-cream/60 hover:text-warm-cream text-[11px] font-bold"
           >
-            Tutup
+            {translations[language].close}
           </button>
         </div>
         {miniBoard.map((entry) => (
@@ -187,12 +191,14 @@ const TimerDisplay = memo(function TimerDisplay({
   onTimeout,
   hasSurrendered,
   clockOffset = 0,
+  language,
 }: {
   startTime: number;
   isMatchmaking: boolean;
   onTimeout?: () => void;
   hasSurrendered: boolean;
   clockOffset?: number;
+  language: "id" | "en";
 }) {
   const normalizedStartTime = useMemo(() => normalizeStartTime(startTime), [startTime]);
   const [elapsed, setElapsed] = useState(() => getElapsedSeconds(normalizedStartTime, clockOffset));
@@ -233,7 +239,11 @@ const TimerDisplay = memo(function TimerDisplay({
         fontSize: "20px",
         lineHeight: 1,
       }}
-      aria-label={isMatchmaking ? "Sisa waktu bermain" : "Waktu yang sudah berjalan"}
+      aria-label={
+        isMatchmaking
+          ? (language === "en" ? "Time left to play" : "Sisa waktu bermain")
+          : (language === "en" ? "Elapsed time" : "Waktu yang sudah berjalan")
+      }
     >
       {formatElapsed(timeToDisplay)}
     </span>
@@ -254,6 +264,7 @@ const GameHeader = memo(
     handleHelpClick,
     onTimeout,
     clockOffset = 0,
+    language,
   }: {
     room: Room;
     hasSurrendered: boolean;
@@ -267,6 +278,7 @@ const GameHeader = memo(
     handleHelpClick: () => void;
     onTimeout?: () => void;
     clockOffset?: number;
+    language: "id" | "en";
   }) => {
     const isMatchmaking = !!room.isMatchmaking;
 
@@ -290,7 +302,7 @@ const GameHeader = memo(
                 className="font-bold uppercase text-charcoal-text/60"
                 style={{ fontSize: "11px", letterSpacing: "0.6px" }}
               >
-                Tujuan
+                {language === "en" ? "Target" : "Tujuan"}
               </span>
               <span
                 className="truncate font-extrabold text-charcoal-text"
@@ -310,7 +322,7 @@ const GameHeader = memo(
               className="font-bold uppercase text-charcoal-text/60"
               style={{ fontSize: "10px", letterSpacing: "0.6px" }}
             >
-              {isMatchmaking ? "Sisa Waktu" : "Waktu"}
+              {isMatchmaking ? (language === "en" ? "Time Left" : "Sisa Waktu") : (language === "en" ? "Time" : "Waktu")}
             </span>
             <TimerDisplay
               startTime={startTime}
@@ -318,6 +330,7 @@ const GameHeader = memo(
               onTimeout={onTimeout}
               hasSurrendered={hasSurrendered}
               clockOffset={clockOffset}
+              language={language}
             />
           </div>
 
@@ -334,9 +347,9 @@ const GameHeader = memo(
                   padding: "8px 12px",
                   fontSize: "13px",
                 }}
-                title="Kembali ke awal artikel (denda suspension)"
+                title={language === "en" ? "Return to starting article (penalty suspension)" : "Kembali ke awal artikel (denda suspension)"}
               >
-                Kembali ke Awal 🔁
+                {language === "en" ? "Back to Start 🔁" : "Kembali ke Awal 🔁"}
               </button>
             )}
 
@@ -362,10 +375,10 @@ const GameHeader = memo(
               }}
             >
               {hasSurrendered
-                ? "Sudah"
+                ? (language === "en" ? "Done" : "Sudah")
                 : confirmingSurrender
-                  ? "Yakin?"
-                  : "Menyerah"}
+                  ? (language === "en" ? "Sure?" : "Yakin?")
+                  : (language === "en" ? "Surrender" : "Menyerah")}
             </button>
           </div>
         </div>
@@ -390,8 +403,8 @@ const GameHeader = memo(
             }}
           >
             {isTimeout
-              ? "⏰ Waktu habis! Menunggu pemain lain selesai…"
-              : "Kamu sudah menyerah. Menunggu pemain lain selesai…"}
+              ? (language === "en" ? "⏰ Time's up! Waiting for other players to finish…" : "⏰ Waktu habis! Menunggu pemain lain selesai…")
+              : (language === "en" ? "You have surrendered. Waiting for other players to finish…" : "Kamu sudah menyerah. Menunggu pemain lain selesai…")}
           </div>
         )}
       </header>
@@ -421,6 +434,7 @@ export default function Game({
   ablyChannel,
   startTime,
   clockOffset = 0,
+  language,
 }: GameProps) {
   const router = useRouter();
 
@@ -773,8 +787,12 @@ export default function Game({
             }}
           >
             {suspensionNotice.reason === "ctrl_f"
-              ? `⚠️ ${suspensionNotice.username} disuspen ${suspensionNotice.duration === 120 ? "2 menit" : "1 menit"} karena menekan Ctrl+F (Kecurangan terdeteksi!)`
-              : `🔄 ${suspensionNotice.username} kembali ke awal dan disuspen ${suspensionNotice.duration} detik.`}
+              ? (language === "en"
+                  ? `⚠️ ${suspensionNotice.username} suspended for ${suspensionNotice.duration === 120 ? "2 minutes" : "1 minute"} for pressing Ctrl+F (Cheating detected!)`
+                  : `⚠️ ${suspensionNotice.username} disuspen ${suspensionNotice.duration === 120 ? "2 menit" : "1 menit"} karena menekan Ctrl+F (Kecurangan terdeteksi!)`)
+              : (language === "en"
+                  ? `🔄 ${suspensionNotice.username} returned to start and suspended for ${suspensionNotice.duration} seconds.`
+                  : `🔄 ${suspensionNotice.username} kembali ke awal dan disuspen ${suspensionNotice.duration} detik.`)}
           </div>
         </div>
       )}
@@ -783,7 +801,7 @@ export default function Game({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/90 px-6 text-center text-warm-cream"
           aria-live="assertive"
-          aria-label="Countdown race"
+          aria-label={language === "en" ? "Race countdown" : "Countdown race"}
         >
           <div className="flex flex-col items-center gap-4">
             <div
@@ -800,7 +818,7 @@ export default function Game({
               className="font-bold uppercase text-lime-accent"
               style={{ fontSize: "14px", letterSpacing: "0.18em" }}
             >
-              Race starting
+              {language === "en" ? "Race starting" : "Game dimulai"}
             </div>
           </div>
         </div>
@@ -811,6 +829,7 @@ export default function Game({
           players={room.players}
           currentClientId={currentClientId}
           hasBadges={liveBadges.length > 0}
+          language={language}
         />
       )}
 
@@ -827,6 +846,7 @@ export default function Game({
         isHelpDisabled={usingHelp || (suspensionTimeLeft > 0)}
         handleHelpClick={handleHelpClick}
         clockOffset={clockOffset}
+        language={language}
       />
 
       {/* ============================================================ */}
@@ -848,12 +868,12 @@ export default function Game({
               >
                 <div className="text-4xl" aria-hidden>⏳</div>
                 <h3 className="font-black text-xl uppercase tracking-wider text-burnt-orange">
-                  AKSES DITANGGUHKAN
+                  {language === "en" ? "ACCESS SUSPENDED" : "AKSES DITANGGUHKAN"}
                 </h3>
                 <p className="text-sm text-charcoal-text/80 leading-relaxed">
                   {mySuspensionReason === "ctrl_f" 
-                    ? "Pencarian kata (Ctrl+F) terdeteksi! Dilarang mencari kata demi kejujuran permainan."
-                    : "Anda menggunakan bantuan untuk kembali ke awal."}
+                    ? (language === "en" ? "Word search (Ctrl+F) detected! Searching words is forbidden for game fairness." : "Pencarian kata (Ctrl+F) terdeteksi! Dilarang mencari kata demi kejujuran permainan.")
+                    : (language === "en" ? "You used help to return to start." : "Anda menggunakan bantuan untuk kembali ke awal.")}
                 </p>
                 <div
                   className="font-black text-4xl tabular-nums bg-charcoal-text text-lime-accent px-4 py-2 mt-2"
@@ -862,7 +882,7 @@ export default function Game({
                   {formatElapsed(suspensionTimeLeft)}
                 </div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
-                  Tunggu hingga hukuman selesai
+                  {language === "en" ? "Wait until penalty expires" : "Tunggu hingga hukuman selesai"}
                 </span>
               </div>
             </div>
@@ -874,6 +894,7 @@ export default function Game({
               endArticle={room.endArticle}
               language={room.language ?? "id"}
               onNavigate={handleNavigate}
+              uiLanguage={language}
             />
           </div>
         </div>
