@@ -684,9 +684,12 @@ export default function HomePage() {
                     {user.username.slice(0, 2).toUpperCase()}
                   </span>
                   <div>
-                    <div className="font-extrabold text-charcoal-text text-sm">
+                    <Link
+                      href={`/profile/${user.username}`}
+                      className="font-extrabold text-charcoal-text text-sm hover:underline hover:text-lime-deep transition-colors cursor-pointer"
+                    >
                       {user.username}
-                    </div>
+                    </Link>
                     <div className="text-[11px] text-charcoal-text/70 font-bold mt-0.5 flex items-center gap-1.5">
                       <span className="inline-block bg-lime-accent text-charcoal-text font-black px-1.5 py-0.5 rounded">
                         🏆 {user.stats?.elo ?? 1200} ELO
@@ -696,13 +699,22 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="btn-secondary"
-                  style={{ padding: "6px 12px", fontSize: "11px", height: "fit-content" }}
-                >
-                  {language === "en" ? "Log Out" : "Keluar"}
-                </button>
+                <div className="flex gap-1.5 shrink-0">
+                  <Link
+                    href={`/profile/${user.username}`}
+                    className="btn-white hover:scale-[1.01]"
+                    style={{ padding: "6px 12px", fontSize: "11px", height: "fit-content" }}
+                  >
+                    {language === "en" ? "View Profile" : "Lihat Profil"}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="btn-secondary"
+                    style={{ padding: "6px 12px", fontSize: "11px", height: "fit-content" }}
+                  >
+                    {language === "en" ? "Log Out" : "Keluar"}
+                  </button>
+                </div>
               </div>
             ) : (
               <div
@@ -1078,7 +1090,12 @@ export default function HomePage() {
                             >
                               <div className="flex items-center gap-2">
                                 <span className="w-5 font-bold text-charcoal-text/60 text-xs">{medal || `${index + 1}`}</span>
-                                <span className="font-bold text-charcoal-text">{entry.username}</span>
+                                <Link
+                                  href={`/profile/${entry.username}`}
+                                  className="font-bold text-charcoal-text hover:text-lime-deep hover:underline cursor-pointer transition-colors"
+                                >
+                                  {entry.username}
+                                </Link>
                               </div>
                               <div className="flex items-center gap-3">
                                 <span className="text-charcoal-text/70 text-xs">{entry.wins} {language === "en" ? "Wins" : "Win"}</span>

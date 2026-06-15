@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { getPacksByLanguage } from "@/lib/challenges";
 import { avatarColor, initials } from "@/lib/avatar";
@@ -1411,7 +1412,13 @@ function PlayerSlot({
           className="flex items-center gap-2 font-extrabold text-charcoal-text"
           style={{ fontSize: "var(--text-body)" }}
         >
-          <span className="truncate">{username}</span>
+          <Link
+            href={`/profile/${username}`}
+            target="_blank"
+            className="truncate hover:underline hover:text-lime-deep transition-colors cursor-pointer"
+          >
+            {username}
+          </Link>
           {isMe && (
             <span
               className="chunky-sm bg-playdate-yellow text-charcoal-text font-bold"
@@ -1531,8 +1538,10 @@ function VersusCard({
   }
 
   return (
-    <div
-      className="w-full flex items-center gap-3 p-3 bg-charcoal-deep border-2 border-charcoal-text transition-all duration-300"
+    <Link
+      href={`/profile/${player.username}`}
+      target="_blank"
+      className="w-full flex items-center gap-3 p-3 bg-charcoal-deep border-2 border-charcoal-text transition-all duration-300 hover:scale-[1.015] hover:border-lime-accent/50 cursor-pointer"
       style={{
         borderRadius: "var(--radius-input)",
         boxShadow: player.ready ? `0 0 12px ${tierColor}40, 4px 4px 0px #000` : "4px 4px 0px #000",
@@ -1586,7 +1595,7 @@ function VersusCard({
           ? (uiLanguage === "en" ? "Ready" : "Siap")
           : (uiLanguage === "en" ? "Not ready" : "Belum siap")}
       </span>
-    </div>
+    </Link>
   );
 }
 

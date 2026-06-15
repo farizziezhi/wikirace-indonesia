@@ -102,23 +102,43 @@ export interface PlayerStats {
   games_played: number;
   wins: number;
   losses: number;
+  equipped_title?: string;
+}
+
+export interface MatchDetails {
+  startArticle: string;
+  endArticle: string;
+  clicks: number;
+  duration: number;
+}
+
+export interface PlayerMatch {
+  id: number;
+  username: string;
+  elo_change: number;
+  start_article: string;
+  end_article: string;
+  clicks: number;
+  duration: number;
+  won: number;
+  played_at: number;
 }
 
 export async function getPlayerStats(username: string): Promise<PlayerStats> {
   await ensureDbInitialized();
   const res = await turso.execute({
-    sql: "SELECT username, elo, games_played, wins, losses FROM player_stats WHERE username = :username",
+    sql: "SELECT username, elo, games_played, wins, losses, equipped_title FROM player_stats WHERE username = :username",
     args: { username },
   });
 
   if (res.rows.length === 0) {
     // Buat data baru jika pengguna belum memiliki catatan statistik
     await turso.execute({
-      sql: `INSERT INTO player_stats (username, elo, games_played, wins, losses)
-            VALUES (:username, 1200, 0, 0, 0)`,
+      sql: `INSERT INTO player_stats (username, elo, games_played, wins, losses, equipped_title)
+            VALUES (:username, 1200, 0, 0, 0, '')`,
       args: { username },
     });
-    return { username, elo: 1200, games_played: 0, wins: 0, losses: 0 };
+    return { username, elo: 1200, games_played: 0, wins: 0, losses: 0, equipped_title: "" };
   }
 
   const row = res.rows[0];
@@ -128,6 +148,7 @@ export async function getPlayerStats(username: string): Promise<PlayerStats> {
     games_played: Number(row.games_played),
     wins: Number(row.wins),
     losses: Number(row.losses),
+    equipped_title: row.equipped_title ? String(row.equipped_title) : "",
   };
 }
 
@@ -135,6 +156,7 @@ export async function updatePlayerStats(
   username: string,
   eloChange: number,
   isWin: boolean,
+  matchDetails?: MatchDetails,
 ): Promise<void> {
   await ensureDbInitialized();
   // Memastikan baris data stats sudah ada
@@ -153,6 +175,59 @@ export async function updatePlayerStats(
       winAdd: isWin ? 1 : 0,
       lossAdd: isWin ? 0 : 1,
     },
+  });
+
+  if (matchDetails) {
+    try {
+      await turso.execute({
+        sql: `INSERT INTO matches (username, elo_change, start_article, end_article, clicks, duration, won, played_at)
+              VALUES (:username, :eloChange, :startArticle, :endArticle, :clicks, :duration, :won, :playedAt)`,
+        args: {
+          username,
+          eloChange,
+          startArticle: matchDetails.startArticle,
+          endArticle: matchDetails.endArticle,
+          clicks: matchDetails.clicks,
+          duration: matchDetails.duration,
+          won: isWin ? 1 : 0,
+          playedAt: Date.now(),
+        },
+      });
+    } catch (err) {
+      console.error("Gagal menyimpan riwayat pertandingan:", err);
+    }
+  }
+}
+
+export async function getPlayerMatches(username: string, limit = 10): Promise<PlayerMatch[]> {
+  await ensureDbInitialized();
+  const res = await turso.execute({
+    sql: `SELECT id, username, elo_change, start_article, end_article, clicks, duration, won, played_at 
+          FROM matches 
+          WHERE username = :username 
+          ORDER BY played_at DESC 
+          LIMIT :limit`,
+    args: { username, limit },
+  });
+
+  return res.rows.map((row: any) => ({
+    id: Number(row.id),
+    username: String(row.username),
+    elo_change: Number(row.elo_change),
+    start_article: String(row.start_article),
+    end_article: String(row.end_article),
+    clicks: Number(row.clicks),
+    duration: Number(row.duration),
+    won: Number(row.won),
+    played_at: Number(row.played_at),
+  }));
+}
+
+export async function updatePlayerTitle(username: string, title: string): Promise<void> {
+  await ensureDbInitialized();
+  await turso.execute({
+    sql: `UPDATE player_stats SET equipped_title = :title WHERE username = :username`,
+    args: { username, title },
   });
 }
 

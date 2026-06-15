@@ -104,7 +104,14 @@ export async function POST(request: NextRequest) {
           
           if (!p.isBot) {
             // Pemain manusia kalah dari bot (isWin = false)
-            await updatePlayerStats(p.username, change, false);
+            const clicks = Math.max(0, p.route.length - 1);
+            const duration = p.route.length > 0 ? p.route[p.route.length - 1].timestamp : 0;
+            await updatePlayerStats(p.username, change, false, {
+              startArticle: room.startArticle || "",
+              endArticle: room.endArticle || "",
+              clicks,
+              duration,
+            });
           }
           p.elo = (p.elo ?? 1200) + change;
           p.eloChange = change;

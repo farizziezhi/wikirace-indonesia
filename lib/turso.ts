@@ -52,7 +52,20 @@ async function initDb() {
       elo REAL DEFAULT 1200,
       games_played INTEGER DEFAULT 0,
       wins INTEGER DEFAULT 0,
-      losses INTEGER DEFAULT 0
+      losses INTEGER DEFAULT 0,
+      equipped_title TEXT DEFAULT ''
+    );`,
+    // Tabel matches baru
+    `CREATE TABLE IF NOT EXISTS matches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL,
+      elo_change REAL NOT NULL,
+      start_article TEXT NOT NULL,
+      end_article TEXT NOT NULL,
+      clicks INTEGER NOT NULL,
+      duration INTEGER NOT NULL,
+      won INTEGER NOT NULL,
+      played_at INTEGER NOT NULL
     );`,
     // Tabel donators
     `CREATE TABLE IF NOT EXISTS donators (
@@ -63,6 +76,13 @@ async function initDb() {
       created_at INTEGER NOT NULL
     );`
   ], "write");
+
+  // Migrasi kolom equipped_title untuk DB yang sudah ada
+  try {
+    await turso.execute("ALTER TABLE player_stats ADD COLUMN equipped_title TEXT DEFAULT '';");
+  } catch {
+    // Abaikan error jika kolom sudah ada
+  }
 }
 
 let dbInitializedPromise: Promise<void> | null = null;
