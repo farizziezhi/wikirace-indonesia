@@ -103,6 +103,8 @@ export interface PlayerStats {
   wins: number;
   losses: number;
   equipped_title?: string;
+  daily_streak?: number;
+  last_daily_challenge_completed_at?: string;
 }
 
 export interface MatchDetails {
@@ -127,18 +129,18 @@ export interface PlayerMatch {
 export async function getPlayerStats(username: string): Promise<PlayerStats> {
   await ensureDbInitialized();
   const res = await turso.execute({
-    sql: "SELECT username, elo, games_played, wins, losses, equipped_title FROM player_stats WHERE username = :username",
+    sql: "SELECT username, elo, games_played, wins, losses, equipped_title, daily_streak, last_daily_challenge_completed_at FROM player_stats WHERE username = :username",
     args: { username },
   });
 
   if (res.rows.length === 0) {
     // Buat data baru jika pengguna belum memiliki catatan statistik
     await turso.execute({
-      sql: `INSERT INTO player_stats (username, elo, games_played, wins, losses, equipped_title)
-            VALUES (:username, 1200, 0, 0, 0, '')`,
+      sql: `INSERT INTO player_stats (username, elo, games_played, wins, losses, equipped_title, daily_streak, last_daily_challenge_completed_at)
+            VALUES (:username, 1200, 0, 0, 0, '', 0, '')`,
       args: { username },
     });
-    return { username, elo: 1200, games_played: 0, wins: 0, losses: 0, equipped_title: "" };
+    return { username, elo: 1200, games_played: 0, wins: 0, losses: 0, equipped_title: "", daily_streak: 0, last_daily_challenge_completed_at: "" };
   }
 
   const row = res.rows[0];
@@ -149,6 +151,8 @@ export async function getPlayerStats(username: string): Promise<PlayerStats> {
     wins: Number(row.wins),
     losses: Number(row.losses),
     equipped_title: row.equipped_title ? String(row.equipped_title) : "",
+    daily_streak: row.daily_streak !== undefined && row.daily_streak !== null ? Number(row.daily_streak) : 0,
+    last_daily_challenge_completed_at: row.last_daily_challenge_completed_at ? String(row.last_daily_challenge_completed_at) : "",
   };
 }
 
@@ -229,6 +233,39 @@ export async function updatePlayerTitle(username: string, title: string): Promis
     sql: `UPDATE player_stats SET equipped_title = :title WHERE username = :username`,
     args: { username, title },
   });
+}
+
+export async function completeDailyChallenge(
+  username: string,
+  dateStr: string
+): Promise<{ newStreak: number; success: boolean }> {
+  await ensureDbInitialized();
+  const stats = await getPlayerStats(username);
+
+  if (stats.last_daily_challenge_completed_at === dateStr) {
+    // Sudah menyelesaikan hari ini, tidak dihitung kembali tapi sukses
+    return { newStreak: stats.daily_streak ?? 0, success: false };
+  }
+
+  // Hitung kemarin (yesterday)
+  const today = new Date(dateStr);
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0]; // YYYY-MM-DD
+
+  let newStreak = 1;
+  if (stats.last_daily_challenge_completed_at === yesterdayStr) {
+    newStreak = (stats.daily_streak ?? 0) + 1;
+  }
+
+  await turso.execute({
+    sql: `UPDATE player_stats 
+          SET daily_streak = :newStreak, last_daily_challenge_completed_at = :dateStr 
+          WHERE username = :username`,
+    args: { username, newStreak, dateStr },
+  });
+
+  return { newStreak, success: true };
 }
 
 export interface LeaderboardEntry {

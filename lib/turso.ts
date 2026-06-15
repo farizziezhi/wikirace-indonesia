@@ -53,7 +53,9 @@ async function initDb() {
       games_played INTEGER DEFAULT 0,
       wins INTEGER DEFAULT 0,
       losses INTEGER DEFAULT 0,
-      equipped_title TEXT DEFAULT ''
+      equipped_title TEXT DEFAULT '',
+      daily_streak INTEGER DEFAULT 0,
+      last_daily_challenge_completed_at TEXT DEFAULT ''
     );`,
     // Tabel matches baru
     `CREATE TABLE IF NOT EXISTS matches (
@@ -80,6 +82,18 @@ async function initDb() {
   // Migrasi kolom equipped_title untuk DB yang sudah ada
   try {
     await turso.execute("ALTER TABLE player_stats ADD COLUMN equipped_title TEXT DEFAULT '';");
+  } catch {
+    // Abaikan error jika kolom sudah ada
+  }
+  // Migrasi kolom daily_streak untuk DB yang sudah ada
+  try {
+    await turso.execute("ALTER TABLE player_stats ADD COLUMN daily_streak INTEGER DEFAULT 0;");
+  } catch {
+    // Abaikan error jika kolom sudah ada
+  }
+  // Migrasi kolom last_daily_challenge_completed_at untuk DB yang sudah ada
+  try {
+    await turso.execute("ALTER TABLE player_stats ADD COLUMN last_daily_challenge_completed_at TEXT DEFAULT '';");
   } catch {
     // Abaikan error jika kolom sudah ada
   }

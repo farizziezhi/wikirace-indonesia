@@ -11,6 +11,8 @@ interface PlayerStats {
   wins: number;
   losses: number;
   equipped_title?: string;
+  daily_streak?: number;
+  last_daily_challenge_completed_at?: string;
 }
 
 interface PlayerMatch {
@@ -347,12 +349,36 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                   <h1 className="font-black text-3xl tracking-tight truncate">
                     {username}
                   </h1>
-                  <span
-                    className="inline-block self-center font-black px-2.5 py-1 rounded text-[10px] uppercase border-2 shadow-[2px_2px_0px_rgba(0,0,0,0.2)]"
-                    style={{ color: tierColor, backgroundColor: tierBg, borderColor: tierColor }}
-                  >
-                    {tierName}
-                  </span>
+                  <div className="flex items-center gap-2 justify-center sm:justify-start">
+                    <span
+                      className="inline-block self-center font-black px-2.5 py-1 rounded text-[10px] uppercase border-2 shadow-[2px_2px_0px_rgba(0,0,0,0.2)]"
+                      style={{ color: tierColor, backgroundColor: tierBg, borderColor: tierColor }}
+                    >
+                      {tierName}
+                    </span>
+                    {stats ? (
+                      stats.daily_streak && stats.daily_streak > 0 ? (
+                        <span
+                          className={`inline-block self-center font-black px-2.5 py-1 rounded text-[10px] uppercase border-2 shadow-[2px_2px_0px_rgba(0,0,0,0.2)] ${
+                            stats.daily_streak >= 7
+                              ? "animate-bounce bg-gradient-to-r from-lime-accent to-lime-deep text-charcoal-text border-charcoal-text"
+                              : stats.daily_streak >= 3
+                              ? "animate-pulse bg-[#FF5500] text-warm-cream border-charcoal-text"
+                              : "bg-[#FF8A00] text-charcoal-text border-charcoal-text"
+                          }`}
+                        >
+                          🔥 {stats.daily_streak} {uiLanguage === "en" ? "Day Streak" : "Hari Streak"}
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-block self-center font-black px-2.5 py-1 rounded text-[10px] uppercase border-2 border-dashed border-warm-gray/40 text-warm-cream/30 bg-warm-cream/5 cursor-default"
+                          title={uiLanguage === "en" ? "No active daily streak" : "Tidak ada streak harian aktif"}
+                        >
+                          🔥 0 {uiLanguage === "en" ? "Streak" : "Streak"}
+                        </span>
+                      )
+                    ) : null}
+                  </div>
                 </div>
                 
                 <div className="mt-2.5 flex flex-wrap items-center justify-center sm:justify-start gap-2">

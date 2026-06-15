@@ -107,6 +107,58 @@ function SoloPlayContent() {
   const [startTime] = useState<number | null>(() => Date.now());
   const [copied, setCopied] = useState(false);
 
+  // Daily Challenge States
+  const [dailyStreak, setDailyStreak] = useState<number | null>(null);
+  const [dailyMessage, setDailyMessage] = useState<string | null>(null);
+  const [dailyError, setDailyError] = useState<string | null>(null);
+  const [dailyLoading, setDailyLoading] = useState(false);
+
+  const isDaily = searchParams.get("daily") === "true";
+
+  useEffect(() => {
+    if (finished && isDaily) {
+      void triggerDailyCompletion();
+    }
+  }, [finished, isDaily]);
+
+  async function triggerDailyCompletion() {
+    setDailyLoading(true);
+    setDailyError(null);
+    try {
+      const res = await fetch("/api/daily/complete", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        let errText = data.error ?? "Gagal menyimpan tantangan harian.";
+        if (res.status === 401) {
+          errText = uiLanguage === "en"
+            ? "Please log in on the homepage to record your Daily Streak."
+            : "Silakan login di halaman beranda untuk mencatat Streak Harian Anda.";
+        }
+        setDailyError(errText);
+      } else {
+        setDailyStreak(data.streak);
+        setDailyMessage(
+          uiLanguage === "en"
+            ? (data.streakUpdated
+                ? "Daily challenge completed! Your streak has increased."
+                : "Daily challenge already completed today.")
+            : data.message
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      setDailyError(
+        uiLanguage === "en"
+          ? "Failed to connect to the server to save daily challenge."
+          : "Gagal menghubungi server untuk menyimpan tantangan harian."
+      );
+    } finally {
+      setDailyLoading(false);
+    }
+  }
+
   const timerRef = useRef<number | null>(null);
 
   // Timer logic for both modes (used to count time-attack or track duration in free-roam)
@@ -300,6 +352,41 @@ Mainkan gratis di: https://wikiraceid.web.id`;
                 {getDriverRating()}
               </p>
             </div>
+
+            {isDaily && (
+              <div className="mb-6 p-4 bg-charcoal-text text-warm-cream border-2 border-charcoal-text shadow-[3px_3px_0px_#000] rounded-xl relative overflow-hidden text-left">
+                <div className="absolute top-0 right-0 h-full w-1.5 bg-gradient-to-b from-lime-accent to-lime-deep opacity-80" />
+                <div className="flex items-center justify-between">
+                  <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    🔥 {uiLanguage === "en" ? "Daily Challenge" : "Tantangan Harian"}
+                  </span>
+                  {dailyStreak !== null && (
+                    <span className="text-xs font-black uppercase text-lime-accent animate-pulse">
+                      🔥 {dailyStreak} {uiLanguage === "en" ? "Day Streak" : "Hari Streak"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  {dailyLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="border-warm-cream border-t-transparent animate-spin w-4 h-4 rounded-full border-2" />
+                      <span className="text-[11px] text-warm-cream/50 uppercase tracking-wide font-bold">
+                        {uiLanguage === "en" ? "Saving progress..." : "Menyimpan rekor..."}
+                      </span>
+                    </div>
+                  ) : dailyError ? (
+                    <div className="text-xs text-burnt-orange font-bold">
+                      ⚠️ {dailyError}
+                    </div>
+                  ) : dailyMessage ? (
+                    <div className="text-xs text-lime-accent font-bold leading-normal">
+                      🎉 {dailyMessage}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            )}
 
             {/* Statistics Telemetry Grid */}
             <div className="grid grid-cols-3 gap-3 mb-6">

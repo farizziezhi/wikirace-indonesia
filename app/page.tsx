@@ -67,6 +67,9 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"play" | "leaderboard">("play");
   const [topDonators, setTopDonators] = useState<any[]>([]);
   const [playMode, setPlayMode] = useState<"ranked" | "mabar" | "solo">("ranked");
+  const [dailyInfo, setDailyInfo] = useState<any>(null);
+  const [dailyLoading, setDailyLoading] = useState(true);
+  const [dailyMinimized, setDailyMinimized] = useState(false);
 
   useEffect(() => {
     clientIdRef.current = getOrCreateClientId();
@@ -106,6 +109,7 @@ export default function HomePage() {
     void checkAuthSession();
     void loadLeaderboard();
     void loadTopDonators();
+    void loadDailyChallenge(getSavedLanguage());
   }, []);
 
   // Sync username jika user login
@@ -184,6 +188,28 @@ export default function HomePage() {
       console.warn("Gagal memuat top donatur:", err);
     }
   }
+
+  async function loadDailyChallenge(lang: string) {
+    setDailyLoading(true);
+    try {
+      const res = await fetch(`/api/daily/challenge?lang=${lang}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDailyInfo(data);
+      }
+    } catch (err) {
+      console.warn("Gagal memuat tantangan harian:", err);
+    } finally {
+      setDailyLoading(false);
+    }
+  }
+
+  // Reload daily challenge on language or session user change
+  useEffect(() => {
+    if (hydrated) {
+      void loadDailyChallenge(language);
+    }
+  }, [language, user, hydrated]);
 
   function openAuth(type: "login" | "register") {
     setAuthType(type);
@@ -742,6 +768,137 @@ export default function HomePage() {
                 </div>
               </div>
             )
+          )}
+
+          {/* Daily Challenge Floating Widget (Only on Homepage) */}
+          {hydrated && (
+            <div
+              className={`fixed bottom-6 right-6 z-40 transition-all duration-300 ${
+                dailyMinimized 
+                  ? "pointer-events-none opacity-0 translate-y-4 scale-95" 
+                  : "pointer-events-auto opacity-100 translate-y-0 scale-100"
+              }`}
+              style={{
+                maxWidth: "340px",
+                width: "calc(100vw - 3rem)",
+              }}
+            >
+              <div
+                className="flex flex-col gap-3.5 bg-charcoal-text text-warm-cream p-5 relative overflow-hidden"
+                style={{
+                  borderRadius: "var(--radius-input)",
+                  border: "2px solid var(--color-charcoal-text)",
+                  boxShadow: "4px 4px 0px #000",
+                }}
+              >
+                {/* Checkered side accent */}
+                <div className="absolute top-0 right-0 h-full w-1.5 bg-gradient-to-b from-lime-accent to-lime-deep opacity-80" />
+
+                <div className="flex items-center justify-between">
+                  <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    🔥 {language === "en" ? "Daily Challenge" : "Tantangan Harian"}
+                  </span>
+                  
+                  <div className="flex items-center gap-3">
+                    {user ? (
+                      <span className={`text-xs font-black uppercase tracking-wide flex items-center gap-1 ${
+                        dailyInfo?.streak && dailyInfo.streak >= 3 
+                          ? "text-lime-accent animate-pulse" 
+                          : "text-warm-cream/70"
+                      }`}>
+                        🔥 {dailyInfo?.streak ?? 0} {language === "en" ? "Day Streak" : "Hari Streak"}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-warm-cream/40 font-bold uppercase tracking-wider">
+                        {language === "en" ? "Daily" : "Harian"}
+                      </span>
+                    )}
+
+                    {/* Minimize button */}
+                    <button
+                      onClick={() => setDailyMinimized(true)}
+                      className="bg-light-beige text-charcoal-text font-black hover:bg-lime-accent rounded border border-charcoal-text shadow-[1px_1px_0px_#000] active:translate-y-[0.5px] active:shadow-[0.5px_0.5px_0px_#000] transition-all cursor-pointer flex items-center justify-center font-mono"
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        fontSize: "9px",
+                      }}
+                      title={language === "en" ? "Minimize" : "Perkecil"}
+                    >
+                      ➖
+                    </button>
+                  </div>
+                </div>
+
+                {dailyLoading ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <div className="border-warm-cream border-t-transparent animate-spin w-4 h-4 rounded-full border-2" />
+                    <span className="text-[11px] text-warm-cream/50 uppercase tracking-wide font-bold">
+                      {language === "en" ? "Loading challenge..." : "Memuat tantangan..."}
+                    </span>
+                  </div>
+                ) : dailyInfo?.challenge ? (
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <h4 className="font-extrabold text-sm text-lime-accent truncate">
+                        {language === "id" ? dailyInfo.challenge.name : (dailyInfo.challenge.nameEn || dailyInfo.challenge.name)}
+                      </h4>
+                      <p className="text-[11px] text-warm-cream/70 leading-normal">
+                        {language === "id" ? dailyInfo.challenge.description : (dailyInfo.challenge.descEn || dailyInfo.challenge.description)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs font-black text-warm-cream flex-wrap bg-very-dark/40 px-3 py-2 rounded-lg border border-very-dark/50">
+                      <span className="bg-warm-cream text-charcoal-text px-1.5 py-0.5 rounded text-[8px] tracking-wide uppercase font-extrabold">START</span>
+                      <span className="truncate max-w-[85px]">{dailyInfo.challenge.startArticle.replace(/_/g, ' ')}</span>
+                      <span className="text-warm-cream/30">➔</span>
+                      <span className="bg-lime-accent text-charcoal-text px-1.5 py-0.5 rounded text-[8px] tracking-wide uppercase font-extrabold">GOAL</span>
+                      <span className="truncate max-w-[85px] text-lime-accent">{dailyInfo.challenge.endArticle.replace(/_/g, ' ')}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 mt-1">
+                      {dailyInfo.completed ? (
+                        <div className="w-full flex items-center justify-center gap-1.5 bg-lime-accent/15 border border-lime-accent/40 text-lime-accent py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wide">
+                          <span>✓</span>
+                          <span>{language === "en" ? "Completed Today" : "Selesai Hari Ini"}</span>
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/solo/play?start=${encodeURIComponent(dailyInfo.challenge.startArticle)}&end=${encodeURIComponent(dailyInfo.challenge.endArticle)}&mode=time-attack&lang=${language}&daily=true`}
+                          className="w-full text-center bg-lime-accent hover:bg-lime-deep text-charcoal-text font-black text-xs px-4 py-2.5 rounded-lg border border-charcoal-text shadow-[2px_2px_0px_#000] active:translate-y-0.5 active:shadow-[1px_1px_0px_#000] transition-all uppercase tracking-wide cursor-pointer"
+                        >
+                          {language === "en" ? "Start Daily Challenge" : "Mulai Tantangan Harian"}
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-warm-cream/50 italic py-2">
+                    {language === "en" ? "No daily challenge available." : "Tantangan harian tidak tersedia."}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Minimized Daily Challenge Trigger (Only on Homepage) */}
+          {hydrated && dailyMinimized && (
+            <button
+              onClick={() => setDailyMinimized(false)}
+              className="fixed bottom-6 right-6 z-40 bg-charcoal-text text-warm-cream font-black text-xs px-3.5 py-2.5 border-2 border-charcoal-text shadow-[3px_3px_0px_#000] hover:shadow-[4px_4px_0px_#000] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_#000] rounded-xl flex items-center gap-2 cursor-pointer transition-all animate-bounce"
+              title={language === "en" ? "Expand Daily Challenge" : "Buka Tantangan Harian"}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-accent opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-accent"></span>
+              </span>
+              <span>🔥 {language === "en" ? "Daily Challenge" : "Tantangan Harian"}</span>
+              {user && dailyInfo?.streak > 0 && (
+                <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded">
+                  {dailyInfo.streak}
+                </span>
+              )}
+            </button>
           )}
 
           {/* Invitation or Tabbed Interface - Wrapped with min-height to prevent vertical layout shifting */}
