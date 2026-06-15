@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { getOrCreateClientId } from "@/lib/client-id";
 
 export default function OnlineCountWidget() {
+  const pathname = usePathname();
   const [count, setCount] = useState<number | null>(null);
   const [language, setLanguage] = useState<"id" | "en">("id");
 
   useEffect(() => {
+    if (pathname?.startsWith("/room/")) return;
+
     // Baca bahasa terpilih dari localStorage saat client-side
     try {
       const savedLang = window.localStorage.getItem("wikirace:language");
@@ -37,9 +41,10 @@ export default function OnlineCountWidget() {
     void fetchCount();
     const interval = setInterval(fetchCount, 45000);
     return () => clearInterval(interval);
-  }, []);
+  }, [pathname]);
 
-  if (count === null) return null;
+  const isRoomPage = pathname?.startsWith("/room/");
+  if (isRoomPage || count === null) return null;
 
   return (
     <div
