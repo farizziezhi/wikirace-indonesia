@@ -8,6 +8,7 @@ export interface ChallengePackEntry {
   endArticle: string;
   lang: WikiLanguage;
   difficulty: "easy" | "medium" | "hard";
+  solutionRoute?: string[];
 }
 
 export const CHALLENGE_PACKS: ChallengePackEntry[] = [
@@ -20,6 +21,12 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Bali",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Jakarta",
+        "Daerah Khusus Ibukota Jakarta",
+        "1950",
+        "Bali"
+    ],
   },
   {
     id: "geography-id-2",
@@ -29,6 +36,13 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Yogyakarta (kota)",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Bandung",
+        "Kota Bandung",
+        "Daftar Gubernur Daerah Istimewa Yogyakarta",
+        "Hamengkubuwana IX",
+        "Yogyakarta (kota)"
+    ],
   },
   {
     id: "geography-id-3",
@@ -38,6 +52,12 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Papua",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Makassar",
+        "Kota Makassar",
+        "Bahasa Bugis",
+        "Papua"
+    ],
   },
 
   // Indonesian History
@@ -49,6 +69,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Indonesia",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Soekarno",
+        "Bali",
+        "Indonesia"
+    ],
   },
   {
     id: "history-id-2",
@@ -58,6 +83,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Sriwijaya",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Majapahit",
+        "Indonesia",
+        "Sriwijaya"
+    ],
   },
   {
     id: "history-id-3",
@@ -67,6 +97,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Soeharto",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Proklamasi Kemerdekaan Indonesia",
+        "Indonesia",
+        "Soeharto"
+    ],
   },
 
   // Indonesian Culture
@@ -78,6 +113,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Tari Bali",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Wayang",
+        "Tari Bali"
+    ],
   },
   {
     id: "culture-id-2",
@@ -87,6 +126,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Rendang",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Nasi goreng",
+        "Daging",
+        "Rendang"
+    ],
   },
   {
     id: "philosophy-id-1",
@@ -96,6 +140,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Logika",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Filsafat",
+        "Logika"
+    ],
   },
   {
     id: "tech-id-1",
@@ -105,6 +153,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Komputasi awan",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Linux",
+        "Komputasi awan"
+    ],
   },
 
   // --- Tambahan Baru ID ---
@@ -117,6 +169,13 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Nasi padang",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Sambal",
+        "Ale-ale",
+        "Makanan",
+        "Nasi",
+        "Nasi padang"
+    ],
   },
   {
     id: "culture-id-3",
@@ -126,6 +185,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "TransJakarta",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "KRL Commuter Line",
+        "Angkutan Sungai Jakarta",
+        "TransJakarta"
+    ],
   },
   {
     id: "nature-id-1",
@@ -135,6 +199,13 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Rafflesia arnoldii",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Komodo",
+        "2006",
+        "Kota Lubuk Linggau",
+        "Kabupaten Bengkulu Utara",
+        "Rafflesia arnoldii"
+    ],
   },
   {
     id: "music-id-1",
@@ -144,6 +215,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Dewa 19",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Noah (grup musik)",
+        "Dewa 19"
+    ],
   },
   // Indonesian History & Geography (Medium)
   {
@@ -154,6 +229,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Diponegoro",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Soedirman",
+        "Indonesia",
+        "Diponegoro"
+    ],
   },
   {
     id: "nature-id-2",
@@ -163,6 +243,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Krakatau",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Gunung Merapi",
+        "Gunung Kerinci",
+        "Krakatau"
+    ],
   },
   {
     id: "geography-id-4",
@@ -172,6 +257,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Borobudur",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Candi Prambanan",
+        "Borobudur"
+    ],
   },
   {
     id: "culture-id-4",
@@ -181,6 +270,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Pramoedya Ananta Toer",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Chairil Anwar",
+        "Pramoedya Ananta Toer"
+    ],
   },
   // Indonesian Science & Mythology (Hard)
   {
@@ -191,6 +284,13 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Nyi Roro Kidul",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Gerhana matahari",
+        "Concorde",
+        "24 Oktober",
+        "11 September",
+        "Nyi Roro Kidul"
+    ],
   },
   {
     id: "tech-id-2",
@@ -200,6 +300,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Pinisi",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Keris",
+        "Pinisi"
+    ],
   },
   {
     id: "philosophy-id-2",
@@ -209,6 +313,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Bhinneka Tunggal Ika",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Pancasila",
+        "Bhinneka Tunggal Ika"
+    ],
   },
 
   // English Geography
@@ -220,6 +328,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Paris",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "London",
+        "Amsterdam",
+        "Paris"
+    ],
   },
   {
     id: "geography-en-2",
@@ -229,6 +342,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Los Angeles",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "New York City",
+        "Los Angeles"
+    ],
   },
 
   // English History
@@ -240,6 +357,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Roman Empire",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Roman Republic",
+        "Roman Empire"
+    ],
   },
   {
     id: "history-en-2",
@@ -249,6 +370,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Albert Einstein",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Isaac Newton",
+        "Albert Einstein"
+    ],
   },
 
   // English Science
@@ -260,6 +385,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Mars",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "Moon",
+        "Mars"
+    ],
   },
   {
     id: "science-en-2",
@@ -269,6 +398,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Bill Gates",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "Steve Jobs",
+        "Bill Gates"
+    ],
   },
   {
     id: "science-en-3",
@@ -278,6 +411,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Quantum computing",
     lang: "en",
     difficulty: "hard",
+    solutionRoute: [
+        "Mathematics",
+        "Algorithm",
+        "Quantum computing"
+    ],
   },
   {
     id: "philosophy-en-1",
@@ -287,6 +425,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Artificial intelligence",
     lang: "en",
     difficulty: "hard",
+    solutionRoute: [
+        "Socrates",
+        "Baruch Spinoza",
+        "Artificial intelligence"
+    ],
   },
 
   // --- Tambahan Baru EN ---
@@ -299,6 +442,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Pizza",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "McDonald's",
+        "Arthur Treacher's",
+        "Pizza"
+    ],
   },
   {
     id: "nature-en-1",
@@ -308,6 +456,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Veterinary medicine",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "Cat",
+        "Aspirin",
+        "Veterinary medicine"
+    ],
   },
   {
     id: "geography-en-3",
@@ -317,6 +470,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Washington, D.C.",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "Tokyo",
+        "Ankara",
+        "Washington, D.C."
+    ],
   },
   // English History & Science (Medium)
   {
@@ -327,6 +485,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Norse mythology",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Zeus",
+        "Andromeda (mythology)",
+        "Norse mythology"
+    ],
   },
   {
     id: "science-en-4",
@@ -336,6 +499,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "International Space Station",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Apollo 11",
+        "International Space Station"
+    ],
   },
   {
     id: "history-en-3",
@@ -345,6 +512,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Galileo Galilei",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Renaissance",
+        "Aristotle",
+        "Galileo Galilei"
+    ],
   },
   // English Tech & Philosophy (Hard)
   {
@@ -355,6 +527,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Domain Name System",
     lang: "en",
     difficulty: "hard",
+    solutionRoute: [
+        "HTTP",
+        "Domain Name System"
+    ],
   },
   {
     id: "science-en-5",
@@ -364,6 +540,12 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Schrödinger's cat",
     lang: "en",
     difficulty: "hard",
+    solutionRoute: [
+        "Mathematics",
+        "Actuary",
+        "Uncertainty",
+        "Schrödinger's cat"
+    ],
   },
   // --- Tambahan Baru ID Lapis Kedua (Banyak Banget) ---
   // ID Easy
@@ -375,6 +557,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Liem Swie King",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Taufik Hidayat",
+        "Indonesia",
+        "Liem Swie King"
+    ],
   },
   {
     id: "food-id-4",
@@ -384,6 +571,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Kolak",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Martabak",
+        "Abon",
+        "Kolak"
+    ],
   },
   {
     id: "tech-id-3",
@@ -393,6 +585,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Facebook",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Kaskus",
+        "Amerika Serikat",
+        "Facebook"
+    ],
   },
   {
     id: "media-id-1",
@@ -402,6 +599,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Festival Film Indonesia",
     lang: "id",
     difficulty: "easy",
+    solutionRoute: [
+        "Sinetron",
+        "Festival Film Indonesia"
+    ],
   },
   // ID Medium
   {
@@ -412,6 +613,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Danau Toba",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Puncak Jaya",
+        "Danau Toba"
+    ],
   },
   {
     id: "geography-id-6",
@@ -421,6 +626,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Pulau Samosir",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Danau Toba",
+        "Pulau Samosir"
+    ],
   },
   {
     id: "history-id-5",
@@ -430,6 +639,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Kesultanan Demak",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Kesultanan Mataram",
+        "Kesultanan Demak"
+    ],
   },
   {
     id: "culture-id-5",
@@ -439,6 +652,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Saung Angklung Udjo",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Angklung",
+        "Udjo Ngalagena",
+        "Saung Angklung Udjo"
+    ],
   },
   {
     id: "history-id-6",
@@ -448,6 +666,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Homo erectus",
     lang: "id",
     difficulty: "medium",
+    solutionRoute: [
+        "Sangiran",
+        "Homo erectus"
+    ],
   },
   // ID Hard
   {
@@ -458,6 +680,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Vereenigde Oostindische Compagnie",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Cengkih",
+        "Indonesia",
+        "Vereenigde Oostindische Compagnie"
+    ],
   },
   {
     id: "myth-id-2",
@@ -467,6 +694,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Mahabharata",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Gatotkaca",
+        "Mahabharata"
+    ],
   },
   {
     id: "law-id-1",
@@ -476,6 +707,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Mahkamah Konstitusi Republik Indonesia",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Undang-Undang Dasar Negara Republik Indonesia Tahun 1945",
+        "Mahkamah Konstitusi Republik Indonesia"
+    ],
   },
   {
     id: "nature-id-3",
@@ -485,6 +720,12 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Zaman es",
     lang: "id",
     difficulty: "hard",
+    solutionRoute: [
+        "Gajah sumatra",
+        "Aceh",
+        "Badak sumatra",
+        "Zaman es"
+    ],
   },
 
   // --- Tambahan Baru EN Lapis Kedua (Banyak Banget) ---
@@ -497,6 +738,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Tetris",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "Pac-Man",
+        "Asteroids (video game)",
+        "Tetris"
+    ],
   },
   {
     id: "music-en-2",
@@ -506,6 +752,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Grammy Award",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "Taylor Swift",
+        "Blues",
+        "Grammy Award"
+    ],
   },
   {
     id: "tech-en-3",
@@ -515,6 +766,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Android (operating system)",
     lang: "en",
     difficulty: "easy",
+    solutionRoute: [
+        "iPhone",
+        "Android (operating system)"
+    ],
   },
   // EN Medium
   {
@@ -525,6 +780,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Pablo Picasso",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Vincent van Gogh",
+        "Andrei Tarkovsky",
+        "Pablo Picasso"
+    ],
   },
   {
     id: "myth-en-2",
@@ -534,6 +794,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Mount Olympus",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Heracles",
+        "Apollo",
+        "Mount Olympus"
+    ],
   },
   {
     id: "history-en-4",
@@ -543,6 +808,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Coal",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Steam engine",
+        "Electricity generation",
+        "Coal"
+    ],
   },
   {
     id: "geography-en-4",
@@ -552,6 +822,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Niagara Falls",
     lang: "en",
     difficulty: "medium",
+    solutionRoute: [
+        "Lake Superior",
+        "Niagara Falls"
+    ],
   },
   // EN Hard
   {
@@ -562,6 +836,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Advanced Encryption Standard",
     lang: "en",
     difficulty: "hard",
+    solutionRoute: [
+        "Cryptography",
+        "Advanced Encryption Standard"
+    ],
   },
   {
     id: "science-en-6",
@@ -571,6 +849,10 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "General relativity",
     lang: "en",
     difficulty: "hard",
+    solutionRoute: [
+        "Black hole",
+        "General relativity"
+    ],
   },
   {
     id: "finance-en-1",
@@ -580,6 +862,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Federal Reserve",
     lang: "en",
     difficulty: "hard",
+    solutionRoute: [
+        "Inflation",
+        "Adam Smith",
+        "Federal Reserve"
+    ],
   },
   {
     id: "science-en-7",
@@ -589,6 +876,11 @@ export const CHALLENGE_PACKS: ChallengePackEntry[] = [
     endArticle: "Natural selection",
     lang: "en",
     difficulty: "hard",
+    solutionRoute: [
+        "Charles Darwin",
+        "Anthropology",
+        "Natural selection"
+    ],
   },
 ];
 

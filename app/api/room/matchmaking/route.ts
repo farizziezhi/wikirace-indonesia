@@ -258,9 +258,11 @@ export async function POST(request: NextRequest) {
         const pack = filteredPacks[Math.floor(Math.random() * filteredPacks.length)];
         startArticle = pack.startArticle;
         endArticle = pack.endArticle;
+        solutionRoute = pack.solutionRoute || [];
       } else {
-        startArticle = language === "en" ? "Earth" : "Indonesia";
-        endArticle = language === "en" ? "London" : "Jakarta";
+        startArticle = language === "en" ? "Steve Jobs" : "Pancasila";
+        endArticle = language === "en" ? "Bill Gates" : "Bhinneka Tunggal Ika";
+        solutionRoute = language === "en" ? ["Steve Jobs", "Bill Gates"] : ["Pancasila", "Bhinneka Tunggal Ika"];
       }
     }
 
