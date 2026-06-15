@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
+import { getSessionUsername } from "@/lib/auth-server";
 import { calculateEloChanges } from "@/lib/elo";
 import { getRoom, setRoom, updatePlayerStats } from "@/lib/redis";
 import { errorResponse, findPlayer } from "@/lib/room";
@@ -39,10 +40,18 @@ export async function POST(request: NextRequest) {
     return errorResponse("Pemain sudah finished/surrendered.", 409);
   }
 
+  // --- SECURITY: Session Verification ---
+  if (room.isMatchmaking) {
+    const sessionUsername = await getSessionUsername();
+    if (!sessionUsername || sessionUsername !== player.username) {
+      return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
+    }
+  }
+
   player.status = "surrendered";
 
-  // Cek apakah semua pemain non-finished sekarang sudah surrendered
-  const stillPlaying = room.players.some((p) => p.status === "playing");
+  // Cek apakah semua pemain non-finished sekarang sudah surrendered (abaikan bot)
+  const stillPlaying = room.players.some((p) => !p.isBot && p.status === "playing");
   const allDone = !stillPlaying;
 
   if (allDone) {
@@ -61,9 +70,15 @@ export async function POST(request: NextRequest) {
 
         eloChanges = calculateEloChanges(eloData);
 
-        // Update database ELO masing-masing pemain & update objek room (karena menyerah semua, isWin = false)
+        // Update database ELO masing-masing pemain & update objek room
         for (const p of room.players) {
           const change = eloChanges[p.username] || 0;
+          if (p.isBot) {
+            // Update ELO di objek room saja, skip database
+            p.elo = (p.elo ?? 1200) + change;
+            p.eloChange = change;
+            continue;
+          }
           await updatePlayerStats(p.username, change, false);
           p.elo = (p.elo ?? 1200) + change;
           p.eloChange = change;

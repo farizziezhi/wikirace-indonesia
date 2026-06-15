@@ -27,6 +27,10 @@ export interface Player {
   helpUsed?: boolean;
   elo?: number;
   eloChange?: number;
+  isBot?: boolean;
+  botTimeline?: RouteStep[];
+  botEmojis?: Array<{ emoji: string; timestamp: number }>;
+  botChats?: Array<{ text: string; timestamp: number }>;
 }
 
 export type RoomStatus = "lobby" | "playing" | "finished";

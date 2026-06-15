@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
+import { getSessionUsername } from "@/lib/auth-server";
 import { getRoom, setRoom } from "@/lib/redis";
 import {
   createRouteStep,
@@ -48,6 +49,14 @@ export async function POST(request: NextRequest) {
   if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
   if (player.status !== "playing") {
     return errorResponse("Pemain tidak dalam status 'playing'.", 409);
+  }
+
+  // --- SECURITY: Session Verification ---
+  if (room.isMatchmaking) {
+    const sessionUsername = await getSessionUsername();
+    if (!sessionUsername || sessionUsername !== player.username) {
+      return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
+    }
   }
 
   if (player.helpUsed) {

@@ -69,6 +69,34 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
     return () => clearInterval(interval);
   }, [room.isMatchmaking, room.autoStartAt, room.players.length, room.status, currentClientId, room.hostClientId, clockOffset]);
 
+  // Efek untuk memicu bot join jika pemain sendirian di Ranked matchmaking > 45 detik
+  useEffect(() => {
+    if (!room.isMatchmaking || room.status !== "lobby" || room.players.length !== 1) {
+      return;
+    }
+
+    let botJoinCalled = false;
+
+    const checkTimeout = () => {
+      const elapsed = (Date.now() + clockOffset) - room.createdAt;
+      if (elapsed >= 45000 && !botJoinCalled) {
+        botJoinCalled = true;
+        // Panggil API bot-join untuk mengundang bot masuk ke Ranked match
+        void fetch("/api/room/bot-join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId: room.id, clientId: currentClientId }),
+        }).catch((err) => {
+          console.warn("Gagal mengundang bot matchmaking:", err);
+        });
+      }
+    };
+
+    checkTimeout();
+    const interval = setInterval(checkTimeout, 1000);
+    return () => clearInterval(interval);
+  }, [room.isMatchmaking, room.status, room.players.length, room.createdAt, room.id, clockOffset]);
+
   // Re-sync kalau update datang dari server.
   const lastSyncedRef = useRef({
     start: room.startArticle,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import OnlineCountWidget from "@/components/OnlineCountWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -163,6 +164,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         {children}
+        <div className="fixed bottom-4 left-4 z-40 hidden md:block">
+          <OnlineCountWidget />
+        </div>
         <Analytics />
       </body>
     </html>

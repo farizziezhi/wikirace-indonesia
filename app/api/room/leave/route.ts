@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
+import { getSessionUsername } from "@/lib/auth-server";
 import {
   addMatchmakingRoom,
   deleteRoom,
@@ -37,13 +38,23 @@ export async function POST(request: NextRequest) {
     return Response.json({ ok: true, roomDeleted: true });
   }
 
+  // --- SECURITY: Session Verification ---
+  const player = room.players.find((p) => p.clientId === clientId);
+  if (player && room.isMatchmaking) {
+    const sessionUsername = await getSessionUsername();
+    if (!sessionUsername || sessionUsername !== player.username) {
+      return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
+    }
+  }
+
   const isMatchmaking = !!room.isMatchmaking;
   const language = room.language ?? "id";
 
   if (clientId === room.hostClientId) {
     const otherPlayers = room.players.filter((p) => p.clientId !== clientId);
-    if (otherPlayers.length === 0) {
-      // Pembatalan & pembersihan total
+    const otherHumans = otherPlayers.filter((p) => !p.isBot);
+    if (otherHumans.length === 0) {
+      // Pembatalan & pembersihan total (tidak ada pemain manusia tersisa)
       await publishRoomEvent(roomId, "game_cancelled", { reason: "host_left" });
       if (isMatchmaking) {
         await removeMatchmakingRoom(language, roomId);
@@ -51,11 +62,11 @@ export async function POST(request: NextRequest) {
       await deleteRoom(roomId);
       return Response.json({ ok: true, roomDeleted: true });
     } else {
-      // Promosikan pemain berikutnya menjadi host baru
-      const newHost = otherPlayers[0];
+      // Promosikan pemain manusia berikutnya menjadi host baru
+      const newHost = otherHumans[0];
       newHost.isHost = true;
       room.hostClientId = newHost.clientId;
-      room.players = otherPlayers;
+      room.players = otherPlayers; // Bot tetap dipertahankan dalam list players jika ada
 
       // Update matchmaking data jika aktif
       if (isMatchmaking) {

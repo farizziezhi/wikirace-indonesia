@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
+import { getSessionUsername } from "@/lib/auth-server";
 import { getRoom } from "@/lib/redis";
 import {
   ALLOWED_EMOJIS,
@@ -58,6 +59,14 @@ export async function POST(request: NextRequest) {
 
   const player = findPlayer(room, clientId);
   if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
+
+  // --- SECURITY: Session Verification ---
+  if (room.isMatchmaking) {
+    const sessionUsername = await getSessionUsername();
+    if (!sessionUsername || sessionUsername !== player.username) {
+      return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
+    }
+  }
 
   // Kirim payload batch jika validEmojis ada, jika tidak kirim emoji tunggal (untuk backward compat)
   await publishRoomEvent(roomId, "emoji_reaction", {

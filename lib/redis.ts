@@ -281,3 +281,103 @@ export async function getMatchmakingPoolSize(
   }
 }
 
+export async function trackActivePlayer(clientId: string): Promise<number> {
+  const key = "active_players";
+  const now = Date.now();
+  const expirationTime = now - 120000; // 2 menit yang lalu
+
+  try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      await upstash.zadd(key, { score: now, member: clientId });
+      await upstash.zremrangebyscore(key, 0, expirationTime);
+      return await upstash.zcard(key);
+    } else {
+      const valkey = getValkeyClient();
+      await valkey.zadd(key, now, clientId);
+      await valkey.zremrangebyscore(key, 0, expirationTime);
+      return await valkey.zcard(key);
+    }
+  } catch (err) {
+    console.error("Gagal melakukan trackActivePlayer:", err);
+    return 1;
+  }
+}
+
+export async function getActivePlayersCount(): Promise<number> {
+  const key = "active_players";
+  const now = Date.now();
+  const expirationTime = now - 120000;
+
+  try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      await upstash.zremrangebyscore(key, 0, expirationTime);
+      return await upstash.zcard(key);
+    } else {
+      const valkey = getValkeyClient();
+      await valkey.zremrangebyscore(key, 0, expirationTime);
+      return await valkey.zcard(key);
+    }
+  } catch (err) {
+    console.error("Gagal mendapatkan online count:", err);
+    return 1;
+  }
+}
+
+export async function getBotStreak(username: string): Promise<number> {
+  const key = `bot_streak:${username}`;
+  try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      const val = await upstash.get(key);
+      return val ? Number(val) : 0;
+    } else {
+      const valkey = getValkeyClient();
+      const val = await valkey.get(key);
+      return val ? Number(val) : 0;
+    }
+  } catch (err) {
+    console.error("Gagal getBotStreak:", err);
+    return 0;
+  }
+}
+
+export async function incrementBotStreak(username: string): Promise<number> {
+  const key = `bot_streak:${username}`;
+  const TTL = 86400; // 24 jam dalam detik
+  try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      const val = await upstash.incr(key);
+      await upstash.expire(key, TTL);
+      return val;
+    } else {
+      const valkey = getValkeyClient();
+      const val = await valkey.incr(key);
+      await valkey.expire(key, TTL);
+      return val;
+    }
+  } catch (err) {
+    console.error("Gagal incrementBotStreak:", err);
+    return 1;
+  }
+}
+
+export async function resetBotStreak(username: string): Promise<void> {
+  const key = `bot_streak:${username}`;
+  try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      await upstash.del(key);
+    } else {
+      const valkey = getValkeyClient();
+      await valkey.del(key);
+    }
+  } catch (err) {
+    console.error("Gagal resetBotStreak:", err);
+  }
+}
+
+
+

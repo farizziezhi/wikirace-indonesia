@@ -627,6 +627,61 @@ export default function Game({
     };
   }, [ablyChannel, router, currentClientId]);
 
+  // Efek untuk mensimulasikan emoji dan mendeteksi selesainya bot
+  useEffect(() => {
+    const bots = room.players.filter((p) => p.isBot && p.status === "playing");
+    if (bots.length === 0 || hasSurrendered) return;
+
+    // Simpan daftar emoji yang sudah dipicu untuk menghindari duplikasi
+    const triggeredEmojis = new Set<string>();
+    let resolveBotCalled = false;
+
+    const checkBotTimeline = () => {
+      const elapsed = Math.floor((Date.now() + clockOffset - normalizedStartTime) / 1000);
+      if (elapsed < 0) return;
+
+      for (const bot of bots) {
+        if (!bot.botTimeline) continue;
+
+        // 1. Kirim emoji terjadwal via Ably
+        if (bot.botEmojis) {
+          for (const item of bot.botEmojis) {
+            const key = `${bot.clientId}-${item.timestamp}-${item.emoji}`;
+            if (elapsed >= item.timestamp && !triggeredEmojis.has(key)) {
+              triggeredEmojis.add(key);
+              void ablyChannel.publish("emoji_reaction", {
+                clientId: bot.clientId,
+                username: bot.username,
+                emojis: [item.emoji],
+              }).catch(() => {});
+            }
+          }
+        }
+
+        // 2. Cek apakah bot sudah mencapai finish untuk memicu resolve-bot di server
+        const lastStep = bot.botTimeline[bot.botTimeline.length - 1];
+        if (elapsed >= lastStep.timestamp && !resolveBotCalled) {
+          resolveBotCalled = true;
+          void fetch("/api/room/resolve-bot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              roomId: room.id,
+              botClientId: bot.clientId,
+              clientId: currentClientId,
+            }),
+          }).catch((err) => {
+            console.warn("Gagal memicu penyelesaian bot:", err);
+          });
+        }
+      }
+    };
+
+    checkBotTimeline();
+    const interval = setInterval(checkBotTimeline, 500);
+    return () => clearInterval(interval);
+  }, [room.players, normalizedStartTime, clockOffset, ablyChannel, room.id, hasSurrendered]);
+
   // ------- Action: navigate -------
   const navigatingRef = useRef(false);
 

@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
+import { getSessionUsername } from "@/lib/auth-server";
 import { calculateEloChanges } from "@/lib/elo";
-import { getRoom, setRoom, updatePlayerStats } from "@/lib/redis";
+import { getRoom, setRoom, updatePlayerStats, getBotStreak, incrementBotStreak, resetBotStreak } from "@/lib/redis";
 import {
   createRouteStep,
   errorResponse,
@@ -57,6 +58,14 @@ export async function POST(request: NextRequest) {
     return errorResponse("Pemain tidak dalam status 'playing'.", 409);
   }
 
+  // --- SECURITY: Session Verification ---
+  if (room.isMatchmaking) {
+    const sessionUsername = await getSessionUsername();
+    if (!sessionUsername || sessionUsername !== player.username) {
+      return errorResponse("Akses ditolak: Sesi tidak cocok dengan clientId pemain.", 403);
+    }
+  }
+
   if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
     return errorResponse("Kamu sedang ditangguhkan (suspended) dan tidak bisa navigasi.", 403);
   }
@@ -91,10 +100,42 @@ export async function POST(request: NextRequest) {
 
         eloChanges = calculateEloChanges(eloData);
 
+        // Deteksi apakah ada bot dalam permainan
+        const hasBot = room.players.some((p) => p.isBot);
+
         // Update database ELO masing-masing pemain & update objek room
         for (const p of room.players) {
-          const change = eloChanges[p.username] || 0;
+          let change = eloChanges[p.username] || 0;
           const isWin = p.clientId === clientId; // Hanya pemain aktif ini yang menang
+
+          if (p.isBot) {
+            // Update ELO di objek room saja, skip database
+            p.elo = (p.elo ?? 1200) + change;
+            p.eloChange = change;
+            continue;
+          }
+
+          // Pemain manusia
+          if (hasBot) {
+            if (isWin && change > 0) {
+              const currentElo = p.elo ?? 1200;
+              if (currentElo >= 1300) {
+                // ELO >= 1300 tidak mendapat ELO dari bot
+                change = 0;
+              } else {
+                // Terapkan ELO decay berturut-turut
+                const streak = await incrementBotStreak(p.username);
+                let multiplier = 1.0;
+                if (streak === 2) multiplier = 0.5;
+                else if (streak >= 3) multiplier = 0.0;
+                change = Math.round(change * multiplier);
+              }
+            }
+          } else {
+            // Bermain melawan manusia asli -> reset bot streak
+            await resetBotStreak(p.username);
+          }
+
           await updatePlayerStats(p.username, change, isWin);
           p.elo = (p.elo ?? 1200) + change;
           p.eloChange = change;

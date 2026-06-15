@@ -15,6 +15,7 @@ import { isRaceAudioUnlocked, unlockRaceAudio } from "@/lib/race-audio";
 import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS } from "@/lib/wikipedia";
 import AdContainer from "@/components/AdContainer";
+import OnlineCountWidget from "@/components/OnlineCountWidget";
 
 const MAX_USERNAME_LENGTH = 20;
 
@@ -489,25 +490,28 @@ export default function HomePage() {
       <div className="grid w-full max-w-[1100px] grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:gap-16">
         {/* ====== Brand mark + hero + Leaderboard ====== */}
         <header className="flex flex-col items-start gap-4 text-charcoal-text">
-          <div className="flex items-center gap-2">
-            <span
-              className="flex items-center justify-center bg-charcoal-text text-warm-cream font-extrabold"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                fontSize: 18,
-              }}
-              aria-hidden
-            >
-              W
-            </span>
-            <span
-              className="font-extrabold uppercase tabular-nums"
-              style={{ fontSize: 17, letterSpacing: "0.18em" }}
-            >
-              WikiRace · ID
-            </span>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <span
+                className="flex items-center justify-center bg-charcoal-text text-warm-cream font-extrabold"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  fontSize: 18,
+                }}
+                aria-hidden
+              >
+                W
+              </span>
+              <span
+                className="font-extrabold uppercase tabular-nums"
+                style={{ fontSize: 17, letterSpacing: "0.18em" }}
+              >
+                WikiRace · ID
+              </span>
+            </div>
+            <OnlineCountWidget />
           </div>
 
           <h1
