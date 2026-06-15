@@ -34,27 +34,92 @@ async function fetchWikiLinks(title: string, lang: string): Promise<string[]> {
   }
 }
 
-async function generateBotRoute(
+async function fetchWikiBacklinks(title: string, lang: string): Promise<string[]> {
+  try {
+    const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(title)}&bllimit=150&blnamespace=0&format=json&origin=*`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "WikiRaceID/1.0 (https://wikiraceid.web.id) NextJS/16",
+      },
+      signal: AbortSignal.timeout(1500),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const backlinks = data.query?.backlinks;
+    if (!backlinks || !Array.isArray(backlinks)) return [];
+    return backlinks.map((l: { title: string }) => l.title).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function generateLogicalBotRoute(
   start: string,
   end: string,
   lang: string,
-  clicksCount: number,
+  solutionRoute?: string[]
 ): Promise<string[]> {
-  const route = [start];
-  let current = start;
-  const startTime = Date.now();
-  
-  for (let i = 0; i < clicksCount - 1; i++) {
-    if (Date.now() - startTime > 2000) break; // Cegah timeout serverless
-    const links = await fetchWikiLinks(current, lang);
-    if (links.length === 0) break;
-    const next = links[Math.floor(Math.random() * links.length)];
-    route.push(next);
-    current = next;
+  // 1. Jika ada solutionRoute resmi dari room, gunakan langsung!
+  if (solutionRoute && solutionRoute.length >= 2 && solutionRoute[0] === start && solutionRoute[solutionRoute.length - 1] === end) {
+    return solutionRoute;
   }
-  
-  route.push(end);
-  return route;
+
+  // 2. Jika tidak ada, coba cari rute dengan Bidirectional Search secara cepat
+  try {
+    const backlinks = await fetchWikiBacklinks(end, lang);
+    const startLinks = await fetchWikiLinks(start, lang);
+    
+    // Cek apakah start langsung terhubung ke end
+    if (startLinks.includes(end)) {
+      return [start, end];
+    }
+    
+    // Cek irisan kedalaman 2: start -> Y -> end
+    const intersect2 = startLinks.filter(x => backlinks.includes(x));
+    if (intersect2.length > 0) {
+      const mid = intersect2[Math.floor(Math.random() * intersect2.length)];
+      return [start, mid, end];
+    }
+    
+    // Cek irisan kedalaman 3: start -> Y -> Z -> end
+    const sampleY = startLinks.slice(0, 8); // Ambil maks 8 halaman untuk hemat request
+    for (const y of sampleY) {
+      const yLinks = await fetchWikiLinks(y, lang);
+      const intersect3 = yLinks.filter(z => backlinks.includes(z));
+      if (intersect3.length > 0) {
+        const z = intersect3[Math.floor(Math.random() * intersect3.length)];
+        return [start, y, z, end];
+      }
+    }
+    
+    // Fallback: Jika gagal mencari rute logis, gunakan random walk tetapi pastikan link terakhir masuk akal
+    if (backlinks.length > 0) {
+      const route = [start];
+      let current = start;
+      for (let i = 0; i < 2; i++) {
+        const links = await fetchWikiLinks(current, lang);
+        if (links.length === 0) break;
+        const connection = links.find(l => backlinks.includes(l));
+        if (connection) {
+          route.push(connection);
+          route.push(end);
+          return route;
+        }
+        const next = links[Math.floor(Math.random() * links.length)];
+        route.push(next);
+        current = next;
+      }
+      const randomBacklink = backlinks[Math.floor(Math.random() * backlinks.length)];
+      route.push(randomBacklink);
+      route.push(end);
+      return route;
+    }
+  } catch (err) {
+    console.error("Gagal memproses rute logis bot:", err);
+  }
+
+  // Fallback mutlak jika Wikipedia mati/error total
+  return [start, end];
 }
 
 export async function POST(request: NextRequest) {
@@ -131,11 +196,11 @@ export async function POST(request: NextRequest) {
         maxSec = 25;
       }
       
-      const route = await generateBotRoute(
+      const route = await generateLogicalBotRoute(
         room.startArticle,
         room.endArticle,
         room.language ?? "id",
-        clicksCount
+        room.solutionRoute
       );
       
       const timeline: Array<{ article: string; timestamp: number }> = [];

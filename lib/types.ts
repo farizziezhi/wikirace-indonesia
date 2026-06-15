@@ -85,5 +85,5 @@ export interface Room {
   isMatchmaking?: boolean;
   autoStartAt?: number;
   averageElo?: number;
+  solutionRoute?: string[];
 }
-

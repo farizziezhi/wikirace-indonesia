@@ -215,12 +215,13 @@ export async function checkRateLimit(
 
 // ---------- Matchmaking Paths Pool Helpers (Upstash Redis + Valkey Fallback) ----------
 
-const poolKey = (lang: string, difficulty: string) => `matchmaking:pool:${lang}:${difficulty}`;
+const poolKey = (lang: string, difficulty: string) =>
+  `matchmaking:pool:${lang}:${difficulty}`;
 
 export async function popMatchmakingPath(
   lang: string,
   difficulty: string,
-): Promise<{ startArticle: string; endArticle: string } | null> {
+): Promise<{ startArticle: string; endArticle: string; path?: string[] } | null> {
   try {
     const key = poolKey(lang, difficulty);
     const upstash = getUpstashClient();
@@ -228,14 +229,14 @@ export async function popMatchmakingPath(
       const res = await upstash.rpop(key);
       if (!res) return null;
       if (typeof res === "object") {
-        return res as { startArticle: string; endArticle: string };
+        return res as { startArticle: string; endArticle: string; path?: string[] };
       }
-      return JSON.parse(res as string) as { startArticle: string; endArticle: string };
+      return JSON.parse(res as string) as { startArticle: string; endArticle: string; path?: string[] };
     } else {
       const valkey = getValkeyClient();
       const res = await valkey.rpop(key);
       if (!res) return null;
-      return JSON.parse(res) as { startArticle: string; endArticle: string };
+      return JSON.parse(res) as { startArticle: string; endArticle: string; path?: string[] };
     }
   } catch (err) {
     console.error("Gagal RPOP dari matchmaking pool:", err);
@@ -246,7 +247,7 @@ export async function popMatchmakingPath(
 export async function pushMatchmakingPath(
   lang: string,
   difficulty: string,
-  path: { startArticle: string; endArticle: string },
+  path: { startArticle: string; endArticle: string; path?: string[] },
 ): Promise<void> {
   try {
     const key = poolKey(lang, difficulty);
@@ -378,6 +379,3 @@ export async function resetBotStreak(username: string): Promise<void> {
     console.error("Gagal resetBotStreak:", err);
   }
 }
-
-
-

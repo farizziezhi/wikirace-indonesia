@@ -51,7 +51,7 @@ async function fetchWikiLinks(title: string, lang: string): Promise<string[]> {
 async function generateRandomWalkPath(
   lang: WikiLanguage,
   elo: number,
-): Promise<{ startArticle: string; endArticle: string } | null> {
+): Promise<{ startArticle: string; endArticle: string; path: string[] } | null> {
   let steps = 5;
   if (elo >= 1300) {
     steps = 9;
@@ -85,7 +85,7 @@ async function generateRandomWalkPath(
     }
 
     if (success && current !== startArticle) {
-      return { startArticle, endArticle: current };
+      return { startArticle, endArticle: current, path: Array.from(visited) };
     }
   }
 
@@ -211,12 +211,14 @@ export async function POST(request: NextRequest) {
     let startArticle = "";
     let endArticle = "";
     let pathFound = false;
+    let solutionRoute: string[] = [];
 
     // A. Coba ambil dari kolam Upstash Redis / Valkey pool
     const cachedPath = await popMatchmakingPath(language, targetDifficulty);
     if (cachedPath) {
       startArticle = cachedPath.startArticle;
       endArticle = cachedPath.endArticle;
+      solutionRoute = cachedPath.path || [];
       pathFound = true;
     } else {
       // B. Jika pool kosong, generate via Random Walk secara instan
@@ -224,6 +226,7 @@ export async function POST(request: NextRequest) {
       if (dynamicPath) {
         startArticle = dynamicPath.startArticle;
         endArticle = dynamicPath.endArticle;
+        solutionRoute = dynamicPath.path || [];
         pathFound = true;
       }
     }
@@ -261,8 +264,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-
-
     // Generate roomId yang unik
     let roomId = generateRoomId();
     for (let i = 0; i < 5; i++) {
@@ -286,6 +287,7 @@ export async function POST(request: NextRequest) {
       createdAt: Date.now(),
       isMatchmaking: true,
       averageElo: userElo,
+      solutionRoute,
     };
 
     await setRoom(newRoom);
