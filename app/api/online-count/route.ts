@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 function getSimulatedCount(): number {
   const date = new Date();
   const hour = date.getHours(); // 0-23 (UTC/Local)
-  const base = 42; 
-  const amplitude = 35; 
+  const base = 12; 
+  const amplitude = 8; 
   
   // Memuncak pada jam 20:00 (8 PM) dan terendah pada jam 04:00 (4 AM)
   const angle = ((hour - 4) / 24) * 2 * Math.PI;
@@ -20,9 +20,9 @@ function getSimulatedCount(): number {
   const hourlyCount = Math.floor(base + amplitude * sinValue);
   
   const minute = date.getMinutes();
-  const noise = (minute % 7) - 3; // -3 s/d +3
+  const noise = (minute % 5) - 2; // -2 s/d +2
   
-  return Math.max(15, hourlyCount + noise);
+  return Math.max(3, hourlyCount + noise);
 }
 
 export async function GET(request: NextRequest) {
