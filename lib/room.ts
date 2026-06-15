@@ -50,6 +50,7 @@ export function createPlayer(
     route: [],
     suspendedUntil: 0,
     helpUsed: false,
+    ready: false,
   };
 }
 

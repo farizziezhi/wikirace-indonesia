@@ -177,8 +177,11 @@ export async function POST(request: NextRequest) {
       room.averageElo = totalElo / room.players.length;
 
       // Pemicu Auto-Start jika pemain >= 2
-      if (room.players.length >= 2 && !room.autoStartAt) {
-        room.autoStartAt = Date.now() + 20000; // 20 detik countdown
+      if (room.players.length >= 2) {
+        room.matchFoundAt = Date.now();
+        if (!room.autoStartAt) {
+          room.autoStartAt = Date.now() + 20000; // 20 detik countdown
+        }
       }
 
       // Jika room sekarang penuh, hapus dari antrean matchmaking

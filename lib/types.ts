@@ -28,6 +28,7 @@ export interface Player {
   elo?: number;
   eloChange?: number;
   isBot?: boolean;
+  ready?: boolean;
   botTimeline?: RouteStep[];
   botEmojis?: Array<{ emoji: string; timestamp: number }>;
   botChats?: Array<{ text: string; timestamp: number }>;
@@ -84,6 +85,7 @@ export interface Room {
   startTime?: number;
   isMatchmaking?: boolean;
   autoStartAt?: number;
+  matchFoundAt?: number;
   averageElo?: number;
   solutionRoute?: string[];
 }

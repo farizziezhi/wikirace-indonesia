@@ -75,6 +75,9 @@ export async function POST(request: NextRequest) {
 
         if (room.players.length < 2) {
           room.autoStartAt = undefined;
+          room.matchFoundAt = undefined;
+        } else {
+          room.matchFoundAt = Date.now();
         }
         if (room.players.length < MAX_PLAYERS) {
           await addMatchmakingRoom(language, roomId);
@@ -99,6 +102,9 @@ export async function POST(request: NextRequest) {
 
     if (room.players.length < 2) {
       room.autoStartAt = undefined;
+      room.matchFoundAt = undefined;
+    } else {
+      room.matchFoundAt = Date.now();
     }
     if (room.players.length < MAX_PLAYERS) {
       await addMatchmakingRoom(language, roomId);

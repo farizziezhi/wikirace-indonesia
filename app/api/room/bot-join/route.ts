@@ -61,9 +61,9 @@ export async function POST(request: NextRequest) {
     }
 
     // --- KEAMANAN 3: Durasi Tunggu Minimal (Anti-Spam) ---
-    // Room harus sudah berumur minimal 40 detik untuk memverifikasi tunggu 45 detik dari client.
+    // Room harus sudah berumur minimal 55 detik untuk memverifikasi tunggu 60 detik dari client.
     const roomAge = Date.now() - room.createdAt;
-    if (roomAge < 40000) {
+    if (roomAge < 55000) {
       return errorResponse("Mohon tunggu sedikit lebih lama sebelum mengundang bot.", 400);
     }
 
@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
     // Hitung rata-rata ELO kamar & jadwalkan hitung mundur auto-start (10 detik)
     room.averageElo = (hostElo + botElo) / 2;
     room.autoStartAt = Date.now() + 10000; // 10 detik countdown menuju start
+    room.matchFoundAt = Date.now(); // Set ready timer start time
 
     // Simpan ke Redis & sebarkan event room_updated ke seluruh client via Ably
     await setRoom(room);
