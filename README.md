@@ -14,7 +14,7 @@ Inspirasi desain bertema **"Lando Norris Modern Racing Premium"** — memadukan 
 
 ## ✨ Fitur Utama
 
-- 🏎️ **Realtime Multiplayer (Up to 8 Players):** Balapan realtime yang didukung penuh oleh **Ably Pub/Sub** untuk sinkronisasi aksi dan perpindahan halaman instan.
+- 🏎️ **Realtime Multiplayer (Up to 8 Players):** Balapan realtime yang didukung penuh oleh **Ably Pub/Sub** untuk sinkronisasi aksi dan perpindahan halaman instan. Sangat keren.
 - 💬 **Realtime Chat & Reactions:** Saling ejek dan berekspresi di tengah balapan dengan panel obrolan terintegrasi serta emoji melayang (*floating reactions*).
 - 🏆 **Timing Screen Podium:** Klasemen akhir otomatis yang meniru layar waktu balapan profesional, lengkap dengan pembagian lencana pencapaian (*achievement badges*).
 - 🎲 **Surprise Me & Challenge Packs:** Host bisa memilih 14+ paket tantangan buatan kurator atau melempar dadu artikel acak (Wikipedia API) untuk balapan instan.
