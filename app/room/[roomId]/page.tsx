@@ -273,6 +273,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         clientId: string;
         article: string;
         route: RouteStep[];
+        status?: Player["status"];
       };
       if (!data?.clientId) return;
       setRoom((prev) =>
@@ -285,6 +286,7 @@ export default function RoomPage({ params }: RoomPageProps) {
                       ...p,
                       currentArticle: data.article,
                       route: data.route ?? p.route,
+                      status: data.status ?? p.status,
                     }
                   : p,
               ),

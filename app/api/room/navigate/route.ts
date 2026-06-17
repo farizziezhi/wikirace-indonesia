@@ -70,16 +70,54 @@ export async function POST(request: NextRequest) {
     return errorResponse("Kamu sedang ditangguhkan (suspended) dan tidak bisa navigasi.", 403);
   }
 
+  const elapsedSeconds = Math.floor((Date.now() - room.startTime) / 1000);
   if (room.isMatchmaking) {
-    const elapsedSeconds = Math.floor((Date.now() - room.startTime) / 1000);
     if (elapsedSeconds >= 300) {
       return errorResponse("Waktu bermain telah habis (maksimal 5 menit).", 403);
     }
+  } else if (room.customRules?.timeLimit && room.customRules.timeLimit > 0) {
+    if (elapsedSeconds >= room.customRules.timeLimit) {
+      player.status = "surrendered";
+      await setRoom(room);
+      await publishRoomEvent(roomId, "player_moved", {
+        clientId,
+        article: player.currentArticle,
+        route: player.route,
+        status: "surrendered",
+      });
+      return errorResponse("Waktu bermain telah habis!", 403);
+    }
+  }
+
+  // --- CUSTOM RULES: Click Limit Check ---
+  const currentClicks = player.route.length - 1;
+  if (room.customRules?.clickLimit && room.customRules.clickLimit > 0) {
+    if (currentClicks >= room.customRules.clickLimit) {
+      return errorResponse("Kuota klik Anda telah habis!", 403);
+    }
+  }
+
+  // --- CUSTOM RULES: Ban List Check ---
+  if (
+    room.customRules?.bannedArticles &&
+    room.customRules.bannedArticles.some(
+      (ban) => ban.toLowerCase().replace(/_/g, " ") === article.toLowerCase().replace(/_/g, " ")
+    )
+  ) {
+    return errorResponse(`Artikel "${article}" dilarang di room ini!`, 403);
   }
 
   const step = createRouteStep(article, room.startTime);
   player.route.push(step);
   player.currentArticle = article;
+
+  // --- CUSTOM RULES: Post-move Click Expiry Check ---
+  const clicksAfter = player.route.length - 1;
+  if (room.customRules?.clickLimit && room.customRules.clickLimit > 0) {
+    if (clicksAfter >= room.customRules.clickLimit && article !== room.endArticle) {
+      player.status = "surrendered";
+    }
+  }
 
   // Jika pemain mencapai artikel akhir -> MENANG!
   if (article === room.endArticle) {
@@ -170,6 +208,7 @@ export async function POST(request: NextRequest) {
       clientId,
       article,
       route: player.route,
+      status: player.status,
     });
     await publishRoomEvent(roomId, "game_won", {
       winnerId: clientId,
@@ -185,6 +224,7 @@ export async function POST(request: NextRequest) {
     clientId,
     article,
     route: player.route,
+    status: player.status,
   });
 
   return Response.json({ room, won: false });

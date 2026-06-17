@@ -40,6 +40,12 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
   const [leaving, setLeaving] = useState(false);
   const [surprising, setSurprising] = useState(false);
 
+  // Aturan Kustom
+  const [clickLimit, setClickLimit] = useState<number>(room.customRules?.clickLimit ?? 0);
+  const [timeLimit, setTimeLimit] = useState<number>(room.customRules?.timeLimit ?? 0);
+  const [bannedArticles, setBannedArticles] = useState<string[]>(room.customRules?.bannedArticles ?? []);
+  const [banInput, setBanInput] = useState("");
+
   // Hitung mundur untuk matchmaking & ready up
   const [toggleReadyLoading, setToggleReadyLoading] = useState(false);
   const [readyCountdown, setReadyCountdown] = useState<number | null>(null);
@@ -167,42 +173,84 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
     end: room.endArticle,
     language: room.language ?? ("id" as WikiLanguage),
     gameMode: room.gameMode ?? "competitive",
+    clickLimit: room.customRules?.clickLimit ?? 0,
+    timeLimit: room.customRules?.timeLimit ?? 0,
+    bannedArticles: room.customRules?.bannedArticles ?? [],
   });
   useEffect(() => {
     const serverLang = room.language ?? "id";
     const serverMode = room.gameMode ?? "competitive";
+    const serverClickLimit = room.customRules?.clickLimit ?? 0;
+    const serverTimeLimit = room.customRules?.timeLimit ?? 0;
+    const serverBannedArticles = room.customRules?.bannedArticles ?? [];
+
+    const startChanged = room.startArticle !== lastSyncedRef.current.start;
+    const endChanged = room.endArticle !== lastSyncedRef.current.end;
+    const langChanged = serverLang !== lastSyncedRef.current.language;
+    const modeChanged = serverMode !== lastSyncedRef.current.gameMode;
+    const clickLimitChanged = serverClickLimit !== lastSyncedRef.current.clickLimit;
+    const timeLimitChanged = serverTimeLimit !== lastSyncedRef.current.timeLimit;
+    const bannedArticlesChanged = JSON.stringify(serverBannedArticles) !== JSON.stringify(lastSyncedRef.current.bannedArticles);
+
     if (
-      room.startArticle !== lastSyncedRef.current.start ||
-      room.endArticle !== lastSyncedRef.current.end ||
-      serverLang !== lastSyncedRef.current.language ||
-      serverMode !== lastSyncedRef.current.gameMode
+      startChanged ||
+      endChanged ||
+      langChanged ||
+      modeChanged ||
+      clickLimitChanged ||
+      timeLimitChanged ||
+      bannedArticlesChanged
     ) {
       setStartArticle(room.startArticle);
       setEndArticle(room.endArticle);
       setLanguage(serverLang);
       setGameMode(serverMode);
+      setClickLimit(serverClickLimit);
+      setTimeLimit(serverTimeLimit);
+      setBannedArticles(serverBannedArticles);
       lastSyncedRef.current = {
         start: room.startArticle,
         end: room.endArticle,
         language: serverLang,
         gameMode: serverMode,
+        clickLimit: serverClickLimit,
+        timeLimit: serverTimeLimit,
+        bannedArticles: serverBannedArticles,
       };
     }
-  }, [room.startArticle, room.endArticle, room.language, room.gameMode]);
+  }, [room.startArticle, room.endArticle, room.language, room.gameMode, room.customRules]);
 
   // ------- Save articles (host only) — debounced -------
   const saveTimer = useRef<number | null>(null);
 
   const saveArticles = useCallback(
-    async (start: string, end: string, lang: WikiLanguage, mode: "competitive" | "casual") => {
+    async (
+      start: string,
+      end: string,
+      lang: WikiLanguage,
+      mode: "competitive" | "casual",
+      rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] }
+    ) => {
       if (!isHost) return;
       const s = start.trim();
       const e = end.trim();
-      // Bisa save jika artikel valid ATAU bahasa berubah ATAU gameMode berubah
       const articlesValid = !!s && !!e && s !== e;
       const langChanged = lang !== lastSyncedRef.current.language;
       const modeChanged = mode !== lastSyncedRef.current.gameMode;
-      if (!articlesValid && !langChanged && !modeChanged) return;
+      
+      const targetRules = rules ?? {
+        clickLimit: lastSyncedRef.current.clickLimit,
+        timeLimit: lastSyncedRef.current.timeLimit,
+        bannedArticles: lastSyncedRef.current.bannedArticles,
+      };
+
+      const clickLimitChanged = targetRules.clickLimit !== lastSyncedRef.current.clickLimit;
+      const timeLimitChanged = targetRules.timeLimit !== lastSyncedRef.current.timeLimit;
+      const bannedArticlesChanged = JSON.stringify(targetRules.bannedArticles) !== JSON.stringify(lastSyncedRef.current.bannedArticles);
+
+      const rulesChanged = clickLimitChanged || timeLimitChanged || bannedArticlesChanged;
+
+      if (!articlesValid && !langChanged && !modeChanged && !rulesChanged) return;
 
       try {
         const res = await fetch("/api/room/set-articles", {
@@ -215,18 +263,25 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
             endArticle: e,
             language: lang,
             gameMode: mode,
+            customRules: targetRules,
           }),
         });
         if (!res.ok) {
           const data: { error?: string } = await res.json().catch(() => ({}));
-          // Saat ganti bahasa tapi artikel belum valid, server akan tolak;
-          // jangan tampilkan error ke user.
           if (articlesValid) {
             setError(data.error ?? "Gagal menyimpan artikel.");
           }
         } else {
           setError(null);
-          lastSyncedRef.current = { start: s, end: e, language: lang, gameMode: mode };
+          lastSyncedRef.current = {
+            start: s,
+            end: e,
+            language: lang,
+            gameMode: mode,
+            clickLimit: targetRules.clickLimit,
+            timeLimit: targetRules.timeLimit,
+            bannedArticles: targetRules.bannedArticles,
+          };
         }
       } catch {
         setError("Tidak bisa terhubung ke server.");
@@ -235,10 +290,16 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
     [isHost, room.id, currentClientId],
   );
 
-  function scheduleSave(start: string, end: string, lang: WikiLanguage, mode: "competitive" | "casual") {
+  function scheduleSave(
+    start: string,
+    end: string,
+    lang: WikiLanguage,
+    mode: "competitive" | "casual",
+    rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] }
+  ) {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      void saveArticles(start, end, lang, mode);
+      void saveArticles(start, end, lang, mode, rules);
     }, SAVE_DEBOUNCE_MS);
   }
 
@@ -445,6 +506,54 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
       setToggleReadyLoading(false);
     }
   }
+  const handleClickLimitChange = (val: number) => {
+    setClickLimit(val);
+    scheduleSave(startArticle, endArticle, language, gameMode, {
+      clickLimit: val,
+      timeLimit,
+      bannedArticles,
+    });
+  };
+
+  const handleTimeLimitChange = (val: number) => {
+    setTimeLimit(val);
+    scheduleSave(startArticle, endArticle, language, gameMode, {
+      clickLimit,
+      timeLimit: val,
+      bannedArticles,
+    });
+  };
+
+  const handleAddBannedArticle = (articleName: string) => {
+    const clean = articleName.trim();
+    if (!clean) return;
+    if (bannedArticles.some(a => a.toLowerCase() === clean.toLowerCase())) return;
+    const nextList = [...bannedArticles, clean];
+    setBannedArticles(nextList);
+    setBanInput("");
+    void saveArticles(startArticle, endArticle, language, gameMode, {
+      clickLimit,
+      timeLimit,
+      bannedArticles: nextList,
+    });
+  };
+
+  const handleRemoveBannedArticle = (index: number) => {
+    const nextList = bannedArticles.filter((_, i) => i !== index);
+    setBannedArticles(nextList);
+    void saveArticles(startArticle, endArticle, language, gameMode, {
+      clickLimit,
+      timeLimit,
+      bannedArticles: nextList,
+    });
+  };
+
+  const handleBanKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddBannedArticle(banInput);
+    }
+  };
 
   const trimmedStart = startArticle.trim();
   const trimmedEnd = endArticle.trim();
@@ -1025,6 +1134,188 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                 empty={t.hostNotChosen}
                 uiLanguage={uiLanguage}
               />
+            </div>
+          )}
+        </section>
+
+        {/* ====== Aturan Kustom ====== */}
+        <section
+          className="chunky flex flex-col gap-4 bg-pure-white p-6"
+          style={{ borderRadius: "var(--radius-input)" }}
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <h2
+              className="font-extrabold text-charcoal-text"
+              style={{
+                fontSize: "var(--text-heading)",
+                lineHeight: "var(--leading-heading)",
+              }}
+            >
+              {uiLanguage === "en" ? "Custom Rules" : "Aturan Kustom"}
+            </h2>
+            {isHost && (
+              <span
+                className="font-bold uppercase text-charcoal-text/60"
+                style={{ fontSize: "11px", letterSpacing: "0.6px" }}
+              >
+                {t.hostSettings}
+              </span>
+            )}
+          </div>
+
+          {isHost ? (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* Click Limit Select */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-bold text-charcoal-text" style={{ fontSize: "var(--text-body)" }}>
+                    {uiLanguage === "en" ? "Click Limit" : "Batas Klik"}
+                  </label>
+                  <select
+                    value={clickLimit}
+                    onChange={(e) => handleClickLimitChange(Number(e.target.value))}
+                    className="pd-input cursor-pointer font-bold bg-pure-white"
+                  >
+                    <option value={0}>{uiLanguage === "en" ? "Unlimited" : "Tanpa Batas"}</option>
+                    <option value={5}>5 {uiLanguage === "en" ? "clicks" : "klik"}</option>
+                    <option value={10}>10 {uiLanguage === "en" ? "clicks" : "klik"}</option>
+                    <option value={15}>15 {uiLanguage === "en" ? "clicks" : "klik"}</option>
+                    <option value={20}>20 {uiLanguage === "en" ? "clicks" : "klik"}</option>
+                  </select>
+                </div>
+
+                {/* Time Limit Select */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-bold text-charcoal-text" style={{ fontSize: "var(--text-body)" }}>
+                    {uiLanguage === "en" ? "Time Limit" : "Batas Waktu"}
+                  </label>
+                  <select
+                    value={timeLimit}
+                    onChange={(e) => handleTimeLimitChange(Number(e.target.value))}
+                    className="pd-input cursor-pointer font-bold bg-pure-white"
+                  >
+                    <option value={0}>{uiLanguage === "en" ? "Unlimited" : "Tanpa Batas"}</option>
+                    <option value={60}>1 {uiLanguage === "en" ? "minute" : "menit"}</option>
+                    <option value={120}>2 {uiLanguage === "en" ? "minutes" : "menit"}</option>
+                    <option value={180}>3 {uiLanguage === "en" ? "minutes" : "menit"}</option>
+                    <option value={300}>5 {uiLanguage === "en" ? "minutes" : "menit"}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Ban List Input */}
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-charcoal-text" style={{ fontSize: "var(--text-body)" }}>
+                  {uiLanguage === "en" ? "Ban Wikipedia Articles" : "Daftar Larangan Artikel Wikipedia"}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={banInput}
+                    onChange={(e) => setBanInput(e.target.value)}
+                    onKeyDown={handleBanKeyDown}
+                    placeholder={
+                      uiLanguage === "en"
+                        ? "Type article name & press enter..."
+                        : "Ketik nama artikel & tekan enter..."
+                    }
+                    className="pd-input flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddBannedArticle(banInput)}
+                    className="chunky-press bg-charcoal-text text-warm-cream font-bold px-4"
+                    style={{
+                      border: "2px solid var(--color-charcoal-text)",
+                      borderRadius: "var(--radius-button)",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {uiLanguage === "en" ? "Ban" : "Larang"}
+                  </button>
+                </div>
+                
+                {/* Tags display */}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {bannedArticles.length === 0 ? (
+                    <span className="text-xs text-charcoal-text/50 italic">
+                      {uiLanguage === "en" ? "No banned articles yet." : "Belum ada artikel yang dilarang."}
+                    </span>
+                  ) : (
+                    bannedArticles.map((art, idx) => (
+                      <span
+                        key={idx}
+                        className="chunky-sm flex items-center gap-1.5 bg-burnt-orange text-warm-cream font-bold px-2.5 py-1"
+                        style={{
+                          borderRadius: "var(--radius-button)",
+                          fontSize: "12px",
+                        }}
+                      >
+                        <span>{art}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveBannedArticle(idx)}
+                          className="text-warm-cream/80 hover:text-warm-cream font-extrabold focus:outline-none ml-1"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
+                    {uiLanguage === "en" ? "Click Limit" : "Batas Klik"}
+                  </span>
+                  <span className="font-extrabold text-charcoal-text">
+                    {clickLimit > 0
+                      ? `${clickLimit} ${uiLanguage === "en" ? "clicks" : "klik"}`
+                      : (uiLanguage === "en" ? "Unlimited" : "Tanpa Batas")}
+                  </span>
+                </div>
+                
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
+                    {uiLanguage === "en" ? "Time Limit" : "Batas Waktu"}
+                  </span>
+                  <span className="font-extrabold text-charcoal-text">
+                    {timeLimit > 0
+                      ? `${timeLimit / 60} ${uiLanguage === "en" ? "minutes" : "menit"}`
+                      : (uiLanguage === "en" ? "Unlimited" : "Tanpa Batas")}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-1.5 border-t border-parchment pt-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
+                  {uiLanguage === "en" ? "Banned Articles" : "Artikel yang Dilarang"}
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {bannedArticles.length === 0 ? (
+                    <span className="text-xs text-charcoal-text/50 italic">
+                      {uiLanguage === "en" ? "No banned articles." : "Tidak ada artikel yang dilarang."}
+                    </span>
+                  ) : (
+                    bannedArticles.map((art, idx) => (
+                      <span
+                        key={idx}
+                        className="chunky-sm bg-burnt-orange/10 text-burnt-orange border border-burnt-orange font-bold px-2 py-0.5"
+                        style={{
+                          borderRadius: "var(--radius-button)",
+                          fontSize: "12px",
+                        }}
+                      >
+                        ⛔ {art}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </section>

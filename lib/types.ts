@@ -62,6 +62,12 @@ export interface EmojiReaction {
   timestamp: number;
 }
 
+export interface CustomRules {
+  clickLimit?: number;       // 0 = Tanpa Batas, atau angka batas klik (5, 10, 15, 20)
+  timeLimit?: number;        // 0 = Tanpa Batas, atau waktu detik (60, 120, 180, 300)
+  bannedArticles?: string[]; // Array judul artikel yang di-ban (case-insensitive)
+}
+
 export interface Room {
   /** 6 karakter, e.g. "ABC123" */
   id: string;
@@ -88,4 +94,5 @@ export interface Room {
   matchFoundAt?: number;
   averageElo?: number;
   solutionRoute?: string[];
+  customRules?: CustomRules;
 }

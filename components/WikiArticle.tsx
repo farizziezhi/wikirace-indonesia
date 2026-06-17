@@ -19,6 +19,7 @@ interface WikiArticleProps {
    */
   onNavigate: (article: string) => void;
   uiLanguage: "id" | "en";
+  bannedArticles?: string[];
 }
 
 /**
@@ -36,12 +37,14 @@ function WikiArticle({
   language,
   onNavigate,
   uiLanguage,
+  bannedArticles = [],
 }: WikiArticleProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayedArticle, setDisplayedArticle] = useState(currentArticle);
   const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bannedWarningTitle, setBannedWarningTitle] = useState<string | null>(null);
 
   const t = translations[uiLanguage];
 
@@ -85,6 +88,15 @@ function WikiArticle({
     }
   }, [html]);
 
+  // Clear warning setelah 3 detik
+  useEffect(() => {
+    if (!bannedWarningTitle) return;
+    const timer = window.setTimeout(() => {
+      setBannedWarningTitle(null);
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [bannedWarningTitle]);
+
   // Intercept klik <a> di dalam konten — listener satu kali pada container.
   useEffect(() => {
     const node = containerRef.current;
@@ -115,18 +127,49 @@ function WikiArticle({
       event.stopPropagation();
 
       if (!articleTitle) return; // bukan artikel valid → ignore
+
+      // Cek apakah artikel terlarang (Ban List)
+      const isBanned = bannedArticles.some(
+        (ban) => ban.toLowerCase().replace(/_/g, " ") === articleTitle.toLowerCase().replace(/_/g, " ")
+      );
+      if (isBanned) {
+        setBannedWarningTitle(articleTitle);
+        return;
+      }
+
       onNavigate(articleTitle);
     }
 
     node.addEventListener("click", handleClick);
     return () => node.removeEventListener("click", handleClick);
-  }, [onNavigate, language]);
+  }, [onNavigate, language, bannedArticles]);
 
   // Saat first load (belum ada konten apa pun), tampilkan spinner besar.
   const isFirstLoad = loading && html === null && error === null;
 
   return (
     <div className="relative flex flex-col">
+      {bannedWarningTitle && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-charcoal-text/70 p-6 animate-pulse"
+          style={{ borderRadius: "var(--radius-input)" }}
+        >
+          <div
+            className="chunky bg-burnt-orange p-6 text-warm-cream max-w-sm w-full text-center border-4 border-charcoal-text shadow-[6px_6px_0px_#000]"
+            style={{ borderRadius: "var(--radius-input)" }}
+          >
+            <div className="text-4xl mb-2" aria-hidden>⚠️</div>
+            <h3 className="font-black text-lg uppercase tracking-wider text-playdate-yellow">
+              {uiLanguage === "en" ? "BANNED ARTICLE!" : "ARTIKEL DI-BAN!"}
+            </h3>
+            <p className="text-sm font-extrabold mt-2 leading-relaxed">
+              {uiLanguage === "en"
+                ? `"${bannedWarningTitle}" is forbidden in this room!`
+                : `"${bannedWarningTitle}" dilarang di room ini!`}
+            </p>
+          </div>
+        </div>
+      )}
       {/* Progress bar tipis saat fetching artikel baru (bukan first load). */}
       {loading && !isFirstLoad && (
         <div

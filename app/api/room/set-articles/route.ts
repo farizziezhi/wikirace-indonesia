@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
     gameMode?: unknown;
     random?: unknown;
     packId?: unknown;
+    customRules?: unknown;
   };
   try {
     body = await request.json();
@@ -113,6 +114,16 @@ export async function POST(request: NextRequest) {
   }
   if (gameMode !== undefined) {
     room.gameMode = gameMode;
+  }
+  if (body.customRules && typeof body.customRules === "object") {
+    const rules = body.customRules as any;
+    room.customRules = {
+      clickLimit: typeof rules.clickLimit === "number" ? Math.max(0, rules.clickLimit) : 0,
+      timeLimit: typeof rules.timeLimit === "number" ? Math.max(0, rules.timeLimit) : 0,
+      bannedArticles: Array.isArray(rules.bannedArticles)
+        ? rules.bannedArticles.map((a: any) => String(a).trim()).filter(Boolean)
+        : [],
+    };
   }
 
   await setRoom(room);

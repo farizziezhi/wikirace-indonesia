@@ -94,6 +94,11 @@ export async function POST(request: NextRequest) {
     endArticle,
     players: [createPlayer(clientId, username, true)],
     createdAt: Date.now(),
+    customRules: {
+      clickLimit: 0,
+      timeLimit: 0,
+      bannedArticles: [],
+    },
   };
 
   await setRoom(room);

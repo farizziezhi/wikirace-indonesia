@@ -188,6 +188,7 @@ MiniLeaderboard.displayName = "MiniLeaderboard";
 const TimerDisplay = memo(function TimerDisplay({
   startTime,
   isMatchmaking,
+  timeLimit = 0,
   onTimeout,
   hasSurrendered,
   clockOffset = 0,
@@ -195,6 +196,7 @@ const TimerDisplay = memo(function TimerDisplay({
 }: {
   startTime: number;
   isMatchmaking: boolean;
+  timeLimit?: number;
   onTimeout?: () => void;
   hasSurrendered: boolean;
   clockOffset?: number;
@@ -202,6 +204,9 @@ const TimerDisplay = memo(function TimerDisplay({
 }) {
   const normalizedStartTime = useMemo(() => normalizeStartTime(startTime), [startTime]);
   const [elapsed, setElapsed] = useState(() => getElapsedSeconds(normalizedStartTime, clockOffset));
+
+  const limit = isMatchmaking ? 300 : timeLimit;
+  const isCountdown = limit > 0;
 
   useEffect(() => {
     if (hasSurrendered) return;
@@ -212,7 +217,7 @@ const TimerDisplay = memo(function TimerDisplay({
       const next = getElapsedSeconds(normalizedStartTime, clockOffset);
       setElapsed(next);
 
-      if (isMatchmaking && next >= 300) {
+      if (isCountdown && next >= limit) {
         if (onTimeout) onTimeout();
         return;
       }
@@ -226,11 +231,11 @@ const TimerDisplay = memo(function TimerDisplay({
     return () => {
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, [normalizedStartTime, isMatchmaking, onTimeout, hasSurrendered, clockOffset]);
+  }, [normalizedStartTime, isCountdown, limit, onTimeout, hasSurrendered, clockOffset]);
 
-  const remaining = isMatchmaking ? Math.max(0, 300 - elapsed) : 0;
-  const timeToDisplay = isMatchmaking ? remaining : elapsed;
-  const isWarning = isMatchmaking && remaining < 30;
+  const remaining = isCountdown ? Math.max(0, limit - elapsed) : 0;
+  const timeToDisplay = isCountdown ? remaining : elapsed;
+  const isWarning = isCountdown && remaining < 30;
 
   return (
     <span
@@ -240,7 +245,7 @@ const TimerDisplay = memo(function TimerDisplay({
         lineHeight: 1,
       }}
       aria-label={
-        isMatchmaking
+        isCountdown
           ? (language === "en" ? "Time left to play" : "Sisa waktu bermain")
           : (language === "en" ? "Elapsed time" : "Waktu yang sudah berjalan")
       }
@@ -253,6 +258,7 @@ const TimerDisplay = memo(function TimerDisplay({
 const GameHeader = memo(
   ({
     room,
+    clicksCount,
     hasSurrendered,
     confirmingSurrender,
     startTime,
@@ -267,6 +273,7 @@ const GameHeader = memo(
     language,
   }: {
     room: Room;
+    clicksCount: number;
     hasSurrendered: boolean;
     confirmingSurrender: boolean;
     startTime: number;
@@ -281,6 +288,8 @@ const GameHeader = memo(
     language: "id" | "en";
   }) => {
     const isMatchmaking = !!room.isMatchmaking;
+    const clickLimit = room.customRules?.clickLimit ?? 0;
+    const isClickLimitWarning = clickLimit > 0 && (clickLimit - clicksCount) <= 3;
 
     return (
       <header className="sticky top-0 z-30 border-b border-warm-gray bg-warm-cream pt-[env(safe-area-inset-top)]">
@@ -317,16 +326,41 @@ const GameHeader = memo(
             </div>
           </div>
 
+          {clickLimit > 0 && (
+            <div className="flex shrink-0 flex-col items-end leading-none">
+              <span
+                className="font-bold uppercase text-charcoal-text/60"
+                style={{ fontSize: "10px", letterSpacing: "0.6px" }}
+              >
+                {language === "en" ? "Clicks Left" : "Sisa Klik"}
+              </span>
+              <span
+                className={`font-extrabold tabular-nums text-charcoal-text ${
+                  isClickLimitWarning ? "timer-pulse-warning text-burnt-orange animate-pulse" : ""
+                }`}
+                style={{
+                  fontSize: "20px",
+                  lineHeight: 1,
+                }}
+              >
+                {Math.max(0, clickLimit - clicksCount)} / {clickLimit}
+              </span>
+            </div>
+          )}
+
           <div className="flex shrink-0 flex-col items-end leading-none">
             <span
               className="font-bold uppercase text-charcoal-text/60"
               style={{ fontSize: "10px", letterSpacing: "0.6px" }}
             >
-              {isMatchmaking ? (language === "en" ? "Time Left" : "Sisa Waktu") : (language === "en" ? "Time" : "Waktu")}
+              {isMatchmaking || (room.customRules?.timeLimit && room.customRules.timeLimit > 0)
+                ? (language === "en" ? "Time Left" : "Sisa Waktu")
+                : (language === "en" ? "Time" : "Waktu")}
             </span>
             <TimerDisplay
               startTime={startTime}
               isMatchmaking={isMatchmaking}
+              timeLimit={room.customRules?.timeLimit}
               onTimeout={onTimeout}
               hasSurrendered={hasSurrendered}
               clockOffset={clockOffset}
@@ -411,6 +445,7 @@ const GameHeader = memo(
     );
   },
 );
+
 GameHeader.displayName = "GameHeader";
 
 /**
@@ -452,6 +487,7 @@ export default function Game({
     () => (me ? computeLiveBadges({ route: me.route, status: me.status }) : []),
     [me],
   );
+  const clicksCount = me ? Math.max(0, me.route.length - 1) : 0;
 
   // ------- Cheat prevention: disable search shortcuts (Ctrl+F, Cmd+F, F3, etc) -------
   const [suspensionNotice, setSuspensionNotice] = useState<{
@@ -890,6 +926,7 @@ export default function Game({
 
       <GameHeader
         room={room}
+        clicksCount={clicksCount}
         hasSurrendered={hasSurrendered}
         confirmingSurrender={confirmingSurrender}
         startTime={startTime}
