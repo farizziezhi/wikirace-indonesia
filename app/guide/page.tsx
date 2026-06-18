@@ -87,7 +87,7 @@ export default function GuidePage() {
             <div className="flex items-center gap-2 mb-1">
               <span className="h-2 w-2 rounded-full bg-lime-accent animate-ping" />
               <span className="text-[10px] font-mono font-black text-lime-accent uppercase tracking-widest">
-                WIKIRACE TELEMETRY // MANUAL_v1.0
+                WIKIRACE TELEMETRY • MANUAL
               </span>
             </div>
             <h1
@@ -247,7 +247,7 @@ export default function GuidePage() {
           {/* Footer Checkered Line */}
           <div className="mt-auto bg-charcoal-text/30 px-6 py-4 border-t border-warm-cream/10 text-center flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span className="text-[10px] font-mono text-warm-cream/40">
-              {lang === "en" ? "WIKIRACE INDONESIA © 2026 // SIRKUIT DATA WIKIPEDIA" : "WIKIRACE INDONESIA © 2026 // SIRKUIT DATA WIKIPEDIA"}
+              {lang === "en" ? "WIKIRACE INDONESIA © 2026 • SIRKUIT DATA WIKIPEDIA" : "WIKIRACE INDONESIA © 2026 • SIRKUIT DATA WIKIPEDIA"}
             </span>
             <Link
               href="/"
