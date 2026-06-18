@@ -1554,23 +1554,39 @@ export default function HomePage() {
             </a>
             .
           </p>
+          <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-1">
+            <Link href="/privacy" className="hover:text-charcoal-text hover:underline transition">
+              {language === "en" ? "Privacy Policy" : "Kebijakan Privasi"}
+            </Link>
+            <span className="opacity-40" aria-hidden="true">•</span>
+            <Link href="/terms" className="hover:text-charcoal-text hover:underline transition">
+              {language === "en" ? "Terms & Conditions" : "Syarat & Ketentuan"}
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* ====== AUTH MODAL DIALOG ====== */}
       {showAuthModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/60 p-4 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/80 p-4 backdrop-blur-xs animate-fade-in">
           <div
-            className="chunky-lg w-full max-w-[380px] bg-pure-white p-6 flex flex-col gap-4 text-charcoal-text"
-            style={{ borderRadius: "var(--radius-rounded)", border: "1px solid var(--color-warm-gray)" }}
+            className="relative overflow-hidden w-full max-w-[390px] bg-charcoal-deep text-warm-cream p-6 flex flex-col gap-5 border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
+            style={{ borderRadius: "var(--radius-input)" }}
           >
-            <div className="flex justify-between items-center border-b border-warm-gray pb-2">
-              <h3 className="font-extrabold text-xl">
-                {authType === "login" ? "Masuk ke Akun" : "Daftar Akun Baru"}
+            {/* Checkered Racing Stripe */}
+            <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center border-b border-warm-cream/15 pb-2.5 mt-2">
+              <h3 className="font-mono font-black text-xl uppercase text-lime-accent">
+                🏁 {authType === "login" ? "Masuk Paddock" : "Daftar Driver"}
               </h3>
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="font-bold text-charcoal-text/60 hover:text-charcoal-text cursor-pointer"
+                className="font-black text-warm-cream/70 hover:text-lime-accent cursor-pointer transition"
                 style={{ fontSize: 18 }}
               >
                 ✕
@@ -1579,34 +1595,34 @@ export default function HomePage() {
 
             {authError && (
               <div
-                className="bg-burnt-orange/15 text-burnt-orange p-3 text-sm font-semibold"
+                className="bg-burnt-orange/15 text-burnt-orange border border-burnt-orange/30 p-3 text-xs font-mono font-bold animate-pulse"
                 style={{ borderRadius: "var(--radius-subtle)" }}
               >
-                ⚠ {authError}
+                ⚠️ {authError}
               </div>
             )}
 
-            <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-bold">Username</label>
+            <form onSubmit={handleAuthSubmit} className="flex flex-col gap-4 font-mono text-xs">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-black text-warm-cream/80 uppercase">Username</label>
                 <input
                   type="text"
                   value={authUsername}
                   onChange={(e) => setAuthUsername(e.target.value)}
-                  className="pd-input"
+                  className="pd-input bg-charcoal-text border-2 border-charcoal-text text-warm-cream font-black focus:border-lime-accent focus:outline-none"
                   maxLength={20}
                   required
                   autoComplete="username"
                   placeholder="Hanya huruf, angka, underscore"
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-bold">Password</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="font-black text-warm-cream/80 uppercase">Password</label>
                 <input
                   type="password"
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
-                  className="pd-input"
+                  className="pd-input bg-charcoal-text border-2 border-charcoal-text text-warm-cream font-black focus:border-lime-accent focus:outline-none"
                   required
                   autoComplete="current-password"
                   placeholder={authType === "register" ? "Min. 8 karakter (huruf & angka)" : "Masukkan password"}
@@ -1616,27 +1632,24 @@ export default function HomePage() {
               <button
                 type="submit"
                 disabled={authLoading}
-                className="btn-primary w-full mt-2 cursor-pointer"
+                className="chunky-press btn-primary w-full mt-2 cursor-pointer font-black text-sm uppercase border-2 border-charcoal-text py-3 shadow-[3px_3px_0px_#000]"
               >
-                {authLoading ? "Memproses..." : authType === "login" ? "Masuk" : "Daftar"}
+                {authLoading ? "PROSES..." : authType === "login" ? "🏁 MASUK BALAPAN" : "🏁 DAFTAR DRIVER"}
               </button>
             </form>
 
             <div className="flex items-center gap-2 my-1" aria-hidden>
-              <div className="h-px flex-1 bg-warm-gray/30" />
-              <span className="text-[10px] font-bold text-charcoal-text/45 uppercase">atau</span>
-              <div className="h-px flex-1 bg-warm-gray/30" />
+              <div className="h-px flex-1 bg-warm-cream/15" />
+              <span className="text-[10px] font-bold text-warm-cream/45 uppercase font-mono">atau</span>
+              <div className="h-px flex-1 bg-warm-cream/15" />
             </div>
 
             <a
               href="/api/auth/google"
-              className="btn-white w-full text-center flex items-center justify-center gap-2.5 font-bold cursor-pointer transition-all"
+              className="chunky-press w-full text-center flex items-center justify-center gap-2.5 font-black text-xs cursor-pointer transition-all border-2 border-charcoal-text bg-pure-white text-charcoal-text shadow-[3px_3px_0px_#000]"
               style={{
                 padding: "10px 18px",
-                fontSize: "14px",
-                border: "1px solid var(--color-warm-gray)",
-                background: "var(--color-pure-white)",
-                boxShadow: "var(--shadow-flat)"
+                borderRadius: "var(--radius-button)"
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1645,16 +1658,16 @@ export default function HomePage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              <span>Masuk dengan Google</span>
+              <span>MASUK DENGAN GOOGLE</span>
             </a>
 
-            <div className="text-center text-sm text-charcoal-text/70 mt-1 border-t border-warm-gray/50 pt-3">
+            <div className="text-center text-xs text-warm-cream/70 mt-1 border-t border-warm-cream/15 pt-3 font-mono font-bold">
               {authType === "login" ? (
                 <>
                   Belum punya akun?{" "}
                   <button
                     onClick={() => openAuth("register")}
-                    className="font-bold text-charcoal-text underline cursor-pointer hover:text-lime-soft"
+                    className="font-black text-lime-accent underline cursor-pointer hover:text-burnt-orange transition"
                   >
                     Daftar di sini
                   </button>
@@ -1664,7 +1677,7 @@ export default function HomePage() {
                   Sudah punya akun?{" "}
                   <button
                     onClick={() => openAuth("login")}
-                    className="font-bold text-charcoal-text underline cursor-pointer hover:text-lime-soft"
+                    className="font-black text-lime-accent underline cursor-pointer hover:text-burnt-orange transition"
                   >
                     Masuk di sini
                   </button>
