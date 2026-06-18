@@ -690,78 +690,125 @@ export default function HomePage() {
               </div>
             ) : user ? (
               <div
-                className="flex items-center justify-between bg-pure-white p-3 border border-warm-gray"
-                style={{
-                  borderRadius: "var(--radius-input)",
-                  boxShadow: "var(--shadow-flat)",
-                }}
+                className="relative overflow-hidden p-5 bg-charcoal-deep border-3 border-charcoal-text text-warm-cream shadow-[5px_5px_0px_#000] flex flex-col gap-4"
+                style={{ borderRadius: "var(--radius-input)" }}
               >
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className="flex items-center justify-center font-extrabold uppercase text-pure-white"
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: "50%",
-                      background: "var(--color-charcoal-text)",
-                      fontSize: "13px",
-                    }}
-                  >
-                    {user.username.slice(0, 2).toUpperCase()}
-                  </span>
-                  <div>
-                    <Link
-                      href={`/profile/${user.username}`}
-                      className="font-extrabold text-charcoal-text text-sm hover:underline hover:text-lime-deep transition-colors cursor-pointer"
+                {/* Header Checkered Line */}
+                <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
+                  {Array.from({ length: 30 }).map((_, i) => (
+                    <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+                  ))}
+                </div>
+
+                <div className="flex items-start justify-between gap-3 mt-1.5">
+                  <div className="flex items-center gap-3.5">
+                    {/* Avatar as a technical license photo */}
+                    <span
+                      className="flex items-center justify-center font-black uppercase text-charcoal-text bg-lime-accent border-2 border-charcoal-text shadow-[2px_2px_0px_#000]"
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "var(--radius-button)",
+                        fontSize: "16px",
+                      }}
+                      aria-hidden="true"
                     >
-                      {user.username}
-                    </Link>
-                    <div className="text-[11px] text-charcoal-text/70 font-bold mt-0.5 flex items-center gap-1.5">
-                      <span className="inline-block bg-lime-accent text-charcoal-text font-black px-1.5 py-0.5 rounded">
-                        🏆 {user.stats?.elo ?? 1200} ELO
+                      {user.username.slice(0, 2).toUpperCase()}
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase font-mono font-black text-warm-cream/50 tracking-wider">Driver/Pembalap</span>
+                      <Link
+                        href={`/profile/${user.username}`}
+                        className="font-black text-warm-cream text-base hover:underline hover:text-lime-accent transition-colors cursor-pointer"
+                      >
+                        {user.username}
+                      </Link>
+                      
+                      <div className="text-[10px] text-warm-cream/70 font-mono mt-0.5 flex items-center gap-2">
+                        <span className="text-lime-accent font-black">
+                          🏆 {user.stats?.elo ?? 1200} ELO
+                        </span>
+                        <span>•</span>
+                        <span>{user.stats?.wins ?? 0} {language === "en" ? "Wins" : "Win"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SVG ELO RPM Speedometer */}
+                  <div className="flex flex-col items-center gap-1 bg-charcoal-text/50 p-2 rounded-lg border border-warm-gray/10">
+                    <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">RPM Gauge</span>
+                    <div className="relative w-12 h-6 overflow-hidden flex items-end justify-center">
+                      <svg width="48" height="24" viewBox="0 0 48 24" aria-hidden="true">
+                        {/* Background Arc */}
+                        <path d="M 4 24 A 20 20 0 0 1 44 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
+                        {/* Filled Arc based on ELO */}
+                        <path 
+                          d="M 4 24 A 20 20 0 0 1 44 24" 
+                          fill="none" 
+                          stroke="var(--color-lime-accent)" 
+                          strokeWidth="4"
+                          strokeDasharray="63"
+                          strokeDashoffset={Math.max(0, 63 - (63 * Math.min(1.0, Math.max(0.0, ((user.stats?.elo ?? 1200) - 800) / 1000))) )}
+                        />
+                      </svg>
+                      <span className="absolute bottom-0 text-[10px] font-black font-mono text-lime-accent">
+                        {Math.min(9, Math.max(1, Math.round(((user.stats?.elo ?? 1200) / 1800) * 10)))}
                       </span>
-                      <span>•</span>
-                      <span>{user.stats?.wins ?? 0} {language === "en" ? "Wins" : "Win"}</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-1.5 shrink-0">
-                  <Link
-                    href={`/profile/${user.username}`}
-                    className="btn-white hover:scale-[1.01]"
-                    style={{ padding: "6px 12px", fontSize: "11px", height: "fit-content" }}
-                  >
-                    {language === "en" ? "View Profile" : "Lihat Profil"}
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="btn-secondary"
-                    style={{ padding: "6px 12px", fontSize: "11px", height: "fit-content" }}
-                  >
-                    {language === "en" ? "Log Out" : "Keluar"}
-                  </button>
+
+                {/* Footer of Driver Card */}
+                <div className="flex items-center justify-between border-t border-warm-cream/10 pt-3.5 mt-0.5">
+                  {/* Tier Badge */}
+                  <div className="flex flex-col">
+                    <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">License Status</span>
+                    <span className="text-[10px] font-black uppercase text-lime-accent tracking-widest bg-lime-accent/15 px-2 py-0.5 rounded border border-lime-accent/20 mt-0.5">
+                      {(user.stats?.elo ?? 1200) < 1100 ? (language === "en" ? "NOVICE" : "PEMULA") : (user.stats?.elo ?? 1200) < 1300 ? (language === "en" ? "EXPLORER" : "PENJELAJAH") : (language === "en" ? "SPEEDRUNNER" : "LEGENDA")}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2 shrink-0">
+                    <Link
+                      href={`/profile/${user.username}`}
+                      className="chunky-press bg-charcoal-text text-warm-cream border-2 border-charcoal-text hover:bg-charcoal-deep font-black"
+                      style={{ padding: "6px 12px", fontSize: "10px", height: "fit-content", borderRadius: "var(--radius-button)" }}
+                    >
+                      {language === "en" ? "Profile" : "Profil"}
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="chunky-press bg-burnt-orange text-warm-cream border-2 border-charcoal-text font-black"
+                      style={{ padding: "6px 12px", fontSize: "10px", height: "fit-content", borderRadius: "var(--radius-button)" }}
+                    >
+                      {language === "en" ? "Log Out" : "Keluar"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
               <div
-                className="p-3 bg-light-beige border border-warm-gray/60 flex items-center justify-between gap-3"
+                className="p-4 bg-charcoal-deep border-3 border-charcoal-text text-warm-cream shadow-[5px_5px_0px_#000] flex flex-col sm:flex-row items-center justify-between gap-4"
                 style={{ borderRadius: "var(--radius-input)" }}
               >
-                <div className="text-[11px] font-bold text-charcoal-text/80 max-w-[200px] leading-relaxed">
-                  {language === "en" ? "Log in or Sign up to save ELO score & enter the Leaderboard." : "Masuk atau Daftar untuk menyimpan skor ELO & masuk Papan Peringkat."}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">Unregistered Node</span>
+                  <div className="text-xs font-bold text-warm-cream/80 max-w-[280px] leading-relaxed">
+                    {language === "en" ? "Log in or Sign up to save ELO score & enter the Leaderboard." : "Masuk atau Daftar untuk menyimpan skor ELO & masuk Papan Peringkat."}
+                  </div>
                 </div>
-                <div className="flex gap-1.5 shrink-0">
+                <div className="flex gap-2 shrink-0 w-full sm:w-auto">
                   <button
                     onClick={() => openAuth("login")}
-                    className="btn-primary"
-                    style={{ padding: "6px 12px", fontSize: "11px", whiteSpace: "nowrap" }}
+                    className="chunky-press btn-primary py-2 px-4 text-xs font-extrabold flex-1 sm:flex-none border-2 border-charcoal-text"
+                    style={{ whiteSpace: "nowrap", height: "fit-content", boxShadow: "2px 2px 0px #000" }}
                   >
                     {language === "en" ? "Log In" : "Masuk"}
                   </button>
                   <button
                     onClick={() => openAuth("register")}
-                    className="btn-white"
-                    style={{ padding: "6px 12px", fontSize: "11px", whiteSpace: "nowrap" }}
+                    className="chunky-press btn-white py-2 px-4 text-xs font-extrabold flex-1 sm:flex-none border-2 border-charcoal-text"
+                    style={{ whiteSpace: "nowrap", height: "fit-content", boxShadow: "2px 2px 0px #000" }}
                   >
                     {language === "en" ? "Sign Up" : "Daftar"}
                   </button>
@@ -1216,47 +1263,60 @@ export default function HomePage() {
                 {/* Tab: Leaderboard */}
                 {activeTab === "leaderboard" && (
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span style={{ fontSize: 20 }}>🏆</span>
-                      <h3 className="font-extrabold text-charcoal-text" style={{ fontSize: "15px" }}>
-                        {language === "en" ? "Global ELO Rankings" : "Peringkat ELO Global"}
-                      </h3>
+                    <div className="flex items-center justify-between border-b border-charcoal-text/10 pb-2 mb-1">
+                      <div className="flex items-center gap-2">
+                        <span style={{ fontSize: 16 }}>🏆</span>
+                        <h3 className="font-black text-charcoal-text uppercase tracking-tight" style={{ fontSize: "14px" }}>
+                          {language === "en" ? "Global Driver Standings" : "Klasemen Global Pembalap"}
+                        </h3>
+                      </div>
+                      <span className="text-[10px] font-mono font-black text-charcoal-text/50 uppercase">Session ELO</span>
                     </div>
 
                     {leaderboardLoading ? (
-                      <div className="flex justify-center py-8 text-charcoal-text/60 text-xs">
-                        {language === "en" ? "Loading rankings..." : "Memuat peringkat..."}
+                      <div className="flex items-center justify-center py-8 text-charcoal-text/60 text-xs font-bold uppercase tracking-wider animate-pulse">
+                        {language === "en" ? "Loading standings..." : "Memuat klasemen..."}
                       </div>
                     ) : leaderboard.length === 0 ? (
-                      <div className="text-center py-8 text-charcoal-text/60 text-xs">
-                        {language === "en" ? "No ranking data yet." : "Belum ada data peringkat."}
+                      <div className="text-center py-8 text-charcoal-text/60 text-xs font-bold uppercase">
+                        {language === "en" ? "No data available." : "Data tidak tersedia."}
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
+                      <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
                         {leaderboard.map((entry, index) => {
-                          let medal = "";
-                          if (index === 0) medal = "🥇";
-                          else if (index === 1) medal = "🥈";
-                          else if (index === 2) medal = "🥉";
+                          const isGold = index === 0;
+                          const isSilver = index === 1;
+                          const isBronze = index === 2;
+
+                          let medalBg = "bg-light-beige";
+                          if (isGold) {
+                            medalBg = "bg-lime-accent/20";
+                          } else if (isSilver) {
+                            medalBg = "bg-warm-gray/30";
+                          } else if (isBronze) {
+                            medalBg = "bg-burnt-orange/20";
+                          }
 
                           return (
                             <div
                               key={entry.username}
-                              className="flex items-center justify-between border-b border-warm-gray/30 pb-2 last:border-0"
-                              style={{ fontSize: "13px" }}
+                              className={`flex items-center justify-between border-2 border-charcoal-text p-2 rounded-lg ${medalBg}`}
+                              style={{ fontSize: "13px", boxShadow: "2px 2px 0px #000" }}
                             >
-                              <div className="flex items-center gap-2">
-                                <span className="w-5 font-bold text-charcoal-text/60 text-xs">{medal || `${index + 1}`}</span>
+                              <div className="flex items-center gap-2.5">
+                                <span className="w-5 h-5 flex items-center justify-center font-black text-xs font-mono text-charcoal-text/60">
+                                  #{index + 1}
+                                </span>
                                 <Link
                                   href={`/profile/${entry.username}`}
-                                  className="font-bold text-charcoal-text hover:text-lime-deep hover:underline cursor-pointer transition-colors"
+                                  className="font-extrabold text-charcoal-text hover:text-lime-deep hover:underline cursor-pointer transition-colors"
                                 >
                                   {entry.username}
                                 </Link>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className="text-charcoal-text/70 text-xs">{entry.wins} {language === "en" ? "Wins" : "Win"}</span>
-                                <span className="font-bold text-charcoal-text bg-lime-accent/70 px-2 py-0.5 rounded text-xs">
+                                <span className="text-charcoal-text/70 text-[11px] font-bold">{entry.wins} W</span>
+                                <span className="font-black text-charcoal-text bg-lime-accent border border-charcoal-text px-2 py-0.5 rounded text-xs shadow-[1.5px_1.5px_0px_#000]">
                                   {entry.elo} ELO
                                 </span>
                               </div>

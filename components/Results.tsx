@@ -154,77 +154,83 @@ export default function Results({
       <div className="flex w-full max-w-[820px] flex-col gap-6">
         {/* ====== Header ====== */}
         <header
-          className="chunky-lg flex flex-col gap-3 bg-pure-white p-6 text-charcoal-text"
+          className="relative overflow-hidden flex flex-col gap-4 bg-charcoal-deep text-warm-cream border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
           style={{ borderRadius: "var(--radius-input)" }}
         >
-          <span
-            className="font-bold uppercase text-charcoal-text/60"
-            style={{ fontSize: "12px", letterSpacing: "0.6px" }}
-          >
-            {t.resultsRoom}{room.id}{room.isMatchmaking ? (language === "en" ? " • Ranked Matchmaking (ELO)" : " • Ranked Matchmaking (ELO)") : ""}
-          </span>
+          {/* Checkered Racing Stripe */}
+          <div className="h-4 w-full bg-charcoal-text border-b-2 border-charcoal-text overflow-hidden flex" aria-hidden="true">
+            {Array.from({ length: 40 }).map((_, i) => (
+              <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+            ))}
+          </div>
 
-          {winner ? (
-            <>
-              <h1
-                className="flex flex-wrap items-baseline gap-2 font-extrabold text-charcoal-text"
-                style={{
-                  fontSize: "var(--text-heading-lg)",
-                  lineHeight: "var(--leading-heading-lg)",
-                }}
-              >
-                <span aria-hidden>🏆</span>
-                <span>{winner.player.username}</span>
-                <span className="font-extrabold text-charcoal-text">
-                  {t.wins}
-                </span>
-              </h1>
-              <p
-                className="text-charcoal-text/80"
-                style={{ fontSize: "var(--text-body)" }}
-              >
-                {t.finishedIn
-                  .replace("{time}", formatTime(winner.finishTimeSec ?? 0))
-                  .replace("{clicks}", String(winner.steps))}
-              </p>
-            </>
-          ) : (
-            <>
-              <h1
-                className="font-extrabold text-charcoal-text"
-                style={{
-                  fontSize: "var(--text-heading-lg)",
-                  lineHeight: "var(--leading-heading-lg)",
-                }}
-              >
-                {t.allSurrendered}
-              </h1>
-              <p
-                className="text-charcoal-text/80"
-                style={{ fontSize: "var(--text-body)" }}
-              >
-                {t.noWinner}
-              </p>
-            </>
-          )}
+          <div className="flex flex-col gap-3 px-6 pb-6 pt-2">
+            <span
+              className="font-black uppercase text-playdate-yellow/80 tracking-wider text-[11px]"
+            >
+              🏁 {t.resultsRoom}{room.id}{room.isMatchmaking ? (language === "en" ? " • Ranked Matchmaking (ELO)" : " • Ranked Matchmaking (ELO)") : ""}
+            </span>
 
-          <div
-            className="mt-2 flex flex-wrap items-center gap-2 text-charcoal-text/70"
-            style={{ fontSize: "14px" }}
-          >
-            <span
-              className="chunky-sm bg-paper-white px-2 py-1 font-bold text-charcoal-text"
-              style={{ borderRadius: "var(--radius-button)" }}
+            {winner ? (
+              <>
+                <h1
+                  className="flex flex-wrap items-baseline gap-2 font-black text-lime-accent"
+                  style={{
+                    fontSize: "var(--text-heading-lg)",
+                    lineHeight: "var(--leading-heading-lg)",
+                  }}
+                >
+                  <span aria-hidden="true">🏆</span>
+                  <span className="text-warm-cream">{winner.player.username}</span>
+                  <span className="font-extrabold text-lime-accent text-lg sm:text-xl uppercase tracking-wider">
+                    {t.wins}
+                  </span>
+                </h1>
+                <p
+                  className="text-warm-cream/80 text-sm font-medium"
+                >
+                  {t.finishedIn
+                    .replace("{time}", formatTime(winner.finishTimeSec ?? 0))
+                    .replace("{clicks}", String(winner.steps))}
+                </p>
+              </>
+            ) : (
+              <>
+                <h1
+                  className="font-black text-burnt-orange"
+                  style={{
+                    fontSize: "var(--text-heading-lg)",
+                    lineHeight: "var(--leading-heading-lg)",
+                  }}
+                >
+                  {t.allSurrendered}
+                </h1>
+                <p
+                  className="text-warm-cream/80 text-sm font-medium"
+                >
+                  {t.noWinner}
+                </p>
+              </>
+            )}
+
+            <div
+              className="mt-2 flex flex-wrap items-center gap-2"
+              style={{ fontSize: "12px" }}
             >
-              {room.startArticle}
-            </span>
-            <span aria-hidden>→</span>
-            <span
-              className="chunky-sm bg-playdate-yellow px-2 py-1 font-bold text-charcoal-text"
-              style={{ borderRadius: "var(--radius-button)" }}
-            >
-              {room.endArticle}
-            </span>
+              <span
+                className="chunky-sm bg-charcoal-text border border-warm-gray/25 px-2.5 py-1 font-bold text-warm-cream"
+                style={{ borderRadius: "var(--radius-button)" }}
+              >
+                {room.startArticle}
+              </span>
+              <span aria-hidden="true" className="text-lime-accent font-black">➔</span>
+              <span
+                className="chunky-sm bg-charcoal-text border border-lime-accent/25 px-2.5 py-1 font-bold text-lime-accent"
+                style={{ borderRadius: "var(--radius-button)" }}
+              >
+                {room.endArticle}
+              </span>
+            </div>
           </div>
         </header>
 
@@ -235,20 +241,23 @@ export default function Results({
 
         {/* ====== Leaderboard penuh ====== */}
         <section
-          className="chunky flex flex-col gap-3 bg-pure-white p-6"
+          className="chunky flex flex-col gap-4 bg-pure-white p-6 border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
           style={{ borderRadius: "var(--radius-input)" }}
         >
-          <h2
-            className="font-extrabold text-charcoal-text"
-            style={{
-              fontSize: "var(--text-heading)",
-              lineHeight: "var(--leading-heading)",
-            }}
-          >
-            {t.standings}
-          </h2>
+          <div className="flex items-center justify-between border-b-2 border-charcoal-text/10 pb-2.5">
+            <h2
+              className="font-black text-charcoal-text uppercase tracking-tight"
+              style={{
+                fontSize: "var(--text-heading)",
+                lineHeight: "var(--leading-heading)",
+              }}
+            >
+              🏁 {t.standings}
+            </h2>
+            <span className="text-xs uppercase font-mono font-black text-charcoal-text/50">Classification</span>
+          </div>
 
-          <ol className="flex flex-col gap-2">
+          <ol className="flex flex-col gap-3">
             {ranked.map((row, index) => (
               <LeaderboardRow
                 key={row.player.clientId}
@@ -265,35 +274,36 @@ export default function Results({
 
         {/* ====== Rute ====== */}
         <section
-          className="chunky flex flex-col gap-3 bg-pure-white p-6"
+          className="chunky flex flex-col gap-4 bg-pure-white p-6 border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
           style={{ borderRadius: "var(--radius-input)" }}
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-charcoal-text/10 pb-2.5">
             <h2
-              className="font-extrabold text-charcoal-text"
+              className="font-black text-charcoal-text uppercase tracking-tight"
               style={{
                 fontSize: "var(--text-heading)",
                 lineHeight: "var(--leading-heading)",
               }}
             >
-              {t.playerRoutes}
+              📊 {t.playerRoutes}
             </h2>
             <button
               type="button"
               onClick={() => setShowReplay(true)}
-              className="bg-charcoal-text text-warm-cream"
+              className="chunky-press bg-charcoal-text text-warm-cream border-2 border-charcoal-text active:translate-y-0"
               style={{
                 borderRadius: "var(--radius-button)",
-                padding: "9px 14px",
-                fontWeight: 700,
-                fontSize: "14px",
+                padding: "8px 16px",
+                fontWeight: 800,
+                fontSize: "13px",
+                boxShadow: "3px 3px 0px #000"
               }}
             >
               {t.compareRoutes}
             </button>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {ranked.map((row) => (
               <RouteAccordion
                 key={row.player.clientId}
@@ -316,7 +326,7 @@ export default function Results({
           {(playAgainError || matchmakingError) && (
             <div
               role="alert"
-              className="bg-charcoal-text text-pure-white"
+              className="bg-charcoal-text text-pure-white border-2 border-charcoal-text"
               style={{
                 borderRadius: "var(--radius-input)",
                 padding: "12px 16px",
@@ -333,7 +343,10 @@ export default function Results({
                 type="button"
                 onClick={handleMatchmakingAgain}
                 disabled={matchmakingLoading || leaveLoading}
-                className="btn-primary"
+                className="chunky-press btn-primary text-base font-black border-2 border-charcoal-text py-4"
+                style={{
+                  boxShadow: "4px 4px 0px #000"
+                }}
               >
                 {matchmakingLoading ? t.findingNewOpponent : t.findOpponentAgain}
               </button>
@@ -342,7 +355,10 @@ export default function Results({
                 type="button"
                 onClick={handleLeave}
                 disabled={leaveLoading || matchmakingLoading}
-                className="btn-white"
+                className="chunky-press btn-white text-base font-black border-2 border-charcoal-text py-4"
+                style={{
+                  boxShadow: "4px 4px 0px #000"
+                }}
               >
                 {leaveLoading ? t.leaving : t.leaveToHomepage}
               </button>
@@ -354,25 +370,29 @@ export default function Results({
                   type="button"
                   onClick={handlePlayAgain}
                   disabled={playAgainLoading || leaveLoading}
-                  className="btn-primary"
+                  className="chunky-press btn-primary text-base font-black border-2 border-charcoal-text py-4"
+                  style={{
+                    boxShadow: "4px 4px 0px #000"
+                  }}
                 >
                   {playAgainLoading ? t.resettingRoom : t.playAgain}
                 </button>
               ) : (
                 <div
-                  className="chunky flex items-center justify-center gap-3 bg-pure-white text-charcoal-text"
+                  className="chunky flex items-center justify-center gap-3 bg-pure-white text-charcoal-text border-2 border-charcoal-text"
                   style={{
                     borderRadius: "var(--radius-input)",
                     padding: "16px 20px",
                     fontSize: "var(--text-body)",
+                    boxShadow: "3px 3px 0px #000"
                   }}
                 >
                   <span
                     className="bg-crank-violet pd-pulse inline-block shrink-0 rounded-full"
                     style={{ width: 10, height: 10 }}
-                    aria-hidden
+                    aria-hidden="true"
                   />
-                  <span>{t.waitingHostNext}</span>
+                  <span className="font-bold">{t.waitingHostNext}</span>
                 </div>
               )}
 
@@ -380,7 +400,10 @@ export default function Results({
                 type="button"
                 onClick={handleLeave}
                 disabled={leaveLoading || playAgainLoading}
-                className="btn-white"
+                className="chunky-press btn-white text-base font-black border-2 border-charcoal-text py-4"
+                style={{
+                  boxShadow: "4px 4px 0px #000"
+                }}
               >
                 {leaveLoading ? t.leaving : t.leaveRoom}
               </button>
@@ -391,16 +414,13 @@ export default function Results({
             href="https://saweria.co/WikiRace"
             target="_blank"
             rel="noopener noreferrer"
-            className="chunky-press flex items-center justify-center gap-2 bg-lime-accent text-charcoal-text font-bold transition hover:bg-lime-deep mt-2"
+            className="chunky-press flex items-center justify-center gap-2 bg-lime-accent text-charcoal-text font-black transition hover:bg-lime-deep mt-2 border-2 border-charcoal-text py-3.5 text-base"
             style={{
-              border: "1px solid var(--color-charcoal-text)",
               borderRadius: "var(--radius-button)",
-              padding: "12px 16px",
-              fontSize: "14px",
-              boxShadow: "var(--shadow-raised)",
+              boxShadow: "4px 4px 0px #000",
             }}
           >
-            {t.supportServer}
+            💖 {t.supportServer}
           </a>
         </section>
       </div>
@@ -413,6 +433,48 @@ export default function Results({
         />
       )}
     </main>
+  );
+}
+
+// ============================================================
+// ELO RPM Speedometer Bar
+// ============================================================
+
+function EloRpmBar({ elo }: { elo: number }) {
+  // Map ELO range 800 to 1800 into 10 segments
+  const minElo = 800;
+  const maxElo = 1800;
+  const segmentsCount = 10;
+  const activeSegments = Math.max(
+    1,
+    Math.min(
+      segmentsCount,
+      Math.round(((elo - minElo) / (maxElo - minElo)) * segmentsCount)
+    )
+  );
+
+  return (
+    <div className="flex gap-0.5 items-center mt-1" title={`${elo} ELO`}>
+      {Array.from({ length: segmentsCount }).map((_, idx) => {
+        const isActive = idx < activeSegments;
+        let colorClass = "bg-charcoal-text/10 dark:bg-warm-cream/10";
+        if (isActive) {
+          if (idx < 4) {
+            colorClass = "bg-lime-soft"; // low ELO: green-ish
+          } else if (idx < 8) {
+            colorClass = "bg-lime-accent"; // medium ELO: bright lime
+          } else {
+            colorClass = "bg-burnt-orange animate-pulse"; // high ELO: orange/redline RPM
+          }
+        }
+        return (
+          <div
+            key={idx}
+            className={`w-2.5 h-1.5 rounded-sm ${colorClass}`}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -434,19 +496,24 @@ function Podium({
 
   return (
     <section
-      className="chunky flex items-end justify-center gap-3 bg-pure-white px-4 py-6 sm:gap-4 sm:px-6"
+      className="flex items-end justify-center gap-3 bg-charcoal-deep text-warm-cream px-4 py-6 sm:gap-4 sm:px-6 border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
       style={{ borderRadius: "var(--radius-input)" }}
     >
       {arranged.map((row, idx) => {
         if (!row) return <div key={idx} className="flex-1" />;
 
         const place = idx === 1 ? 1 : idx === 0 ? 2 : 3;
-        const heights = { 1: 130, 2: 100, 3: 80 } as const;
+        const heights = { 1: "130px", 2: "105px", 3: "85px" } as const;
         const medals = { 1: "🥇", 2: "🥈", 3: "🥉" } as const;
-        const medalBgs = {
-          1: "var(--color-medal-gold)",
-          2: "var(--color-medal-silver)",
-          3: "var(--color-medal-bronze)",
+        const neonBorders = {
+          1: "border-3 border-lime-accent shadow-[0px_0px_10px_rgba(210,255,0,0.25)]",
+          2: "border-2 border-warm-gray/40",
+          3: "border-2 border-burnt-orange/40",
+        } as const;
+        const placeColors = {
+          1: "text-lime-accent",
+          2: "text-warm-gray",
+          3: "text-burnt-orange",
         } as const;
 
         const isMe = row.player.clientId === currentClientId;
@@ -460,18 +527,19 @@ function Podium({
             <span
               className="chunky-sm flex items-center justify-center font-extrabold uppercase text-pure-white"
               style={{
-                width: 40,
-                height: 40,
+                width: 38,
+                height: 38,
                 borderRadius: "9999px",
                 background: color,
-                fontSize: 14,
+                fontSize: 13,
+                border: "2px solid var(--color-charcoal-text)"
               }}
-              aria-hidden
+              aria-hidden="true"
             >
               {initials(row.player.username)}
             </span>
             <div
-              className="text-center font-extrabold text-charcoal-text"
+              className="text-center font-extrabold text-warm-cream"
               style={{ fontSize: "12px", lineHeight: 1.1 }}
             >
               <span className="block truncate max-w-[80px] sm:max-w-[160px]">
@@ -479,10 +547,10 @@ function Podium({
               </span>
               {isMe && (
                 <span
-                  className="text-charcoal-text/60 block"
+                  className="text-lime-accent block"
                   style={{
                     fontSize: "10px",
-                    letterSpacing: "0.3px",
+                    fontWeight: 900,
                   }}
                 >
                   {language === "en" ? "(you)" : "(kamu)"}
@@ -490,53 +558,54 @@ function Podium({
               )}
               {row.player.elo !== undefined && (
                 <div
-                  className="font-bold flex items-center justify-center gap-1 mt-0.5"
-                  style={{ fontSize: "11px" }}
+                  className="font-mono flex flex-col items-center justify-center mt-0.5"
+                  style={{ fontSize: "10px" }}
                 >
-                  <span className="text-charcoal-text/75">{row.player.elo} ELO</span>
-                  {row.player.eloChange !== undefined && row.player.eloChange !== 0 && (
-                    <span
-                      className="font-extrabold"
-                      style={{
-                        color: row.player.eloChange > 0 ? "#10b981" : "#f43f5e",
-                      }}
-                    >
-                      {row.player.eloChange > 0 ? `+${row.player.eloChange}` : row.player.eloChange}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1 font-bold text-warm-cream/80">
+                    <span>{row.player.elo} ELO</span>
+                    {row.player.eloChange !== undefined && row.player.eloChange !== 0 && (
+                      <span
+                        className="font-extrabold"
+                        style={{
+                          color: row.player.eloChange > 0 ? "#10b981" : "#f43f5e",
+                        }}
+                      >
+                        {row.player.eloChange > 0 ? `+${row.player.eloChange}` : row.player.eloChange}
+                      </span>
+                    )}
+                  </div>
+                  <EloRpmBar elo={row.player.elo} />
                 </div>
               )}
             </div>
             <div
-              className="chunky-sm flex w-full flex-col items-center justify-end gap-1 px-2 py-2 text-charcoal-text"
+              className={`flex w-full flex-col items-center justify-end gap-1 px-2 py-3 bg-charcoal-text rounded-xl relative ${neonBorders[place]}`}
               style={{
-                background: medalBgs[place],
-                borderRadius: "var(--radius-input)",
                 minHeight: heights[place],
               }}
             >
-              <span style={{ fontSize: 26 }} aria-hidden>
+              <span style={{ fontSize: 26 }} aria-hidden="true">
                 {medals[place]}
               </span>
               <span
-                className="font-extrabold tabular-nums"
-                style={{ fontSize: 18 }}
+                className={`font-black tabular-nums ${placeColors[place]}`}
+                style={{ fontSize: 20 }}
               >
-                #{place}
+                P{place}
               </span>
               {row.finishTimeSec !== undefined ? (
                 <span
-                  className="font-bold tabular-nums text-charcoal-text/80"
-                  style={{ fontSize: 12 }}
+                  className="font-mono font-bold tabular-nums text-warm-cream/70"
+                  style={{ fontSize: 11 }}
                 >
-                  {formatTime(row.finishTimeSec)}
+                  ⏱️ {formatTime(row.finishTimeSec)}
                 </span>
               ) : (
                 <span
-                  className="font-bold text-charcoal-text/80"
-                  style={{ fontSize: 12 }}
+                  className="font-mono font-bold text-warm-cream/70"
+                  style={{ fontSize: 11 }}
                 >
-                  {row.steps} {language === "en" ? "clicks" : "klik"}
+                  ⚡ {row.steps} {language === "en" ? "CLK" : "KLK"}
                 </span>
               )}
             </div>
@@ -591,7 +660,7 @@ function LeaderboardRow({
 
   return (
     <li
-      className="flex items-center gap-3 border border-warm-gray p-3"
+      className="flex items-center gap-3 border-2 border-charcoal-text p-3 transition-transform duration-200 hover:-translate-y-0.5"
       style={{
         borderRadius: "var(--radius-input)",
         background: isWinner
@@ -599,10 +668,11 @@ function LeaderboardRow({
           : isMe
             ? "var(--color-light-beige)"
             : "var(--color-warm-cream)",
+        boxShadow: "3px 3px 0px #000"
       }}
     >
       <span
-        className="chunky-sm flex shrink-0 items-center justify-center font-extrabold tabular-nums text-charcoal-text"
+        className="chunky-sm flex shrink-0 items-center justify-center font-extrabold tabular-nums text-charcoal-text border border-charcoal-text/10"
         style={{
           width: 32,
           height: 32,
@@ -623,15 +693,16 @@ function LeaderboardRow({
           borderRadius: "9999px",
           background: color,
           fontSize: 13,
+          border: "1px solid var(--color-charcoal-text)/10"
         }}
-        aria-hidden
+        aria-hidden="true"
       >
         {initials(player.username)}
       </span>
 
       <div className="min-w-0 flex-1">
         <div
-          className="flex items-center gap-2 font-extrabold text-charcoal-text"
+          className="flex items-center gap-2 font-extrabold text-charcoal-text animate-fade-in"
           style={{ fontSize: "var(--text-body)" }}
         >
           <span className="truncate">
@@ -640,48 +711,42 @@ function LeaderboardRow({
           </span>
           {isMe && (
             <span
-              className="chunky-sm bg-pure-white text-charcoal-text font-bold"
-              style={{
-                fontSize: "10px",
-                padding: "1px 6px",
-                borderRadius: "var(--radius-button)",
-                letterSpacing: "0.4px",
-              }}
+              className="bg-charcoal-text text-warm-cream font-black text-[9px] px-1.5 py-0.5 rounded"
             >
               {language === "en" ? "YOU" : "KAMU"}
             </span>
           )}
           {player.isHost && (
             <span
-              className="text-charcoal-text/70 font-bold"
-              style={{ fontSize: "10px", letterSpacing: "0.4px" }}
+              className="text-charcoal-text/75 font-bold uppercase tracking-wider text-[9px] bg-charcoal-text/10 px-1 rounded"
             >
               HOST
             </span>
           )}
         </div>
-        <div className="text-charcoal-text/80 flex flex-wrap items-center gap-x-2" style={{ fontSize: "14px" }}>
-          <span className="tabular-nums">{steps} {language === "en" ? "clicks" : "klik"}</span>
+        <div className="text-charcoal-text/80 flex flex-wrap items-center gap-x-2 font-mono text-xs mt-0.5">
+          <span className="tabular-nums font-bold">{steps} {language === "en" ? "clicks" : "klik"}</span>
           {finishTimeSec !== undefined && (
             <>
               <span className="opacity-50">·</span>
-              <span className="tabular-nums">{formatTime(finishTimeSec)}</span>
+              <span className="tabular-nums font-bold">{formatTime(finishTimeSec)}</span>
             </>
           )}
           {player.elo !== undefined && (
             <>
               <span className="opacity-50">·</span>
-              <span className="font-bold text-charcoal-text/80">
+              <span className="font-extrabold text-charcoal-text">
                 {player.elo} ELO
               </span>
               {player.eloChange !== undefined && player.eloChange !== 0 && (
                 <span
-                  className="font-extrabold"
-                  style={{
-                    color: player.eloChange > 0 ? "#10b981" : "#f43f5e",
-                  }}
+                  className={`font-black text-[10px] px-1 rounded ${
+                    player.eloChange > 0 
+                      ? "bg-[#10b981]/15 text-[#10b981]" 
+                      : "bg-[#f43f5e]/15 text-[#f43f5e]"
+                  }`}
                 >
-                  ({player.eloChange > 0 ? `+${player.eloChange}` : player.eloChange})
+                  {player.eloChange > 0 ? `▲ +${player.eloChange}` : `▼ ${player.eloChange}`}
                 </span>
               )}
             </>
@@ -697,10 +762,10 @@ function LeaderboardRow({
       </div>
 
       <span
-        className="chunky-sm font-bold text-charcoal-text"
+        className="chunky-sm font-bold text-charcoal-text border border-charcoal-text/10"
         style={{
           background: badgeBg,
-          padding: "2px 8px",
+          padding: "2.5px 8px",
           borderRadius: "var(--radius-button)",
           fontSize: "11px",
           letterSpacing: "0.4px",
@@ -743,7 +808,7 @@ function RouteAccordion({
 
   return (
     <details
-      className="border border-warm-gray bg-warm-cream"
+      className="border-2 border-charcoal-text bg-charcoal-deep text-warm-cream shadow-[3px_3px_0px_#000]"
       style={{ borderRadius: "var(--radius-input)" }}
       open={openByDefault}
     >
@@ -759,15 +824,16 @@ function RouteAccordion({
             borderRadius: "9999px",
             background: color,
             fontSize: 12,
+            border: "1px solid var(--color-charcoal-text)"
           }}
-          aria-hidden
+          aria-hidden="true"
         >
           {initials(player.username)}
         </span>
 
         <div className="min-w-0 flex-1">
           <div
-            className="flex items-center gap-2 font-extrabold text-charcoal-text"
+            className="flex items-center gap-2 font-black text-warm-cream"
             style={{ fontSize: "var(--text-body)" }}
           >
             <span className="truncate">
@@ -776,14 +842,13 @@ function RouteAccordion({
             </span>
             {isMe && (
               <span
-                className="text-charcoal-text/70 font-bold"
-                style={{ fontSize: "10px", letterSpacing: "0.4px" }}
+                className="bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded uppercase"
               >
                 {language === "en" ? "YOU" : "KAMU"}
               </span>
             )}
           </div>
-          <div className="text-charcoal-text/70 flex flex-wrap items-center gap-x-2" style={{ fontSize: "13px" }}>
+          <div className="text-warm-cream/70 flex flex-wrap items-center gap-x-2 font-mono text-[11px] mt-0.5">
             <span className="tabular-nums">{steps} {language === "en" ? "clicks" : "klik"}</span>
             {finishTimeSec !== undefined && (
               <>
@@ -796,20 +861,20 @@ function RouteAccordion({
             {surrendered && (
               <>
                 <span className="opacity-50">·</span>
-                <span>{language === "en" ? "surrendered" : "menyerah"}</span>
+                <span className="text-burnt-orange font-bold uppercase text-[10px]">{language === "en" ? "surrendered" : "menyerah"}</span>
               </>
             )}
             {player.elo !== undefined && (
               <>
                 <span className="opacity-50">·</span>
-                <span className="font-bold text-charcoal-text/70">
+                <span className="font-bold text-playdate-yellow">
                   {player.elo} ELO
                 </span>
                 {player.eloChange !== undefined && player.eloChange !== 0 && (
                   <span
                     className="font-extrabold"
                     style={{
-                      color: player.eloChange > 0 ? "#10b981" : "#f43f5e",
+                      color: player.eloChange > 0 ? "#D2FF00" : "#FF6B00",
                     }}
                   >
                     ({player.eloChange > 0 ? `+${player.eloChange}` : player.eloChange})
@@ -827,32 +892,32 @@ function RouteAccordion({
           )}
         </div>
         <span
-          className="text-charcoal-text/60 transition-transform"
+          className="text-warm-cream/60 transition-transform"
           style={{
             fontSize: "16px",
           }}
-          aria-hidden
+          aria-hidden="true"
         >
           ▾
         </span>
       </summary>
 
-      <div className="border-t border-parchment px-4 py-3">
+      <div className="border-t border-charcoal-text/50 bg-charcoal-text/30 px-4 py-3">
         {route.length === 0 ? (
-          <p className="text-charcoal-text/70" style={{ fontSize: "14px" }}>
+          <p className="text-warm-cream/60 font-mono text-xs">
             {language === "en" ? "Player did not open any articles." : "Pemain tidak sempat membuka artikel apa pun."}
           </p>
         ) : (
-          <ol className="flex flex-wrap items-center gap-x-1 gap-y-2">
+          <ol className="flex flex-wrap items-center gap-x-1 gap-y-2 font-mono text-xs">
             {route.map((step, i) => {
               const isLast = i === route.length - 1;
               const isStart = i === 0;
               const isFinishStep = finished && isLast;
               const showStopHere = isLast && !finished;
 
-              let bg = "var(--color-paper-white)";
-              if (isStart) bg = "var(--color-pure-white)";
-              if (isFinishStep) bg = "var(--color-playdate-yellow)";
+              let bg = "bg-charcoal-text text-warm-cream border border-charcoal-gray/30";
+              if (isStart) bg = "bg-charcoal-text border-2 border-lime-accent/50 text-warm-cream";
+              if (isFinishStep) bg = "bg-lime-accent text-charcoal-text border-2 border-charcoal-text font-black";
 
               return (
                 <li
@@ -860,34 +925,31 @@ function RouteAccordion({
                   className="flex items-center gap-1"
                 >
                   <span
-                    className="inline-flex items-baseline gap-1 border border-warm-gray text-charcoal-text"
+                    className={`inline-flex items-baseline gap-1.5 ${bg}`}
                     style={{
-                      background: bg,
                       padding: "3px 8px",
                       borderRadius: "var(--radius-button)",
-                      fontSize: "13px",
+                      fontSize: "12px",
                     }}
                   >
                     <span className="font-bold">{step.article}</span>
-                    <span className="text-charcoal-text/60 tabular-nums">
+                    <span className="opacity-65 text-[10px] tabular-nums">
                       ({formatTime(step.timestamp)})
                     </span>
                   </span>
                   {showStopHere && (
                     <span
-                      className="text-charcoal-text/70 italic"
-                      style={{ fontSize: "12px" }}
+                      className="text-burnt-orange font-bold text-[10px] uppercase ml-1"
                     >
-                      {language === "en" ? "(stopped here)" : "(berhenti di sini)"}
+                      {language === "en" ? "(stopped)" : "(berhenti)"}
                     </span>
                   )}
                   {!isLast && (
                     <span
-                      className="text-charcoal-text/50 px-1"
-                      style={{ fontSize: "14px" }}
-                      aria-hidden
+                      className="text-lime-accent px-1 font-black text-sm"
+                      aria-hidden="true"
                     >
-                      →
+                      ➔
                     </span>
                   )}
                 </li>
