@@ -330,31 +330,37 @@ Mainkan gratis di: https://wikiraceid.web.id`;
       {/* VICTORY SCREEN PREMIUM OVERLAY */}
       {finished && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/85 px-4 overflow-y-auto animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/90 px-4 overflow-y-auto animate-fade-in"
           style={{ backdropFilter: "blur(10px)" }}
         >
           <div
-            className="w-full max-w-[520px] bg-paper-white p-6 sm:p-8 my-8 text-charcoal-text shadow-floating animate-scale-up"
+            className="relative overflow-hidden w-full max-w-[530px] bg-charcoal-deep p-6 sm:p-8 my-8 text-warm-cream border-3 border-charcoal-text shadow-[6px_6px_0px_#000] animate-scale-up"
             style={{
-              borderRadius: "var(--radius-rounded)",
-              border: "3px solid var(--color-charcoal-text)",
+              borderRadius: "var(--radius-input)",
             }}
           >
-            <div className="text-center mb-6">
+            {/* Checkered Racing Stripe */}
+            <div className="absolute top-0 left-0 right-0 h-2.5 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
+              {Array.from({ length: 30 }).map((_, i) => (
+                <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+              ))}
+            </div>
+
+            <div className="text-center mb-6 mt-3">
               <span className="text-5xl" aria-hidden>🏆</span>
               <h2
-                className="mt-3 font-black text-charcoal-text uppercase tracking-tight"
+                className="mt-3 font-black text-lime-accent uppercase tracking-tight"
                 style={{ fontSize: "clamp(24px, 6vw, 36px)", lineHeight: 1.1 }}
               >
                 Balapan Selesai!
               </h2>
-              <p className="text-lime-soft font-black text-sm uppercase tracking-wider mt-1">
+              <p className="text-burnt-orange font-black text-sm uppercase tracking-wider mt-1.5 animate-pulse">
                 {getDriverRating()}
               </p>
             </div>
 
             {isDaily && (
-              <div className="mb-6 p-4 bg-charcoal-text text-warm-cream border-2 border-charcoal-text shadow-[3px_3px_0px_#000] rounded-xl relative overflow-hidden text-left">
+              <div className="mb-6 p-4 bg-charcoal-text text-warm-cream border-2 border-lime-accent/30 shadow-[3px_3px_0px_#000] rounded-xl relative overflow-hidden text-left font-mono">
                 <div className="absolute top-0 right-0 h-full w-1.5 bg-gradient-to-b from-lime-accent to-lime-deep opacity-80" />
                 <div className="flex items-center justify-between">
                   <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-2.5 py-0.5 rounded uppercase tracking-wider">
@@ -389,54 +395,54 @@ Mainkan gratis di: https://wikiraceid.web.id`;
             )}
 
             {/* Statistics Telemetry Grid */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-warm-cream p-3 text-center rounded border border-warm-gray flex flex-col justify-center">
-                <span className="text-[10px] uppercase font-bold text-charcoal-text/60">Total Clicks</span>
-                <span className="text-2xl font-black text-charcoal-text mt-0.5 tabular-nums">{clicks}</span>
-                <span className="text-[9px] text-charcoal-text/50 mt-0.5">
+            <div className="grid grid-cols-3 gap-3 mb-6 font-mono">
+              <div className="bg-charcoal-text p-3 text-center rounded-lg border border-lime-accent/15 flex flex-col justify-center shadow-[2px_2px_0px_#000]">
+                <span className="text-[9px] uppercase font-bold text-warm-cream/50">Clicks</span>
+                <span className="text-2xl font-black text-lime-accent mt-0.5 tabular-nums">{clicks}</span>
+                <span className="text-[9px] text-warm-cream/40 mt-0.5">
                   Min: {estimatedDepth === -1 ? "?" : estimatedDepth}
                 </span>
               </div>
 
-              <div className="bg-warm-cream p-3 text-center rounded border border-warm-gray flex flex-col justify-center">
-                <span className="text-[10px] uppercase font-bold text-charcoal-text/60">Total Time</span>
-                <span className="text-2xl font-black text-charcoal-text mt-0.5 tabular-nums">
+              <div className="bg-charcoal-text p-3 text-center rounded-lg border border-lime-accent/15 flex flex-col justify-center shadow-[2px_2px_0px_#000]">
+                <span className="text-[9px] uppercase font-bold text-warm-cream/50">Time</span>
+                <span className="text-2xl font-black text-lime-accent mt-0.5 tabular-nums">
                   {formatTime(elapsedSeconds)}
                 </span>
-                <span className="text-[9px] text-charcoal-text/50 mt-0.5">elapsed</span>
+                <span className="text-[9px] text-warm-cream/40 mt-0.5">elapsed</span>
               </div>
 
-              <div className="bg-warm-cream p-3 text-center rounded border border-warm-gray flex flex-col justify-center">
-                <span className="text-[10px] uppercase font-bold text-charcoal-text/60">Pace Speed</span>
-                <span className="text-2xl font-black text-charcoal-text mt-0.5 tabular-nums">
+              <div className="bg-charcoal-text p-3 text-center rounded-lg border border-lime-accent/15 flex flex-col justify-center shadow-[2px_2px_0px_#000]">
+                <span className="text-[9px] uppercase font-bold text-warm-cream/50">Pace</span>
+                <span className="text-2xl font-black text-lime-accent mt-0.5 tabular-nums">
                   {(elapsedSeconds / Math.max(clicks, 1)).toFixed(1)}s
                 </span>
-                <span className="text-[9px] text-charcoal-text/50 mt-0.5">per click</span>
+                <span className="text-[9px] text-warm-cream/40 mt-0.5">per click</span>
               </div>
             </div>
 
             {/* Visual Flow Track Map */}
-            <div className="border border-warm-gray rounded-lg p-4 bg-warm-cream/35 mb-6">
-              <span className="block text-xs font-bold text-charcoal-text/60 uppercase tracking-wide mb-2">
-                Peta Lintasan Anda ({route.length} Artikel):
+            <div className="border border-warm-cream/15 rounded-lg p-4 bg-charcoal-text mb-6 font-mono text-xs">
+              <span className="block text-[10px] font-bold text-warm-cream/60 uppercase tracking-wide mb-2">
+                📡 PATH TELEMETRY ({route.length} NODES):
               </span>
               <div className="max-h-36 overflow-y-auto text-xs scrollbar-thin">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   {route.map((art, idx) => (
                     <div key={idx} className="flex items-center">
                       <span
-                        className={`inline-flex items-center justify-center font-mono font-bold text-[10px] rounded-full w-5 h-5 shrink-0 ${
+                        className={`inline-flex items-center justify-center font-bold text-[9px] rounded-full w-4.5 h-4.5 shrink-0 ${
                           idx === 0
-                            ? "bg-charcoal-text text-warm-cream"
+                            ? "bg-warm-cream text-charcoal-text"
                             : idx === route.length - 1
                             ? "bg-lime-accent text-charcoal-text"
-                            : "bg-stone-gray/30 text-charcoal-text"
+                            : "bg-warm-cream/20 text-warm-cream"
                         }`}
                       >
                         {idx + 1}
                       </span>
-                      <span className={`ml-2 font-bold truncate ${idx === route.length - 1 ? "text-charcoal-text underline decoration-2 decoration-lime-soft font-black" : "text-charcoal-text/80"}`}>
-                        {art}
+                      <span className={`ml-2 font-bold truncate ${idx === route.length - 1 ? "text-lime-accent underline decoration-2 decoration-lime-accent/50 font-black" : "text-warm-cream/80"}`}>
+                        {art.replace(/_/g, " ")}
                       </span>
                     </div>
                   ))}
@@ -446,9 +452,9 @@ Mainkan gratis di: https://wikiraceid.web.id`;
 
             {/* Custom Toast Notification inside modal */}
             {copied && (
-              <div className="bg-charcoal-text text-lime-accent text-xs font-bold text-center py-2.5 px-4 mb-4 rounded-md animate-fade-in flex items-center justify-center gap-1.5">
+              <div className="bg-lime-accent text-charcoal-text text-xs font-black text-center py-2.5 px-4 mb-4 rounded-md animate-fade-in flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#000]">
                 <span>✓</span>
-                <span>Statistik Balapan berhasil disalin ke clipboard!</span>
+                <span>TELEMETRY STATS COPIED TO CLIPBOARD!</span>
               </div>
             )}
 
@@ -457,25 +463,24 @@ Mainkan gratis di: https://wikiraceid.web.id`;
               <button
                 type="button"
                 onClick={handleShare}
-                className="btn-primary flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2"
-                style={{ border: "2px solid var(--color-charcoal-text)" }}
+                className="chunky-press btn-primary flex-1 py-3 text-sm font-black flex items-center justify-center gap-2 border-2 border-charcoal-text shadow-[3px_3px_0px_#000]"
               >
                 <span>📤</span>
-                <span>Bagikan Rute</span>
+                <span>SHARE STATS</span>
               </button>
               <button
                 type="button"
                 onClick={handleRestart}
-                className="btn-white py-3 text-sm font-bold flex-1"
+                className="chunky-press btn-white py-3 text-sm font-black flex-1 border-2 border-charcoal-text shadow-[3px_3px_0px_#000]"
               >
-                Main Lagi
+                PLAY AGAIN
               </button>
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="btn-white py-3 text-sm font-bold flex-1"
+                className="chunky-press btn-white py-3 text-sm font-black flex-1 border-2 border-charcoal-text shadow-[3px_3px_0px_#000]"
               >
-                Home
+                HOME
               </button>
             </div>
           </div>
