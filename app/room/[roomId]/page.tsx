@@ -506,23 +506,38 @@ export default function RoomPage({ params }: RoomPageProps) {
       ? (language === "en" ? "Cannot connect to the server. Check your connection." : "Tidak bisa terhubung ke server. Periksa koneksi.")
       : fatalError;
     return (
-      <main className="dot-bg flex flex-1 items-center justify-center bg-playdate-yellow px-6 py-12">
+      <main className="dot-bg flex min-h-screen w-full flex-col items-center justify-center bg-warm-cream px-6 py-12">
         <div
-          className="chunky-lg bg-pure-white p-6 text-charcoal-text"
+          className="relative overflow-hidden p-6 bg-charcoal-deep text-warm-cream border-3 border-burnt-orange shadow-[6px_6px_0px_#000]"
           style={{
-            borderRadius: "var(--radius-input)",
-            maxWidth: 420,
+            borderRadius: "var(--radius-rounded)",
+            maxWidth: 440,
             width: "100%",
           }}
         >
-          <p style={{ fontSize: "var(--text-body)" }}>{translatedError}</p>
-          <button
-            type="button"
-            onClick={() => router.replace("/")}
-            className="btn-yellow mt-4"
-          >
-            {language === "en" ? "Back to Homepage" : "Kembali ke Beranda"}
-          </button>
+          {/* Header Checkered Line */}
+          <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+            ))}
+          </div>
+
+          <div className="flex flex-col items-center text-center gap-4 mt-3">
+            <span className="text-4xl animate-pulse">⚠️</span>
+            <span className="font-mono font-black text-xs text-burnt-orange uppercase tracking-widest">
+              SYSTEM FAULT: CONNECTION FAILURE
+            </span>
+            <p className="font-bold text-sm leading-relaxed text-warm-cream/80">
+              {translatedError}
+            </p>
+            <button
+              type="button"
+              onClick={() => router.replace("/")}
+              className="chunky-press w-full bg-burnt-orange text-warm-cream font-mono font-black text-xs uppercase py-3 border-2 border-charcoal-text shadow-[3px_3px_0px_#000] rounded-xl hover:bg-[#d65a00]"
+            >
+              ← {language === "en" ? "Abort & Eject" : "Batalkan & Kembali"}
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -530,25 +545,40 @@ export default function RoomPage({ params }: RoomPageProps) {
 
   if (isLoading) {
     return (
-      <main className="dot-bg flex flex-1 items-center justify-center bg-playdate-yellow px-6 py-12">
+      <main className="dot-bg flex min-h-screen w-full flex-col items-center justify-center bg-warm-cream px-6 py-12">
         <div
-          className="chunky flex items-center gap-3 bg-pure-white px-5 py-4 text-charcoal-text"
-          style={{ borderRadius: "var(--radius-input)" }}
+          className="relative overflow-hidden p-6 bg-charcoal-deep text-warm-cream border-3 border-lime-accent shadow-[6px_6px_0px_#000] flex flex-col items-center justify-center gap-4"
+          style={{
+            borderRadius: "var(--radius-rounded)",
+            maxWidth: 440,
+            width: "100%",
+          }}
         >
-          <div
-            className="border-charcoal-text border-t-transparent animate-spin"
-            style={{
-              width: 20,
-              height: 20,
-              borderWidth: 3,
-              borderRadius: "9999px",
-            }}
-          />
-          <span style={{ fontSize: "var(--text-body)" }}>
-            {language === "en"
-              ? `Connecting to room ${normalizedRoomId}…`
-              : `Menghubungkan ke room ${normalizedRoomId}…`}
-          </span>
+          {/* Header Checkered Line */}
+          <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+            ))}
+          </div>
+
+          <div className="flex flex-col items-center justify-center gap-4 mt-3">
+            <div
+              className="border-lime-accent border-t-transparent animate-spin rounded-full"
+              style={{
+                width: 32,
+                height: 32,
+                borderWidth: 4,
+              }}
+            />
+            <span className="font-mono font-black text-xs text-lime-accent uppercase tracking-widest animate-pulse">
+              ESTABLISHING LINK: ROOM {normalizedRoomId}
+            </span>
+            <p className="text-xs text-warm-cream/50 uppercase font-mono font-semibold">
+              {language === "en"
+                ? "Connecting to Ably grid..."
+                : "Menghubungkan ke server real-time..."}
+            </p>
+          </div>
         </div>
       </main>
     );

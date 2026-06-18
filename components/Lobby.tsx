@@ -45,10 +45,43 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
   const [timeLimit, setTimeLimit] = useState<number>(room.customRules?.timeLimit ?? 0);
   const [bannedArticles, setBannedArticles] = useState<string[]>(room.customRules?.bannedArticles ?? []);
   const [banInput, setBanInput] = useState("");
+  const [banSuggestions, setBanSuggestions] = useState<string[]>([]);
+  const [banOpen, setBanOpen] = useState(false);
+  const [banSearching, setBanSearching] = useState(false);
+  const banDebounceRef = useRef<number | null>(null);
+  const banReqIdRef = useRef(0);
 
   // Hitung mundur untuk matchmaking & ready up
   const [toggleReadyLoading, setToggleReadyLoading] = useState(false);
   const [readyCountdown, setReadyCountdown] = useState<number | null>(null);
+
+  useEffect(() => {
+    const q = banInput.trim();
+    if (banDebounceRef.current) window.clearTimeout(banDebounceRef.current);
+
+    if (q.length < 2) {
+      banDebounceRef.current = window.setTimeout(() => {
+        setBanSuggestions([]);
+        setBanSearching(false);
+      }, 0);
+      return;
+    }
+
+    const myReqId = ++banReqIdRef.current;
+    banDebounceRef.current = window.setTimeout(async () => {
+      setBanSearching(true);
+      const result = await searchArticles(q, language).catch(
+        () => [] as string[],
+      );
+      if (myReqId !== banReqIdRef.current) return;
+      setBanSuggestions(result);
+      setBanSearching(false);
+    }, 250);
+
+    return () => {
+      if (banDebounceRef.current) window.clearTimeout(banDebounceRef.current);
+    };
+  }, [banInput, language]);
 
   // Redirect and alert if kicked (AFK)
   useEffect(() => {
@@ -566,10 +599,12 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
   const numPlayers = room.players.length;
   const readyCount = room.players.filter(p => p.ready).length;
   const allReady = numPlayers >= MIN_PLAYERS && readyCount === numPlayers;
+  const showBanSuggestions =
+    banOpen && (banSearching || banSuggestions.length > 0);
 
   if (room.isMatchmaking) {
     return (
-      <main className="dot-bg flex flex-1 items-start justify-center bg-playdate-yellow px-4 pt-8 pb-32 sm:px-6 sm:pt-10 sm:pb-36">
+      <main className="dot-bg flex flex-1 items-start justify-center bg-warm-cream px-4 pt-8 pb-32 sm:px-6 sm:pt-10 sm:pb-36">
         <div className="w-full max-w-[1150px] grid grid-cols-12 gap-6 items-start">
           {/* Left Column: Matchmaking Info & Track */}
           <div className="col-span-12 md:col-span-5 flex flex-col gap-6 w-full">
@@ -577,22 +612,29 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
             <section
               className="relative overflow-hidden flex flex-col items-center gap-4 p-0 text-center w-full"
               style={{
-                borderRadius: "var(--radius-input)",
+                borderRadius: "var(--radius-rounded)",
                 border: "3px solid var(--color-charcoal-text)",
                 boxShadow: "6px 6px 0px #000",
                 background: "var(--color-charcoal-text)",
                 color: "var(--color-warm-cream)",
               }}
             >
-              <div className="flex flex-col items-center gap-2.5 px-6 py-5 w-full">
-                <h1 className="font-black tracking-tight text-playdate-yellow uppercase" style={{ fontSize: "22px", lineHeight: 1.1 }}>
-                  Ranked Match
+              {/* Header Checkered Accent Line */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+                ))}
+              </div>
+
+              <div className="flex flex-col items-center gap-2.5 px-6 py-5 w-full mt-1.5">
+                <h1 className="font-black tracking-tight text-lime-accent uppercase" style={{ fontSize: "22px", lineHeight: 1.1 }}>
+                  🏎️ Ranked Match Cockpit
                 </h1>
 
-                <div className="flex items-center gap-6 border-t border-b border-warm-gray/10 py-2.5 px-6 my-0.5 w-full justify-center">
+                <div className="flex items-center gap-6 border-t border-b border-warm-gray/10 py-2.5 px-6 my-0.5 w-full justify-center font-mono">
                   <div className="flex flex-col items-center">
                     <span className="text-[9px] uppercase font-black text-warm-cream/50 tracking-wider">Rata-rata Elo</span>
-                    <span className="font-black text-xl text-playdate-yellow tabular-nums">{Math.round(room.averageElo ?? 1200)}</span>
+                    <span className="font-black text-xl text-lime-accent tabular-nums">{Math.round(room.averageElo ?? 1200)}</span>
                   </div>
                   <div className="w-[2px] h-8 bg-warm-gray/10" />
                   <div className="flex flex-col items-center">
@@ -606,7 +648,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                     type="button"
                     onClick={handleLeave}
                     disabled={leaving}
-                    className="chunky-press bg-burnt-orange text-warm-cream font-black border-2 border-charcoal-text tracking-wider uppercase text-[12px]"
+                    className="chunky-press bg-burnt-orange text-warm-cream font-mono font-black border-2 border-charcoal-text tracking-wider uppercase text-[11px]"
                     style={{
                       borderRadius: "var(--radius-button)",
                       padding: "8px 18px",
@@ -705,19 +747,17 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
           <div className="col-span-12 md:col-span-7 flex flex-col gap-6 w-full">
             {/* ====== Pemain ====== */}
             <section
-              className="flex flex-col gap-4 p-6 bg-charcoal-text text-warm-cream w-full"
+              className="flex flex-col gap-4 p-6 bg-charcoal-deep text-warm-cream w-full border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
               style={{
-                borderRadius: "var(--radius-input)",
-                border: "3px solid var(--color-charcoal-text)",
-                boxShadow: "6px 6px 0px #000",
+                borderRadius: "var(--radius-rounded)",
               }}
             >
               <div className="flex items-center justify-between border-b border-warm-cream/10 pb-3">
-                <h2 className="font-black text-lg uppercase tracking-wider text-playdate-yellow">
-                  Pemain
+                <h2 className="font-black text-lg uppercase tracking-wider text-lime-accent">
+                  🏎️ Driver Standings
                 </h2>
-                <span className={`font-bold text-sm ${allReady ? "text-lime-accent" : "text-burnt-orange"}`}>
-                  {readyCount}/{numPlayers} siap
+                <span className={`font-mono font-black text-xs uppercase ${allReady ? "text-lime-accent" : "text-burnt-orange"}`}>
+                  {readyCount}/{numPlayers} READY
                 </span>
               </div>
 
@@ -762,17 +802,15 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
               <div className="flex flex-col gap-4">
                 {room.players.length < 2 ? (
                   <div
-                    className="flex flex-col items-center justify-center gap-3 text-center p-6 bg-pure-white"
+                    className="flex flex-col items-center justify-center gap-3 text-center p-6 bg-pure-white border-3 border-charcoal-text shadow-[5px_5px_0px_#000]"
                     style={{
-                      borderRadius: "var(--radius-input)",
-                      border: "3px solid var(--color-charcoal-text)",
-                      boxShadow: "5px 5px 0px #000",
+                      borderRadius: "var(--radius-rounded)",
                       color: "var(--color-charcoal-text)",
                     }}
                   >
                     <div className="flex items-center gap-2">
                       <span className="bg-burnt-orange pd-pulse inline-block shrink-0 rounded-full" style={{ width: 12, height: 12 }} />
-                      <span className="font-mono font-black text-lg uppercase tracking-tight">{t.findingOpponent}</span>
+                      <span className="font-mono font-black text-base uppercase tracking-tight">{t.findingOpponent}</span>
                     </div>
                     <p className="text-xs text-charcoal-text/75 font-bold uppercase tracking-wider">
                       {t.waitingPlayers}
@@ -780,11 +818,9 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                   </div>
                 ) : readyCountdown !== null ? (
                   <div
-                    className="flex flex-col gap-3 p-5 bg-lime-accent"
+                    className="flex flex-col gap-3 p-5 bg-lime-accent border-3 border-charcoal-text shadow-[5px_5px_0px_#000]"
                     style={{
-                      borderRadius: "var(--radius-input)",
-                      border: "3px solid var(--color-charcoal-text)",
-                      boxShadow: "5px 5px 0px #000",
+                      borderRadius: "var(--radius-rounded)",
                       color: "var(--color-charcoal-text)",
                     }}
                   >
@@ -795,7 +831,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                           ⏱️ {uiLanguage === "en" ? "READY COUNTDOWN" : "HITUNG MUNDUR BERSIAP"}
                         </span>
                       </div>
-                      <span className="font-mono font-black text-lg bg-charcoal-text text-playdate-yellow px-2 py-0.5 rounded border border-charcoal-text">
+                      <span className="font-mono font-black text-lg bg-charcoal-text text-lime-accent px-2 py-0.5 rounded border border-charcoal-text">
                         {readyCountdown}S
                       </span>
                     </div>
@@ -827,11 +863,9 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                   </div>
                 ) : (
                   <div
-                    className="flex flex-col items-center justify-center gap-3 text-center p-6 bg-lime-accent"
+                    className="flex flex-col items-center justify-center gap-3 text-center p-6 bg-lime-accent border-3 border-charcoal-text shadow-[5px_5px_0px_#000]"
                     style={{
-                      borderRadius: "var(--radius-input)",
-                      border: "3px solid var(--color-charcoal-text)",
-                      boxShadow: "5px 5px 0px #000",
+                      borderRadius: "var(--radius-rounded)",
                       color: "var(--color-charcoal-text)",
                     }}
                   >
@@ -846,11 +880,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                       type="button"
                       onClick={handleToggleReady}
                       disabled={toggleReadyLoading}
-                      className={`relative overflow-hidden chunky-press w-full py-4 text-center font-extrabold uppercase tracking-wider text-lg transition border-3 border-charcoal-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_#000] ${
-                        room.players.find(p => p.clientId === currentClientId)?.ready
-                          ? "bg-lime-accent text-charcoal-text shadow-[5px_5px_0px_#000] hover:bg-lime-accent/90"
-                          : "bg-playdate-yellow text-charcoal-text shadow-[5px_5px_0px_#000] hover:bg-playdate-yellow/90"
-                      }`}
+                      className={`relative overflow-hidden chunky-press w-full py-4 text-center font-mono font-black uppercase tracking-wider text-lg transition border-3 border-charcoal-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_#000] bg-lime-accent text-charcoal-text shadow-[5px_5px_0px_#000] hover:bg-lime-accent/90`}
                       style={{
                         borderRadius: "var(--radius-button)",
                       }}
@@ -859,8 +889,8 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                         {toggleReadyLoading 
                           ? (uiLanguage === "en" ? "Processing..." : "Memproses...")
                           : room.players.find(p => p.clientId === currentClientId)?.ready
-                            ? (uiLanguage === "en" ? "✓ Ready" : "✓ Saya Siap")
-                            : (uiLanguage === "en" ? "Ready to Play" : "Siap Bermain")}
+                            ? (uiLanguage === "en" ? "✓ READY" : "✓ SAYA SIAP")
+                            : (uiLanguage === "en" ? "READY TO PLAY" : "SIAP BERMAIN")}
                       </span>
                     </button>
                   </div>
@@ -877,56 +907,48 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
   }
 
   return (
-    <main className="dot-bg flex flex-1 items-start justify-center bg-playdate-yellow px-4 pt-8 pb-32 sm:px-6 sm:pt-10 sm:pb-36">
+    <main className="dot-bg flex flex-1 items-start justify-center bg-warm-cream px-4 pt-8 pb-32 sm:px-6 sm:pt-10 sm:pb-36">
       <div className="flex w-full max-w-[820px] flex-col gap-6">
         {/* ====== Room code poster (Custom Room) ====== */}
         <section
-          className="chunky-lg flex flex-col items-center gap-3 bg-pure-white px-6 py-7 text-center"
-          style={{ borderRadius: "var(--radius-input)" }}
+          className="relative overflow-hidden flex flex-col items-center gap-3 bg-charcoal-deep text-warm-cream px-6 py-8 text-center border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
+          style={{ borderRadius: "var(--radius-rounded)" }}
         >
+          {/* Header Checkered Line */}
+          <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
+            {Array.from({ length: 30 }).map((_, i) => (
+              <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+            ))}
+          </div>
+
           <span
-            className="font-bold uppercase text-charcoal-text/60"
-            style={{ fontSize: "12px", letterSpacing: "0.6px" }}
+            className="font-mono font-black uppercase text-lime-accent text-xs tracking-widest mt-1.5"
           >
-            {t.roomCodeShare}
+            🏁 {t.roomCodeShare} • PADDOCK ENTRY
           </span>
           <div
-            className="font-black tabular-nums text-charcoal-text"
+            className="font-black font-mono tabular-nums text-lime-accent bg-charcoal-text/50 px-8 py-3 rounded-2xl border-2 border-charcoal-text shadow-[inset_0px_2px_8px_rgba(0,0,0,0.5)] my-2"
             style={{
-              fontSize: "clamp(48px, 14vw, 104px)",
+              fontSize: "clamp(36px, 10vw, 76px)",
               lineHeight: 1,
-              letterSpacing: "0.14em",
+              letterSpacing: "0.15em",
             }}
             aria-label={`Kode room ${room.id}`}
           >
             {room.id}
           </div>
-          <div className="mt-1 flex flex-wrap items-center justify-center gap-2 px-4">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3 px-4 z-10">
             <button
               type="button"
               onClick={handleCopyCode}
-              className="chunky-press bg-lime-accent text-charcoal-text"
-              style={{
-                border: "1px solid var(--color-lime-accent)",
-                borderRadius: "var(--radius-button)",
-                padding: "10px 16px",
-                fontWeight: 600,
-                fontSize: "14px",
-              }}
+              className="chunky-press bg-lime-accent text-charcoal-text font-mono font-black text-xs uppercase px-5 py-3 border-2 border-charcoal-text shadow-[3px_3px_0px_#000] rounded-xl hover:bg-lime-deep transition-all"
             >
               {copied ? t.copied : t.copyCode}
             </button>
             <button
               type="button"
               onClick={handleShareLink}
-              className="chunky-press bg-charcoal-text text-warm-cream"
-              style={{
-                border: "1px solid var(--color-charcoal-text)",
-                borderRadius: "var(--radius-button)",
-                padding: "10px 16px",
-                fontWeight: 600,
-                fontSize: "14px",
-              }}
+              className="chunky-press bg-charcoal-text text-warm-cream border-2 border-charcoal-text font-mono font-black text-xs uppercase px-5 py-3 shadow-[3px_3px_0px_#000] rounded-xl hover:bg-charcoal-deep transition-all"
             >
               {shareStatus === "shared"
                 ? t.shared
@@ -938,14 +960,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
               type="button"
               onClick={handleLeave}
               disabled={leaving}
-              className="chunky-press bg-warm-cream text-charcoal-text"
-              style={{
-                border: "1px solid var(--color-warm-gray)",
-                borderRadius: "var(--radius-button)",
-                padding: "10px 16px",
-                fontWeight: 600,
-                fontSize: "14px",
-              }}
+              className="chunky-press bg-burnt-orange text-warm-cream border-2 border-charcoal-text font-mono font-black text-xs uppercase px-5 py-3 shadow-[3px_3px_0px_#000] rounded-xl hover:bg-[#d65a00] transition-all"
             >
               {leaving ? t.leaving : t.leave}
             </button>
@@ -954,36 +969,24 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
 
         {/* ====== Topik permainan ====== */}
         <section
-          className="chunky flex flex-col gap-4 bg-pure-white p-6"
-          style={{ borderRadius: "var(--radius-input)" }}
+          className="flex flex-col gap-4 bg-pure-white p-6 border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
+          style={{ borderRadius: "var(--radius-rounded)" }}
         >
-          <div className="flex items-baseline justify-between gap-2">
-            <h2
-              className="font-extrabold text-charcoal-text"
-              style={{
-                fontSize: "var(--text-heading)",
-                lineHeight: "var(--leading-heading)",
-              }}
-            >
-              {t.gameTopic}
+          <div className="flex items-baseline justify-between gap-2 border-b-3 border-charcoal-text pb-2.5">
+            <h2 className="font-black text-xl text-charcoal-text uppercase tracking-wider">
+              🏁 {t.gameTopic}
             </h2>
             {isHost && (
-              <span
-                className="font-bold uppercase text-charcoal-text/60"
-                style={{ fontSize: "11px", letterSpacing: "0.6px" }}
-              >
-                {t.hostSettings}
+              <span className="font-mono font-black uppercase text-[10px] bg-charcoal-text text-lime-accent px-2 py-0.5 rounded border border-charcoal-text">
+                🛠️ {t.hostSettings}
               </span>
             )}
           </div>
 
           {isHost && (
-            <section
-              className="chunky flex flex-col gap-3 bg-pure-white p-6"
-              style={{ borderRadius: "var(--radius-input)" }}
-            >
-              <h3 className="text-xl font-extrabold text-charcoal-text">
-                {t.readyChallenges}
+            <div className="flex flex-col gap-3.5 bg-light-beige/50 p-4 border-2 border-charcoal-text rounded-xl mt-1">
+              <h3 className="text-xs font-black text-charcoal-text uppercase tracking-wider font-mono">
+                🏆 {t.readyChallenges}
               </h3>
               <select
                 id="challenge-select"
@@ -993,7 +996,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                     void handleSelectPack(e.target.value);
                   }
                 }}
-                className="pd-input cursor-pointer font-bold bg-pure-white"
+                className="pd-input cursor-pointer font-bold bg-pure-white border-2 border-charcoal-text shadow-[2px_2px_0px_#000]"
                 defaultValue=""
               >
                 <option value="" disabled>
@@ -1005,22 +1008,21 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                   </option>
                 ))}
               </select>
-            </section>
+            </div>
           )}
 
           {isHost ? (
             <div className="flex flex-col gap-4">
               <div
-                className="bg-light-beige/60 text-charcoal-text border border-warm-gray/60 p-3.5"
+                className="bg-charcoal-deep text-warm-cream border-2 border-charcoal-text p-4 rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.15)]"
                 style={{
-                  borderRadius: "var(--radius-input)",
                   fontSize: "13px",
-                  lineHeight: "1.45",
+                  lineHeight: "1.5",
                 }}
               >
                 💡{" "}
-                <span className="font-bold">
-                  {uiLanguage === "en" ? "How to set up the game:" : "Cara mengatur permainan:"}
+                <span className="font-black text-lime-accent uppercase font-mono tracking-wider block sm:inline mr-1">
+                  {uiLanguage === "en" ? "COCKPIT SETUP:" : "CARA MENGATUR BALAPAN:"}
                 </span>{" "}
                 {uiLanguage === "en" ? (
                   <>
@@ -1068,16 +1070,9 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                 type="button"
                 onClick={handleSurpriseMe}
                 disabled={surprising || starting}
-                className="chunky-press bg-lime-accent text-charcoal-text transition disabled:opacity-60"
-                style={{
-                  border: "1px solid var(--color-lime-accent)",
-                  borderRadius: "var(--radius-button)",
-                  padding: "12px 16px",
-                  fontWeight: 700,
-                  fontSize: "14px",
-                }}
+                className="chunky-press bg-lime-accent text-charcoal-text border-2 border-charcoal-text font-mono font-black text-xs uppercase px-4 py-3 shadow-[3px_3px_0px_#000] rounded-xl hover:bg-lime-deep transition-all"
               >
-                {surprising ? t.searching : t.surpriseMe}
+                🎲 {surprising ? t.searching : t.surpriseMe}
               </button>
 
               <ArticleAutocomplete
@@ -1112,10 +1107,9 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
               />
               {!articlesValid && (trimmedStart || trimmedEnd) && (
                 <p
-                  className="text-charcoal-text/70"
-                  style={{ fontSize: "14px" }}
+                  className="text-burnt-orange font-bold text-xs uppercase font-mono"
                 >
-                  {t.chooseDifferent}
+                  ⚠️ {t.chooseDifferent}
                 </p>
               )}
               {articlesValid && (
@@ -1138,27 +1132,18 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
           )}
         </section>
 
-        {/* ====== Aturan Kustom ====== */}
+        {/* ====== Aturan Kustom (Diagnostics Dashboard) ====== */}
         <section
-          className="chunky flex flex-col gap-4 bg-pure-white p-6"
-          style={{ borderRadius: "var(--radius-input)" }}
+          className="flex flex-col gap-4 bg-pure-white p-6 border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
+          style={{ borderRadius: "var(--radius-rounded)" }}
         >
-          <div className="flex items-baseline justify-between gap-2">
-            <h2
-              className="font-extrabold text-charcoal-text"
-              style={{
-                fontSize: "var(--text-heading)",
-                lineHeight: "var(--leading-heading)",
-              }}
-            >
-              {uiLanguage === "en" ? "Custom Rules" : "Aturan Kustom"}
+          <div className="flex items-baseline justify-between gap-2 border-b-3 border-charcoal-text pb-2.5">
+            <h2 className="font-black text-xl text-charcoal-text uppercase tracking-wider">
+              ⚙️ {uiLanguage === "en" ? "Custom Diagnostics" : "Aturan Kustom"}
             </h2>
             {isHost && (
-              <span
-                className="font-bold uppercase text-charcoal-text/60"
-                style={{ fontSize: "11px", letterSpacing: "0.6px" }}
-              >
-                {t.hostSettings}
+              <span className="font-mono font-black uppercase text-[10px] bg-charcoal-text text-lime-accent px-2 py-0.5 rounded border border-charcoal-text">
+                🛠️ {t.hostSettings}
               </span>
             )}
           </div>
@@ -1168,13 +1153,13 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Click Limit Select */}
                 <div className="flex flex-col gap-2">
-                  <label className="font-bold text-charcoal-text" style={{ fontSize: "var(--text-body)" }}>
-                    {uiLanguage === "en" ? "Click Limit" : "Batas Klik"}
+                  <label className="font-mono font-black text-xs uppercase text-charcoal-text/70">
+                    🔋 {uiLanguage === "en" ? "Click Limit" : "Batas Klik"}
                   </label>
                   <select
                     value={clickLimit}
                     onChange={(e) => handleClickLimitChange(Number(e.target.value))}
-                    className="pd-input cursor-pointer font-bold bg-pure-white"
+                    className="pd-input cursor-pointer font-bold bg-pure-white border-2 border-charcoal-text shadow-[2px_2px_0px_#000]"
                   >
                     <option value={0}>{uiLanguage === "en" ? "Unlimited" : "Tanpa Batas"}</option>
                     <option value={5}>5 {uiLanguage === "en" ? "clicks" : "klik"}</option>
@@ -1186,13 +1171,13 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
 
                 {/* Time Limit Select */}
                 <div className="flex flex-col gap-2">
-                  <label className="font-bold text-charcoal-text" style={{ fontSize: "var(--text-body)" }}>
-                    {uiLanguage === "en" ? "Time Limit" : "Batas Waktu"}
+                  <label className="font-mono font-black text-xs uppercase text-charcoal-text/70">
+                    ⏱️ {uiLanguage === "en" ? "Time Limit" : "Batas Waktu"}
                   </label>
                   <select
                     value={timeLimit}
                     onChange={(e) => handleTimeLimitChange(Number(e.target.value))}
-                    className="pd-input cursor-pointer font-bold bg-pure-white"
+                    className="pd-input cursor-pointer font-bold bg-pure-white border-2 border-charcoal-text shadow-[2px_2px_0px_#000]"
                   >
                     <option value={0}>{uiLanguage === "en" ? "Unlimited" : "Tanpa Batas"}</option>
                     <option value={60}>1 {uiLanguage === "en" ? "minute" : "menit"}</option>
@@ -1205,57 +1190,92 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
 
               {/* Ban List Input */}
               <div className="flex flex-col gap-2">
-                <label className="font-bold text-charcoal-text" style={{ fontSize: "var(--text-body)" }}>
-                  {uiLanguage === "en" ? "Ban Wikipedia Articles" : "Daftar Larangan Artikel Wikipedia"}
+                <label className="font-mono font-black text-xs uppercase text-charcoal-text/70">
+                  ⛔ {uiLanguage === "en" ? "Ban Wikipedia Articles" : "Daftar Larangan Artikel"}
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={banInput}
-                    onChange={(e) => setBanInput(e.target.value)}
-                    onKeyDown={handleBanKeyDown}
-                    placeholder={
-                      uiLanguage === "en"
-                        ? "Type article name & press enter..."
-                        : "Ketik nama artikel & tekan enter..."
-                    }
-                    className="pd-input flex-1"
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={banInput}
+                      onChange={(e) => setBanInput(e.target.value)}
+                      onFocus={() => setBanOpen(true)}
+                      onBlur={() => window.setTimeout(() => setBanOpen(false), 120)}
+                      onKeyDown={handleBanKeyDown}
+                      placeholder={
+                        uiLanguage === "en"
+                          ? "Type article name & press enter..."
+                          : "Ketik nama artikel & tekan enter..."
+                      }
+                      className="pd-input w-full border-2 border-charcoal-text shadow-[2px_2px_0px_#000]"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+
+                    {/* Autocomplete Dropdown */}
+                    {showBanSuggestions && (
+                      <ul
+                        className="chunky-sm absolute z-20 mt-1 max-h-[200px] w-full overflow-y-auto bg-pure-white"
+                        style={{
+                          top: "100%",
+                          borderRadius: "var(--radius-input)",
+                        }}
+                        role="listbox"
+                      >
+                        {banSearching && banSuggestions.length === 0 && (
+                          <li
+                            className="px-3 py-2 text-charcoal-text/60"
+                            style={{ fontSize: "14px" }}
+                          >
+                            {translations[uiLanguage].searching}
+                          </li>
+                        )}
+                        {banSuggestions.map((title) => (
+                          <li
+                            key={title}
+                            role="option"
+                            aria-selected={bannedArticles.includes(title)}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleAddBannedArticle(title);
+                              setBanOpen(false);
+                            }}
+                            className="cursor-pointer border-b border-parchment px-3 py-2 text-charcoal-text last:border-b-0 hover:bg-paper-white"
+                            style={{ fontSize: "var(--text-body)" }}
+                          >
+                            {title}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => handleAddBannedArticle(banInput)}
-                    className="chunky-press bg-charcoal-text text-warm-cream font-bold px-4"
-                    style={{
-                      border: "2px solid var(--color-charcoal-text)",
-                      borderRadius: "var(--radius-button)",
-                      fontSize: "14px",
-                    }}
+                    className="chunky-press bg-charcoal-text text-warm-cream font-mono font-black text-xs uppercase px-5 border-2 border-charcoal-text shadow-[2px_2px_0px_#000] rounded-xl hover:bg-charcoal-deep"
                   >
                     {uiLanguage === "en" ? "Ban" : "Larang"}
                   </button>
                 </div>
                 
-                {/* Tags display */}
+                {/* Tags display (Stiker Plat Nomor Hazard) */}
                 <div className="flex flex-wrap gap-2 mt-2">
                   {bannedArticles.length === 0 ? (
-                    <span className="text-xs text-charcoal-text/50 italic">
+                    <span className="text-xs text-charcoal-text/50 font-mono italic">
                       {uiLanguage === "en" ? "No banned articles yet." : "Belum ada artikel yang dilarang."}
                     </span>
                   ) : (
                     bannedArticles.map((art, idx) => (
                       <span
                         key={idx}
-                        className="chunky-sm flex items-center gap-1.5 bg-burnt-orange text-warm-cream font-bold px-2.5 py-1"
-                        style={{
-                          borderRadius: "var(--radius-button)",
-                          fontSize: "12px",
-                        }}
+                        className="flex items-center gap-1.5 bg-burnt-orange text-warm-cream font-mono font-black text-[11px] uppercase px-3 py-1 rounded border-2 border-charcoal-text shadow-[2px_2px_0px_#000] hover:scale-[1.02] transition-all"
                       >
                         <span>{art}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveBannedArticle(idx)}
-                          className="text-warm-cream/80 hover:text-warm-cream font-extrabold focus:outline-none ml-1"
+                          className="text-warm-cream hover:text-lime-accent font-extrabold focus:outline-none ml-1 cursor-pointer"
                         >
                           ✕
                         </button>
@@ -1269,7 +1289,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
+                  <span className="text-[10px] font-mono font-black uppercase text-charcoal-text/50">
                     {uiLanguage === "en" ? "Click Limit" : "Batas Klik"}
                   </span>
                   <span className="font-extrabold text-charcoal-text">
@@ -1280,7 +1300,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
+                  <span className="text-[10px] font-mono font-black uppercase text-charcoal-text/50">
                     {uiLanguage === "en" ? "Time Limit" : "Batas Waktu"}
                   </span>
                   <span className="font-extrabold text-charcoal-text">
@@ -1292,23 +1312,19 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
               </div>
               
               <div className="flex flex-col gap-1.5 border-t border-parchment pt-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
+                <span className="text-[10px] font-mono font-black uppercase text-charcoal-text/50">
                   {uiLanguage === "en" ? "Banned Articles" : "Artikel yang Dilarang"}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {bannedArticles.length === 0 ? (
-                    <span className="text-xs text-charcoal-text/50 italic">
+                    <span className="text-xs text-charcoal-text/50 font-mono italic">
                       {uiLanguage === "en" ? "No banned articles." : "Tidak ada artikel yang dilarang."}
                     </span>
                   ) : (
                     bannedArticles.map((art, idx) => (
                       <span
                         key={idx}
-                        className="chunky-sm bg-burnt-orange/10 text-burnt-orange border border-burnt-orange font-bold px-2 py-0.5"
-                        style={{
-                          borderRadius: "var(--radius-button)",
-                          fontSize: "12px",
-                        }}
+                        className="bg-burnt-orange/15 text-burnt-orange border border-burnt-orange font-mono font-black px-2.5 py-0.5 rounded text-[11px] uppercase"
                       >
                         ⛔ {art}
                       </span>
@@ -1657,41 +1673,38 @@ function PlayerSlot({
   if (isMatchmaking && elo !== undefined) {
     if (elo < 1100) {
       tierName = uiLanguage === "en" ? "Novice" : "Pemula";
-      tierColor = "#8c5b30";
-      tierBg = "#f3e1d3";
+      tierColor = "#FF6B00";
+      tierBg = "rgba(255, 107, 0, 0.1)";
     } else if (elo < 1300) {
       tierName = uiLanguage === "en" ? "Explorer" : "Penjelajah";
-      tierColor = "#4b5563";
-      tierBg = "#f3f4f6";
+      tierColor = "#B2C73A";
+      tierBg = "rgba(178, 199, 58, 0.1)";
     } else {
       tierName = uiLanguage === "en" ? "Speedrunner" : "Legenda";
-      tierColor = "#b45309";
-      tierBg = "#fef3c7";
+      tierColor = "#D2FF00";
+      tierBg = "rgba(210, 255, 0, 0.1)";
     }
   }
 
   return (
     <li
-      className="flex items-center gap-3 p-3 text-charcoal-text"
+      className="flex items-center gap-3 p-3 text-charcoal-text border-2 border-charcoal-text bg-pure-white transition-all shadow-[2px_2px_0px_#000] hover:scale-[1.01]"
       style={{
         borderRadius: "var(--radius-input)",
-        border: isMatchmaking ? "3px solid var(--color-charcoal-text)" : "2px solid var(--color-charcoal-text)",
-        boxShadow: isMatchmaking ? "3px 3px 0px #000" : "none",
         background: isMe
-          ? "var(--color-playdate-yellow-soft)"
+          ? "var(--color-light-beige)"
           : "var(--color-pure-white)",
       }}
     >
       <span
-        className="chunky-sm flex shrink-0 items-center justify-center font-extrabold uppercase text-pure-white"
+        className="flex shrink-0 items-center justify-center font-extrabold uppercase text-pure-white border-2 border-charcoal-text shadow-[1px_1px_0px_#000]"
         style={{
           width: 38,
           height: 38,
-          borderRadius: "9999px",
+          borderRadius: "8px",
           background: color,
           fontSize: 14,
           letterSpacing: "0.04em",
-          border: isMatchmaking ? "2px solid var(--color-charcoal-text)" : "none",
         }}
         aria-hidden
       >
@@ -1712,11 +1725,8 @@ function PlayerSlot({
           </Link>
           {isMe && (
             <span
-              className="chunky-sm bg-playdate-yellow text-charcoal-text font-bold"
+              className="bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[1px_1px_0px_#000] shrink-0"
               style={{
-                fontSize: "10px",
-                padding: "1px 6px",
-                borderRadius: "var(--radius-button)",
                 letterSpacing: "0.4px",
               }}
             >
@@ -1735,7 +1745,7 @@ function PlayerSlot({
               className={`font-black uppercase px-1.5 py-0.5 rounded text-[9px] border border-charcoal-text shadow-[1px_1px_0px_#000] ${
                 ready 
                   ? "bg-lime-accent text-charcoal-text" 
-                  : "bg-amber-300 text-charcoal-text"
+                  : "bg-burnt-orange text-warm-cream"
               }`}
             >
               {ready 
@@ -1745,7 +1755,7 @@ function PlayerSlot({
           )}
 
           {elo !== undefined && (
-            <span className="font-bold text-charcoal-text bg-lime-accent/40 px-1.5 py-0.5 rounded ml-1" style={{ fontSize: "10px" }}>
+            <span className="font-bold text-charcoal-text bg-lime-accent/30 border border-charcoal-text/20 px-1.5 py-0.5 rounded ml-1" style={{ fontSize: "10px" }}>
               {elo} ELO
             </span>
           )}
@@ -1832,7 +1842,7 @@ function VersusCard({
     <Link
       href={`/profile/${player.username}`}
       target="_blank"
-      className="w-full flex items-center gap-3 p-3 bg-charcoal-deep border-2 border-charcoal-text transition-all duration-300 hover:scale-[1.015] hover:border-lime-accent/50 cursor-pointer"
+      className="w-full flex items-center gap-3 p-3 bg-charcoal-deep border-2 border-charcoal-text transition-all duration-300 hover:scale-[1.015] hover:border-lime-accent/50 cursor-pointer text-warm-cream"
       style={{
         borderRadius: "var(--radius-input)",
         boxShadow: player.ready ? `0 0 12px ${tierColor}40, 4px 4px 0px #000` : "4px 4px 0px #000",
@@ -1856,13 +1866,13 @@ function VersusCard({
         <div className="flex items-center gap-1.5 font-extrabold text-warm-cream text-sm">
           <span className="truncate">{player.username}</span>
           {isMe && (
-            <span className="bg-playdate-yellow text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[1px_1px_0px_#000] shrink-0">
+            <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[1px_1px_0px_#000] shrink-0 font-mono">
               {uiLanguage === "en" ? "YOU" : "KAMU"}
             </span>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-2 mt-0.5">
-          <span className="font-bold text-playdate-yellow text-[11px]">
+        <div className="flex flex-wrap items-center gap-2 mt-0.5 font-mono">
+          <span className="font-bold text-lime-accent text-[11px]">
             {elo} Elo
           </span>
           <span
@@ -1876,7 +1886,7 @@ function VersusCard({
 
       {/* Ready status */}
       <span
-        className={`shrink-0 font-black uppercase px-2 py-0.5 rounded text-[9px] border border-charcoal-text shadow-[1px_1px_0px_#000] ${
+        className={`shrink-0 font-mono font-black uppercase px-2 py-0.5 rounded text-[9px] border border-charcoal-text shadow-[1px_1px_0px_#000] ${
           player.ready
             ? "bg-lime-accent text-charcoal-text"
             : "bg-burnt-orange text-warm-cream"
@@ -1938,8 +1948,7 @@ function ArticlePreview({
     if (empty) {
       return (
         <p
-          className="text-charcoal-text/70"
-          style={{ fontSize: "var(--text-body)" }}
+          className="text-charcoal-text/70 font-mono text-xs uppercase"
         >
           {empty}
         </p>
@@ -1948,34 +1957,32 @@ function ArticlePreview({
     return null;
   }
   return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-parchment pt-3">
-      <span
-        className="font-bold uppercase text-charcoal-text/60"
-        style={{ fontSize: "11px", letterSpacing: "0.6px" }}
-      >
-        {t.preview}
+    <div className="flex flex-col gap-2 border-t border-warm-gray/30 pt-4 mt-2">
+      <span className="text-[10px] font-mono font-black text-charcoal-text/50 uppercase tracking-widest">
+        {t.preview} • TELEMETRY ROUTE
       </span>
-      <span
-        className="chunky-sm bg-paper-white px-3 py-1 font-bold text-charcoal-text"
-        style={{
-          borderRadius: "var(--radius-button)",
-          fontSize: "var(--text-body)",
-        }}
-      >
-        {start}
-      </span>
-      <span className="font-bold text-charcoal-text/60" aria-hidden>
-        →
-      </span>
-      <span
-        className="chunky-sm bg-playdate-yellow px-3 py-1 font-bold text-charcoal-text"
-        style={{
-          borderRadius: "var(--radius-button)",
-          fontSize: "var(--text-body)",
-        }}
-      >
-        {end}
-      </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-charcoal-deep p-4 rounded-xl border-2 border-charcoal-text shadow-[3px_3px_0px_#000] text-warm-cream">
+        {/* Start */}
+        <div className="flex-1 min-w-0">
+          <span className="bg-lime-accent text-charcoal-text text-[9px] font-black px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+            START
+          </span>
+          <p className="font-extrabold text-sm truncate mt-1.5 text-warm-cream">
+            {start.replace(/_/g, ' ')}
+          </p>
+        </div>
+        {/* Arrow */}
+        <span className="text-lime-accent font-black text-lg self-center rotate-90 sm:rotate-0">➔</span>
+        {/* Goal */}
+        <div className="flex-1 min-w-0 text-right sm:text-right">
+          <span className="bg-burnt-orange text-warm-cream text-[9px] font-black px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+            GOAL
+          </span>
+          <p className="font-extrabold text-sm truncate mt-1.5 text-lime-accent">
+            {end.replace(/_/g, ' ')}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
