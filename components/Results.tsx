@@ -150,7 +150,7 @@ export default function Results({
   const t = translations[language];
 
   return (
-    <main className="dot-bg flex flex-1 flex-col items-center bg-playdate-yellow px-4 py-8 sm:px-6 sm:py-10">
+    <main className="dot-bg flex flex-1 flex-col items-center bg-warm-cream px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex w-full max-w-[820px] flex-col gap-6">
         {/* ====== Header ====== */}
         <header
@@ -218,17 +218,17 @@ export default function Results({
               style={{ fontSize: "12px" }}
             >
               <span
-                className="chunky-sm bg-charcoal-text border border-warm-gray/25 px-2.5 py-1 font-bold text-warm-cream"
+                className="bg-charcoal-text border border-warm-gray/25 px-2.5 py-1 font-bold text-warm-cream"
                 style={{ borderRadius: "var(--radius-button)" }}
               >
-                {room.startArticle}
+                {room.startArticle.replace(/_/g, " ")}
               </span>
               <span aria-hidden="true" className="text-lime-accent font-black">➔</span>
               <span
-                className="chunky-sm bg-charcoal-text border border-lime-accent/25 px-2.5 py-1 font-bold text-lime-accent"
+                className="bg-charcoal-text border border-lime-accent/25 px-2.5 py-1 font-bold text-lime-accent"
                 style={{ borderRadius: "var(--radius-button)" }}
               >
-                {room.endArticle}
+                {room.endArticle.replace(/_/g, " ")}
               </span>
             </div>
           </div>
