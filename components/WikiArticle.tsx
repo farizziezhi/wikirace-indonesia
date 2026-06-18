@@ -5,6 +5,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import type { WikiLanguage } from "@/lib/types";
 import { extractArticleTitle, fetchArticleHtml } from "@/lib/wikipedia";
 import { translations } from "@/lib/translations";
+import { playBannedBeep } from "@/lib/race-audio";
 
 interface WikiArticleProps {
   /** Judul artikel yang sedang ditampilkan ke pemain. */
@@ -134,6 +135,7 @@ function WikiArticle({
       );
       if (isBanned) {
         setBannedWarningTitle(articleTitle);
+        playBannedBeep();
         return;
       }
 

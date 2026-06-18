@@ -275,6 +275,64 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     tierBg = "rgba(210, 255, 0, 0.1)";
   }
 
+  // 10 matches terakhir (jika ada) untuk grafik ELO
+  const recentMatchesForChart = matches.slice(0, 10);
+  
+  const eloHistoryPoints: number[] = [];
+  let trackingElo = stats?.elo ?? 1200;
+  eloHistoryPoints.push(trackingElo);
+  
+  for (const m of recentMatchesForChart) {
+    trackingElo = trackingElo - m.elo_change;
+    eloHistoryPoints.push(trackingElo);
+  }
+  
+  // Balik urutan agar kronologis dari yang terlama ke terbaru
+  eloHistoryPoints.reverse();
+  
+  // Cari min & max elo untuk menskalakan grafik
+  const minElo = eloHistoryPoints.length > 0 ? Math.min(...eloHistoryPoints) : 1200;
+  const maxElo = eloHistoryPoints.length > 0 ? Math.max(...eloHistoryPoints) : 1200;
+  
+  // Padding atas bawah untuk estetika garis
+  const eloRange = maxElo - minElo;
+  const minVal = eloRange === 0 ? minElo - 50 : minElo - Math.max(10, eloRange * 0.15);
+  const maxVal = eloRange === 0 ? maxElo + 50 : maxElo + Math.max(10, eloRange * 0.15);
+  const valueDelta = maxVal - minVal;
+  
+  // Resolusi SVG Koordinat
+  const chartWidth = 500;
+  const chartHeight = 85;
+  
+  // Hitung koordinat titik
+  const chartPoints = eloHistoryPoints.map((elo, idx) => {
+    const x = eloHistoryPoints.length > 1 
+      ? (idx / (eloHistoryPoints.length - 1)) * chartWidth 
+      : chartWidth / 2;
+    const y = chartHeight - ((elo - minVal) / valueDelta) * chartHeight;
+    return { x, y, elo };
+  });
+  
+  // Buat path string untuk garis SVG
+  let linePathD = "";
+  let areaPathD = "";
+  if (chartPoints.length > 1) {
+    linePathD = chartPoints.reduce((acc, pt, idx) => {
+      return acc + (idx === 0 ? `M ${pt.x} ${pt.y}` : ` L ${pt.x} ${pt.y}`);
+    }, "");
+    
+    // Path area ber-gradien turun ke bawah grafik
+    areaPathD = `${linePathD} L ${chartPoints[chartPoints.length - 1].x} ${chartHeight} L ${chartPoints[0].x} ${chartHeight} Z`;
+  }
+  
+  // Buat grid lines horizontal (3 garis bantu ELO)
+  const gridLines: number[] = [];
+  if (eloHistoryPoints.length > 1) {
+    gridLines.push(Math.round(minVal + valueDelta * 0.25));
+    gridLines.push(Math.round(minVal + valueDelta * 0.5));
+    gridLines.push(Math.round(minVal + valueDelta * 0.75));
+  }
+
   return (
     <main className="dot-bg flex min-h-screen w-full flex-col items-center px-4 pt-8 pb-32 sm:px-6 sm:pt-12 sm:pb-36">
       <div className="w-full max-w-[850px] flex flex-col gap-6">
@@ -473,6 +531,108 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                   <span className="bg-lime-accent/15 text-lime-accent border border-lime-accent/30 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase font-mono">{stats?.wins ?? 0} W</span>
                   <span className="bg-burnt-orange/15 text-burnt-orange border border-burnt-orange/30 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase font-mono">{stats?.losses ?? 0} L</span>
                 </div>
+              </div>
+            </section>
+
+            {/* ====== ELO Progression Telemetry Chart ====== */}
+            <section className="bg-charcoal-deep text-warm-cream border-3 border-charcoal-text p-4 rounded-xl shadow-[4px_4px_0px_#000]">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-mono font-black uppercase text-warm-cream/50 tracking-wider">
+                  📈 {uiLanguage === "en" ? "ELO PROGRESSION TELEMETRY" : "TELEMETRI TREN ELO"}
+                </span>
+                {matches.length > 0 && (
+                  <span className="text-[10px] font-mono text-lime-accent uppercase">
+                    [ MIN: {minElo} | MAX: {maxElo} | CURRENT: {eloVal} ]
+                  </span>
+                )}
+              </div>
+
+              {/* Chart SVG wrapper */}
+              <div className="relative w-full h-[120px] bg-charcoal-text/30 rounded-lg border border-warm-gray/10 p-3 flex items-center justify-center overflow-hidden">
+                {eloHistoryPoints.length <= 1 ? (
+                  <span className="text-xs text-warm-cream/40 font-mono italic text-center">
+                    {uiLanguage === "en" ? "NO TELEMETRY DATA YET (NEED > 1 RACES)" : "BELUM ADA DATA TELEMETRI (BUTUH > 1 BALAPAN)"}
+                  </span>
+                ) : (
+                  <svg width="100%" height="100%" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none" className="overflow-visible w-full h-full">
+                    <defs>
+                      <linearGradient id="eloTrendGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--color-lime-accent)" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="var(--color-lime-accent)" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Horizontal Grid lines */}
+                    {gridLines.map((gridVal, idx) => {
+                      const yVal = chartHeight - ((gridVal - minVal) / (maxVal - minVal)) * chartHeight;
+                      return (
+                        <g key={idx}>
+                          <line
+                            x1="0"
+                            y1={yVal}
+                            x2={chartWidth}
+                            y2={yVal}
+                            stroke="rgba(255,255,255,0.06)"
+                            strokeWidth="1"
+                            strokeDasharray="4 4"
+                          />
+                          <text
+                            x={4}
+                            y={yVal - 3}
+                            fill="rgba(255,255,255,0.25)"
+                            fontSize="8"
+                            fontFamily="monospace"
+                          >
+                            {gridVal}
+                          </text>
+                        </g>
+                      );
+                    })}
+                    
+                    {/* Area path */}
+                    <path
+                      d={areaPathD}
+                      fill="url(#eloTrendGrad)"
+                      stroke="none"
+                    />
+                    
+                    {/* Line path */}
+                    <path
+                      d={linePathD}
+                      fill="none"
+                      stroke="var(--color-lime-accent)"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    
+                    {/* Circle markers */}
+                    {chartPoints.map((pt, idx) => (
+                      <g key={idx} className="group/dot">
+                        <circle
+                          cx={pt.x}
+                          cy={pt.y}
+                          r="3.5"
+                          fill="var(--color-charcoal-deep)"
+                          stroke="var(--color-lime-accent)"
+                          strokeWidth="2"
+                        />
+                        {/* Always show current ELO values on nodes in small font or hover */}
+                        <text
+                          x={pt.x}
+                          y={pt.y - 8}
+                          textAnchor="middle"
+                          fill="#fff"
+                          fontSize="8"
+                          fontFamily="monospace"
+                          fontWeight="bold"
+                        >
+                          {pt.elo}
+                        </text>
+                      </g>
+                    ))}
+                  </svg>
+                )}
               </div>
             </section>
 

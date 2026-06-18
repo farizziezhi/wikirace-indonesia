@@ -10,7 +10,7 @@ import Game from "@/components/Game";
 import Lobby from "@/components/Lobby";
 import Results from "@/components/Results";
 import { getOrCreateClientId, getSavedUsername, getSavedLanguage } from "@/lib/client-id";
-import { unlockRaceAudio } from "@/lib/race-audio";
+import { unlockRaceAudio, playVictoryChime } from "@/lib/race-audio";
 import type { Player, Room, RouteStep } from "@/lib/types";
 import AdContainer from "@/components/AdContainer";
 
@@ -97,6 +97,12 @@ export default function RoomPage({ params }: RoomPageProps) {
   useEffect(() => {
     roomRef.current = room;
   }, [room]);
+
+  useEffect(() => {
+    if (gameState === "finished") {
+      playVictoryChime();
+    }
+  }, [gameState]);
 
   // ------- Ably client + channel -------
   const [ablyChannel, setAblyChannel] =

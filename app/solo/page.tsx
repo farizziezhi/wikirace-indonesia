@@ -6,6 +6,7 @@ import type { WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
 import { SOLO_THEMES, SoloTheme, CURATED_ARTICLES } from "@/lib/solo-curated";
 import { getSavedLanguage, saveLanguage } from "@/lib/client-id";
+import { playCountdownBeep, unlockRaceAudio } from "@/lib/race-audio";
 
 type SoloMode = "time-attack" | "free-roam";
 type SelectionModule = "curated" | "wild" | "custom";
@@ -153,13 +154,17 @@ function SoloPageContent() {
 
     let count = 3;
     setCountdown(count);
+    void unlockRaceAudio();
+    playCountdownBeep("3");
 
     const timer = setInterval(() => {
       count -= 1;
       if (count > 0) {
         setCountdown(count);
+        playCountdownBeep(String(count) as "3" | "2" | "1");
       } else if (count === 0) {
         setCountdown("GO! 🏁");
+        playCountdownBeep("GO");
       } else {
         clearInterval(timer);
         // Navigate to play page

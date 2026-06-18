@@ -7,6 +7,7 @@ import { avatarColor, initials } from "@/lib/avatar";
 import type { ChatMessage, Room } from "@/lib/types";
 import { MAX_CHAT_LENGTH } from "@/lib/room";
 import { translations } from "@/lib/translations";
+import { playPitRadioClick } from "@/lib/race-audio";
 
 interface ChatPanelProps {
   room: Room;
@@ -35,6 +36,10 @@ export default function ChatPanel({
   const [unreadCount, setUnreadCount] = useState(0);
   const [sendCooldown, setSendCooldown] = useState(false);
   const [prevIsExpanded, setPrevIsExpanded] = useState(isExpanded);
+
+  const quickMessages = language === "en" 
+    ? ["Box Box Box! 🛠️", "Green Light! 🏁", "No Power! ⚠️", "Push Push! ⚡", "Spinning Out! 🔄", "Plan B! 📋"]
+    : ["Box Box Box! 🛠️", "Lampu Hijau! 🏁", "Hilang Tenaga! ⚠️", "Ayo Cepat! ⚡", "Melintir! 🔄", "Rencana B! 📋"];
 
   // Clear unread count when panel becomes expanded (in render phase).
   if (isExpanded !== prevIsExpanded) {
@@ -240,6 +245,37 @@ export default function ChatPanel({
           ))
         )}
         <div ref={messagesEndRef} />
+      </div>
+
+      {/* Quick Radio Messages */}
+      <div className="shrink-0 border-t border-warm-gray bg-warm-cream/40 px-2 py-1.5 flex gap-1.5 overflow-x-auto scrollbar-none">
+        {quickMessages.map((msg) => (
+          <button
+            key={msg}
+            type="button"
+            onClick={async () => {
+              if (sendCooldown) return;
+              playPitRadioClick();
+              try {
+                await fetch("/api/room/chat", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    roomId: room.id,
+                    clientId: currentClientId,
+                    text: msg,
+                  }),
+                });
+              } catch {}
+              setSendCooldown(true);
+              setTimeout(() => setSendCooldown(false), SEND_COOLDOWN_MS);
+            }}
+            disabled={sendCooldown}
+            className="shrink-0 bg-pure-white hover:bg-parchment text-charcoal-text border border-warm-gray font-mono font-bold text-[10px] uppercase px-2.5 py-1 rounded shadow-[1px_1px_0px_#000] disabled:opacity-40 transition-all cursor-pointer"
+          >
+            📻 {msg}
+          </button>
+        ))}
       </div>
 
       {/* Input bar */}

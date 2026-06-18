@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import WikiArticle from "@/components/WikiArticle";
 import type { WikiLanguage } from "@/lib/types";
 import { getSavedLanguage } from "@/lib/client-id";
+import { playVictoryChime } from "@/lib/race-audio";
 
 type SoloMode = "time-attack" | "free-roam";
 
@@ -120,6 +121,12 @@ function SoloPlayContent() {
       void triggerDailyCompletion();
     }
   }, [finished, isDaily]);
+
+  useEffect(() => {
+    if (finished) {
+      playVictoryChime();
+    }
+  }, [finished]);
 
   async function triggerDailyCompletion() {
     setDailyLoading(true);
