@@ -192,4 +192,54 @@ export function playPitRadioClick(): void {
   osc.stop(now + 0.025);
 }
 
+export function speakRadioMessage(text: string, lang: "id" | "en"): void {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+
+  try {
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    // Clean text: strip out emojis and radio prefix
+    const cleanText = text
+      .replace("📻", "")
+      .replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, "")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = lang === "en" ? "en-US" : "id-ID";
+    
+    // Cockpit radio style: slightly faster and flat tone
+    utterance.rate = 1.05;
+    utterance.pitch = 0.95;
+
+    // Find custom voice if possible
+    const voices = window.speechSynthesis.getVoices();
+    const voiceLang = lang === "en" ? "en" : "id";
+    const matchingVoice = voices.find(v => v.lang.toLowerCase().startsWith(voiceLang));
+    if (matchingVoice) {
+      utterance.voice = matchingVoice;
+    }
+
+    // Play pit radio static beep before speaking
+    playPitRadioClick();
+
+    // Speak after click sound plays out slightly
+    setTimeout(() => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.speak(utterance);
+      }
+    }, 40);
+
+    // Play static beep after speaking finishes
+    utterance.onend = () => {
+      setTimeout(() => {
+        playPitRadioClick();
+      }, 50);
+    };
+  } catch (err) {
+    console.warn("Gagal membacakan pesan suara:", err);
+  }
+}
+
+
 

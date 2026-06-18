@@ -7,7 +7,7 @@ import { avatarColor, initials } from "@/lib/avatar";
 import type { ChatMessage, Room } from "@/lib/types";
 import { MAX_CHAT_LENGTH } from "@/lib/room";
 import { translations } from "@/lib/translations";
-import { playPitRadioClick } from "@/lib/race-audio";
+import { playPitRadioClick, speakRadioMessage } from "@/lib/race-audio";
 
 interface ChatPanelProps {
   room: Room;
@@ -74,6 +74,11 @@ export default function ChatPanel({
         const next = [...prev, data];
         return next.length > MAX_MESSAGES ? next.slice(-MAX_MESSAGES) : next;
       });
+
+      // Play text-to-speech if it's a team radio transmission
+      if (data.text.startsWith("📻")) {
+        speakRadioMessage(data.text, language);
+      }
 
       // Increment unread kalau panel collapsed.
       if (!isExpanded) {
@@ -248,7 +253,27 @@ export default function ChatPanel({
       </div>
 
       {/* Quick Radio Messages */}
-      <div className="shrink-0 border-t border-warm-gray bg-warm-cream/40 px-2 py-1.5 flex gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="quick-chat-container shrink-0 border-t border-warm-gray bg-warm-cream/40 px-2 py-1.5 flex gap-1.5 overflow-x-auto w-full">
+        <style jsx={false}>{`
+          .quick-chat-container {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+          }
+          .quick-chat-container::-webkit-scrollbar {
+            height: 4px;
+          }
+          .quick-chat-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 2px;
+          }
+          .quick-chat-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 2px;
+          }
+          .quick-chat-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.45);
+          }
+        `}</style>
         {quickMessages.map((msg) => (
           <button
             key={msg}
