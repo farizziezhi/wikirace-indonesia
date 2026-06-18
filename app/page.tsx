@@ -1058,9 +1058,17 @@ export default function HomePage() {
 
                     {/* Pilihan bahasa */}
                     <div className="flex flex-col gap-1.5">
-                      <span className="font-bold text-charcoal-text text-sm">
-                        {language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-charcoal-text text-sm">
+                          {language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
+                        </span>
+                        <Link
+                          href="/guide"
+                          className="font-mono font-black text-[10px] uppercase text-burnt-orange hover:text-lime-accent hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          📖 {language === "en" ? "Game Guide" : "Pedoman Bermain"}
+                        </Link>
+                      </div>
                       <div
                         className="grid grid-cols-2 gap-1 bg-light-beige p-1"
                         style={{
@@ -1555,6 +1563,10 @@ export default function HomePage() {
             .
           </p>
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-1">
+            <Link href="/guide" className="hover:text-charcoal-text hover:underline transition">
+              {language === "en" ? "Game Guide" : "Pedoman Bermain"}
+            </Link>
+            <span className="opacity-40" aria-hidden="true">•</span>
             <Link href="/privacy" className="hover:text-charcoal-text hover:underline transition">
               {language === "en" ? "Privacy Policy" : "Kebijakan Privasi"}
             </Link>
