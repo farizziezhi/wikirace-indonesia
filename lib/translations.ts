@@ -89,6 +89,21 @@ export const translations = {
     loadingArticle: "Memuat artikel…",
     loadError: "Artikel tidak bisa dimuat. Coba klik tautan lain.",
     networkError: "Gagal terhubung ke Wikipedia. Periksa koneksi.",
+    // pitstop
+    pitStopBtn: "🔧 MASUK PIT",
+    pitStopTitle: "🔧 PIT STOP STRATEGY",
+    pitStopDesc: "Pilih ban (Tyre Compound) untuk mendapatkan keunggulan taktis! Durasi pengerjaan ban: 4 detik.",
+    softTyresTitle: "🔴 Ban Soft (Preview Link)",
+    softTyresDesc: "Arahkan kursor ke link Wikipedia untuk melihat ringkasan isi artikel selama 15 detik.",
+    mediumTyresTitle: "🟡 Ban Medium (Bypass Ban)",
+    mediumTyresDesc: "Abaikan daftar artikel terlarang (Ban List) selama 15 detik. Bebas navigasi!",
+    hardTyresTitle: "⚪ Ban Hard (Tebarkan Oli)",
+    hardTyresDesc: "Kotori layar semua lawan dengan noda oli selama 6 detik. Lawan harus mengeklik WIPE untuk membersihkannya!",
+    pitInClickTitle: "MEMASANG BAN...",
+    pitInClickDesc: "Kru pit sedang mengganti ban Anda. Bersiaplah!",
+    debrisAlertTitle: "⚠️ OLI DI LINTASAN!",
+    debrisAlertDesc: "Pembalap {username} menumpahkan oli! Layar Anda kotor!",
+    wipeScreen: "🧹 BERSIHKAN LAYAR ({count}x)",
   },
   en: {
     // lobby
@@ -178,5 +193,20 @@ export const translations = {
     loadingArticle: "Loading article…",
     loadError: "Article cannot be loaded. Try clicking another link.",
     networkError: "Failed to connect to Wikipedia. Check connection.",
+    // pitstop
+    pitStopBtn: "🔧 ENTER PIT",
+    pitStopTitle: "🔧 PIT STOP STRATEGY",
+    pitStopDesc: "Choose a tyre compound to gain a tactical advantage! Fitting duration: 4 seconds.",
+    softTyresTitle: "🔴 Soft Tyres (Link Preview)",
+    softTyresDesc: "Hover over Wikipedia links to see a brief summary of the article for the next 15 seconds.",
+    mediumTyresTitle: "🟡 Medium Tyres (Bypass Ban)",
+    mediumTyresDesc: "Bypass Banned Articles for the next 15 seconds. Navigate freely!",
+    hardTyresTitle: "⚪ Hard Tyres (Spill Oil)",
+    hardTyresDesc: "Splatter oil on all opponents' screens for 6 seconds. They must click WIPE to clean it!",
+    pitInClickTitle: "FITTING TYRES...",
+    pitInClickDesc: "Pit crew is changing your tires. Stand by!",
+    debrisAlertTitle: "⚠️ OIL ON TRACK!",
+    debrisAlertDesc: "Driver {username} spilled oil! Your screen is dirty!",
+    wipeScreen: "🧹 WIPE SCREEN ({count}x)",
   }
 };

@@ -16,7 +16,7 @@ import {
   computeMiniLeaderboard,
   type AchievementBadge,
 } from "@/lib/achievements";
-import { playCountdownBeep, playCheatAlarm } from "@/lib/race-audio";
+import { playCountdownBeep, playCheatAlarm, playPitStopSound, playPowerUpEquippedSound, playOilSplatSound } from "@/lib/race-audio";
 import type { Room } from "@/lib/types";
 
 import WikiArticle from "./WikiArticle";
@@ -268,6 +268,9 @@ const GameHeader = memo(
     showHelpButton,
     isHelpDisabled,
     handleHelpClick,
+    showPitStopButton,
+    isPitStopDisabled,
+    handlePitStopClick,
     onTimeout,
     clockOffset = 0,
     language,
@@ -283,6 +286,9 @@ const GameHeader = memo(
     showHelpButton: boolean;
     isHelpDisabled: boolean;
     handleHelpClick: () => void;
+    showPitStopButton: boolean;
+    isPitStopDisabled: boolean;
+    handlePitStopClick: () => void;
     onTimeout?: () => void;
     clockOffset?: number;
     language: "id" | "en";
@@ -369,6 +375,24 @@ const GameHeader = memo(
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {showPitStopButton && (
+              <button
+                type="button"
+                onClick={handlePitStopClick}
+                disabled={isPitStopDisabled}
+                className="chunky-press bg-playdate-yellow text-charcoal-text transition disabled:opacity-60 cursor-pointer font-extrabold"
+                style={{
+                  border: "1px solid var(--color-warm-gray)",
+                  borderRadius: "var(--radius-button)",
+                  padding: "8px 12px",
+                  fontSize: "13px",
+                }}
+                title={language === "en" ? "Enter the pit lane to select strategy" : "Masuk ke pit lane untuk memilih strategi"}
+              >
+                {language === "en" ? "🔧 PIT STOP" : "🔧 MASUK PIT"}
+              </button>
+            )}
+
             {showHelpButton && (
               <button
                 type="button"
@@ -489,6 +513,75 @@ export default function Game({
   );
   const clicksCount = me ? Math.max(0, me.route.length - 1) : 0;
 
+  // ------- Pit Stop & Power-Ups States -------
+  const [pitActive, setPitActive] = useState(false);
+  const [pitTimeLeft, setPitTimeLeft] = useState(4.0);
+  const [selectedTyre, setSelectedTyre] = useState<"soft" | "medium" | "hard" | null>(null);
+
+  const [localActivePowerUp, setLocalActivePowerUp] = useState<"soft" | "medium" | "hard" | null>(null);
+  const [powerUpTimeLeft, setPowerUpTimeLeft] = useState(0);
+
+  const [oilSplat, setOilSplat] = useState(false);
+  const [splatClicksLeft, setSplatClicksLeft] = useState(0);
+  const [attackerName, setAttackerName] = useState("");
+
+  // Sync active powerups from server
+  useEffect(() => {
+    const active = me?.activePowerUp ?? null;
+    const expiresAt = me?.powerUpExpiresAt ?? 0;
+    if (active && expiresAt > Date.now() + clockOffset) {
+      setLocalActivePowerUp(active);
+      const timer = setInterval(() => {
+        const left = Math.max(0, (expiresAt - (Date.now() + clockOffset)) / 1000);
+        setPowerUpTimeLeft(Math.round(left * 10) / 10);
+        if (left <= 0) {
+          setLocalActivePowerUp(null);
+          clearInterval(timer);
+        }
+      }, 100);
+      return () => clearInterval(timer);
+    } else {
+      setLocalActivePowerUp(null);
+      setPowerUpTimeLeft(0);
+    }
+  }, [me?.activePowerUp, me?.powerUpExpiresAt, clockOffset]);
+
+  // Pit stop ticking logic
+  useEffect(() => {
+    if (!pitActive) return;
+
+    const interval = setInterval(() => {
+      setPitTimeLeft((prev) => {
+        const next = Math.max(0, prev - 0.1);
+        if (next <= 0) {
+          clearInterval(interval);
+          setPitActive(false);
+
+          // Submit the choice
+          const finalTyre = selectedTyre || "medium";
+          void fetch("/api/room/pit-stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              roomId: room.id,
+              clientId: currentClientId,
+              tyreType: finalTyre,
+            }),
+          }).then((res) => {
+            if (res.ok) {
+              playPowerUpEquippedSound();
+            }
+          }).catch((err) => {
+            console.error("Gagal mengirim pit stop:", err);
+          });
+        }
+        return next;
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [pitActive, selectedTyre, room.id, currentClientId]);
+
   // ------- Cheat prevention: disable search shortcuts (Ctrl+F, Cmd+F, F3, etc) -------
   const [suspensionNotice, setSuspensionNotice] = useState<{
     username: string;
@@ -536,6 +629,16 @@ export default function Game({
 
     return () => window.clearInterval(interval);
   }, [me?.suspendedUntil, clockOffset]);
+
+  const handlePitStopClick = useCallback(() => {
+    if (pitActive || me?.pitStopUsed || hasSurrendered || (suspensionTimeLeft > 0)) return;
+
+    setSelectedTyre(null);
+    setPitTimeLeft(4.0);
+    setPitActive(true);
+    playPitStopSound();
+  }, [pitActive, me?.pitStopUsed, hasSurrendered, suspensionTimeLeft]);
+
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -654,12 +757,28 @@ export default function Game({
       }
     }
 
+    function handlePitAttack(message: Ably.Message) {
+      const data = message.data as {
+        type: string;
+        attackerId: string;
+        attackerName: string;
+      };
+      if (data && data.attackerId !== currentClientId) {
+        setOilSplat(true);
+        setSplatClicksLeft(4);
+        setAttackerName(data.attackerName);
+        playOilSplatSound();
+      }
+    }
+
     void ablyChannel.subscribe("game_cancelled", handleGameCancelled);
     void ablyChannel.subscribe("player_suspended", handlePlayerSuspended);
+    void ablyChannel.subscribe("pit_attack", handlePitAttack);
 
     return () => {
       ablyChannel.unsubscribe("game_cancelled", handleGameCancelled);
       ablyChannel.unsubscribe("player_suspended", handlePlayerSuspended);
+      ablyChannel.unsubscribe("pit_attack", handlePitAttack);
     };
   }, [ablyChannel, router, currentClientId]);
 
@@ -935,8 +1054,11 @@ export default function Game({
         liveBadges={liveBadges}
         handleSurrenderClick={handleSurrenderClick}
         showHelpButton={me ? !me.helpUsed && myArticle !== room.startArticle && me.status === "playing" : false}
-        isHelpDisabled={usingHelp || (suspensionTimeLeft > 0)}
+        isHelpDisabled={usingHelp || (suspensionTimeLeft > 0) || pitActive}
         handleHelpClick={handleHelpClick}
+        showPitStopButton={room.gameMode === "casual" && me ? !me.pitStopUsed && me.status === "playing" : false}
+        isPitStopDisabled={pitActive || (suspensionTimeLeft > 0) || usingHelp}
+        handlePitStopClick={handlePitStopClick}
         clockOffset={clockOffset}
         language={language}
       />
@@ -946,7 +1068,7 @@ export default function Game({
       {/* ============================================================ */}
       <section className="mx-auto w-full max-w-[920px] flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <div
-          className="relative chunky bg-pure-white"
+          className="relative bg-pure-white border border-warm-gray shadow-raised"
           style={{ borderRadius: "var(--radius-input)" }}
         >
           {suspensionTimeLeft > 0 && (
@@ -955,8 +1077,8 @@ export default function Game({
               style={{ borderRadius: "var(--radius-input)" }}
             >
               <div
-                className="chunky-lg bg-pure-white p-6 sm:p-8 flex flex-col items-center gap-4 text-charcoal-text max-w-sm"
-                style={{ boxShadow: "var(--shadow-floating)" }}
+                className="bg-pure-white border border-warm-gray p-6 sm:p-8 flex flex-col items-center gap-4 text-charcoal-text max-w-sm"
+                style={{ borderRadius: "var(--radius-rounded)", boxShadow: "var(--shadow-floating)" }}
               >
                 <div className="text-4xl" aria-hidden>⏳</div>
                 <h3 className="font-black text-xl uppercase tracking-wider text-burnt-orange">
@@ -980,17 +1102,252 @@ export default function Game({
             </div>
           )}
 
-          <div className={suspensionTimeLeft > 0 ? "blur-md pointer-events-none select-none" : ""}>
+          {/* Active Power-up HUD status bar */}
+          {localActivePowerUp && (
+            <div
+              className={`border-b border-charcoal-text px-5 py-2.5 font-mono font-extrabold text-xs flex justify-between items-center text-charcoal-text ${
+                localActivePowerUp === "soft"
+                  ? "bg-burnt-orange text-warm-cream"
+                  : "bg-playdate-yellow"
+              }`}
+              style={{
+                borderRadius: "var(--radius-input) var(--radius-input) 0 0",
+              }}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="animate-pulse">{localActivePowerUp === "soft" ? "🔴" : "🟡"}</span>
+                <span>
+                  {localActivePowerUp === "soft"
+                    ? (language === "en" ? "SOFT TYRES ACTIVE: LINK PREVIEWS ENABLED" : "BAN SOFT AKTIF: PREVIEW LINK AKTIF")
+                    : (language === "en" ? "MEDIUM TYRES ACTIVE: BAN BYPASS ENABLED" : "BAN MEDIUM AKTIF: ABREVIASI BAN AKTIF")}
+                </span>
+              </div>
+              <div className="tabular-nums opacity-95">
+                {powerUpTimeLeft.toFixed(1)}s {language === "en" ? "LEFT" : "SISA"}
+              </div>
+            </div>
+          )}
+
+          {/* Oil Splat Attack Overlay */}
+          {oilSplat && (
+            <div
+              className="fixed inset-0 z-45 flex flex-col items-center justify-center p-6 text-center"
+              style={{
+                backgroundColor: `rgba(20, 20, 20, ${Math.max(0.4, (splatClicksLeft / 4) * 0.95)})`,
+                backdropFilter: `blur(${Math.max(0, splatClicksLeft * 2.5)}px)`,
+                transition: "background-color 0.2s, backdrop-filter 0.2s",
+              }}
+            >
+              <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+                <svg className="w-full h-full opacity-90 fill-charcoal-text" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M15,12 Q30,10 25,35 Q10,40 12,20 Z" />
+                  <path d="M85,25 Q90,40 75,45 Q65,30 80,15 Z" />
+                  <path d="M30,80 Q45,95 20,90 Q10,75 25,65 Z" />
+                  <path d="M70,75 Q85,60 90,85 Q65,90 75,70 Z" />
+                  <path d="M50,35 C65,30 75,45 60,60 C45,75 35,65 30,55 C25,45 35,40 50,35 Z" className="opacity-70" />
+                </svg>
+              </div>
+
+              <div
+                className="z-50 bg-playdate-yellow p-6 sm:p-8 flex flex-col items-center gap-4 text-charcoal-text max-w-sm border-4 border-charcoal-text shadow-[6px_6px_0px_#000]"
+                style={{ borderRadius: "var(--radius-input)" }}
+              >
+                <div className="text-4xl animate-bounce" aria-hidden>🧹</div>
+                <h3 className="font-black text-xl uppercase tracking-wider text-burnt-orange">
+                  {translations[language].debrisAlertTitle}
+                </h3>
+                <p className="text-xs font-extrabold leading-relaxed text-charcoal-text/80">
+                  {translations[language].debrisAlertDesc.replace("{username}", attackerName)}
+                </p>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    playOilSplatSound();
+                    setSplatClicksLeft((prev) => {
+                      const next = prev - 1;
+                      if (next <= 0) {
+                        setOilSplat(false);
+                      }
+                      return next;
+                    });
+                  }}
+                  className="chunky-press w-full bg-charcoal-text text-warm-cream font-mono font-black text-sm uppercase py-3 border-2 border-charcoal-text shadow-[4px_4px_0px_#000] rounded-xl hover:bg-charcoal-text/90"
+                >
+                  {translations[language].wipeScreen.replace("{count}", splatClicksLeft.toString())}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className={(suspensionTimeLeft > 0 || oilSplat) ? "blur-md pointer-events-none select-none" : ""}>
             <WikiArticle
               currentArticle={myArticle}
               endArticle={room.endArticle}
               language={room.language ?? "id"}
               onNavigate={handleNavigate}
               uiLanguage={language}
+              activePowerUp={localActivePowerUp}
+              bannedArticles={room.customRules?.bannedArticles}
             />
           </div>
         </div>
       </section>
+
+      {/* Main Pit Stop Strategy Screen Overlay */}
+      {pitActive && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/95 p-4 sm:p-6 text-warm-cream">
+          <div className="relative w-full max-w-[640px] bg-charcoal-deep border-4 border-lime-accent p-6 text-center flex flex-col gap-6" style={{ borderRadius: "var(--radius-input)", boxShadow: "var(--shadow-floating)" }}>
+            {/* Checkered Border Detail */}
+            <div className="absolute top-0 left-0 right-0 h-3 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
+              {Array.from({ length: 40 }).map((_, i) => (
+                <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
+              ))}
+            </div>
+
+            <div className="mt-2 flex flex-col items-center gap-1">
+              <h2 className="font-mono font-black text-2xl text-lime-accent uppercase tracking-wider animate-pulse">
+                {translations[language].pitInClickTitle}
+              </h2>
+              <p className="text-sm font-semibold opacity-70">
+                {translations[language].pitInClickDesc}
+              </p>
+            </div>
+
+            {/* Gigantic Ticking Timer */}
+            <div className="flex flex-col items-center justify-center py-4 bg-charcoal-text rounded-2xl border-2 border-warm-cream/15">
+              <div className="font-mono font-black text-6xl text-lime-accent tracking-tighter tabular-nums animate-pulse">
+                {pitTimeLeft.toFixed(1)}s
+              </div>
+              <span className="font-mono font-bold text-xs uppercase tracking-widest text-warm-cream/50 mt-1">
+                {language === "en" ? "LIMIT TIME FOR SELECTION" : "BATAS WAKTU MEMILIH"}
+              </span>
+            </div>
+
+            {/* Tyre Card Selector Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+              {/* Soft Tyres Card */}
+              <button
+                key="soft-tyre"
+                type="button"
+                onClick={() => {
+                  setSelectedTyre("soft");
+                }}
+                className={`relative text-left p-3.5 flex flex-col gap-2 transition select-none border ${
+                  selectedTyre === "soft"
+                    ? "bg-burnt-orange text-warm-cream border-lime-accent scale-[1.03] shadow-none translate-y-[2px]"
+                    : "bg-charcoal-text border-warm-cream/20 text-warm-cream hover:border-warm-cream/40 hover:scale-[1.01]"
+                }`}
+                style={{
+                  borderRadius: "var(--radius-button)",
+                  borderWidth: selectedTyre === "soft" ? "3px" : "1px",
+                }}
+              >
+                <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
+                  <span>{translations[language].softTyresTitle}</span>
+                  {selectedTyre === "soft" && (
+                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
+                      🎯 {language === "en" ? "CHOSEN" : "TERPILIH"}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
+                  {translations[language].softTyresDesc}
+                </p>
+              </button>
+
+              {/* Medium Tyres Card */}
+              <button
+                key="medium-tyre"
+                type="button"
+                onClick={() => {
+                  setSelectedTyre("medium");
+                }}
+                className={`relative text-left p-3.5 flex flex-col gap-2 transition select-none border ${
+                  selectedTyre === "medium"
+                    ? "bg-playdate-yellow text-charcoal-text border-lime-accent scale-[1.03] shadow-none translate-y-[2px]"
+                    : "bg-charcoal-text border-warm-cream/20 text-warm-cream hover:border-warm-cream/40 hover:scale-[1.01]"
+                }`}
+                style={{
+                  borderRadius: "var(--radius-button)",
+                  borderWidth: selectedTyre === "medium" ? "3px" : "1px",
+                }}
+              >
+                <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
+                  <span>{translations[language].mediumTyresTitle}</span>
+                  {selectedTyre === "medium" && (
+                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
+                      🎯 {language === "en" ? "CHOSEN" : "TERPILIH"}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
+                  {translations[language].mediumTyresDesc}
+                </p>
+              </button>
+
+              {/* Hard Tyres Card */}
+              <button
+                key="hard-tyre"
+                type="button"
+                onClick={() => {
+                  setSelectedTyre("hard");
+                }}
+                className={`relative text-left p-3.5 flex flex-col gap-2 transition select-none border ${
+                  selectedTyre === "hard"
+                    ? "bg-pure-white text-charcoal-text border-lime-accent scale-[1.03] shadow-none translate-y-[2px]"
+                    : "bg-charcoal-text border-warm-cream/20 text-warm-cream hover:border-warm-cream/40 hover:scale-[1.01]"
+                }`}
+                style={{
+                  borderRadius: "var(--radius-button)",
+                  borderWidth: selectedTyre === "hard" ? "3px" : "1px",
+                }}
+              >
+                <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
+                  <span>{translations[language].hardTyresTitle}</span>
+                  {selectedTyre === "hard" && (
+                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
+                      🎯 {language === "en" ? "CHOSEN" : "TERPILIH"}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
+                  {translations[language].hardTyresDesc}
+                </p>
+              </button>
+            </div>
+
+            {/* Glowing Telemetry Strategy Console Bar */}
+            <div className="border-t border-warm-cream/10 pt-4">
+              <div
+                className={`font-mono text-sm uppercase tracking-wider font-extrabold p-3.5 flex justify-between items-center transition-all duration-300 border ${
+                  selectedTyre === "soft"
+                    ? "bg-burnt-orange text-warm-cream border-pure-white shadow-[0_0_15px_rgba(255,107,0,0.4)]"
+                    : selectedTyre === "medium"
+                      ? "bg-playdate-yellow text-charcoal-text border-pure-white shadow-[0_0_15px_rgba(255,226,89,0.4)]"
+                      : selectedTyre === "hard"
+                        ? "bg-pure-white text-charcoal-text border-pure-white shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+                        : "bg-charcoal-text text-burnt-orange border-burnt-orange animate-pulse"
+                }`}
+                style={{ borderRadius: "var(--radius-button)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <span>⚡ {language === "en" ? "STRATEGY:" : "STRATEGI:"}</span>
+                  <span className="font-black underline decoration-2">
+                    {selectedTyre 
+                      ? (selectedTyre === "soft" ? "🔴 SOFT COMPOUND" : selectedTyre === "medium" ? "🟡 MEDIUM COMPOUND" : "⚪ HARD COMPOUND")
+                      : (language === "en" ? "SELECT A TYRE!" : "PILIH BAN SEKARANG!")}
+                  </span>
+                </div>
+                <span className="text-xs opacity-90 font-bold">
+                  {language === "en" ? "AUTO-FIT AT " : "AUTO-FIT PADA "}
+                  <span className="font-black tabular-nums">{pitTimeLeft.toFixed(1)}s</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

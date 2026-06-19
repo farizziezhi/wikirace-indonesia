@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
   }
 
   // --- CUSTOM RULES: Ban List Check ---
+  const hasMediumTyre = player.activePowerUp === "medium" && player.powerUpExpiresAt && Date.now() < player.powerUpExpiresAt;
   if (
+    !hasMediumTyre &&
     room.customRules?.bannedArticles &&
     room.customRules.bannedArticles.some(
       (ban) => ban.toLowerCase().replace(/_/g, " ") === article.toLowerCase().replace(/_/g, " ")

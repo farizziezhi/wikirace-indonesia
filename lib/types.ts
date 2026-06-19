@@ -25,6 +25,9 @@ export interface Player {
   finishedAt?: number;
   suspendedUntil?: number;
   helpUsed?: boolean;
+  pitStopUsed?: boolean;
+  activePowerUp?: "soft" | "medium" | "hard";
+  powerUpExpiresAt?: number;
   elo?: number;
   eloChange?: number;
   isBot?: boolean;

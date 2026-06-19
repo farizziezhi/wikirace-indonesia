@@ -241,5 +241,97 @@ export function speakRadioMessage(text: string, lang: "id" | "en"): void {
   }
 }
 
+export function playPitStopSound(): void {
+  if (!isRaceAudioUnlocked()) return;
+
+  const ctx = getAudioContext();
+  if (!ctx || ctx.state !== "running") return;
+
+  const now = ctx.currentTime;
+  
+  // F1 Impact Wrench / Wheel Gun sound simulation:
+  // 4 rapid high-speed impact bursts ("Zzzt! Zzzt! Zzzt! Zzzt!")
+  for (let i = 0; i < 4; i++) {
+    const burstStart = now + i * 0.8;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sawtooth";
+    // Sweep frequency down rapidly from 1200Hz to 180Hz
+    osc.frequency.setValueAtTime(1200, burstStart);
+    osc.frequency.exponentialRampToValueAtTime(180, burstStart + 0.4);
+
+    // Dynamic gain envelope for impact burst
+    gain.gain.setValueAtTime(0.0001, burstStart);
+    gain.gain.exponentialRampToValueAtTime(0.12, burstStart + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.05, burstStart + 0.2);
+    gain.gain.exponentialRampToValueAtTime(0.0001, burstStart + 0.4);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(burstStart);
+    osc.stop(burstStart + 0.45);
+  }
+}
+
+export function playPowerUpEquippedSound(): void {
+  if (!isRaceAudioUnlocked()) return;
+
+  const ctx = getAudioContext();
+  if (!ctx || ctx.state !== "running") return;
+
+  const now = ctx.currentTime;
+  
+  // Futuristic upward chime
+  const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+  notes.forEach((freq, idx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = freq;
+
+    const start = now + idx * 0.07;
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.1, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(start);
+    osc.stop(start + 0.2);
+  });
+}
+
+export function playOilSplatSound(): void {
+  if (!isRaceAudioUnlocked()) return;
+
+  const ctx = getAudioContext();
+  if (!ctx || ctx.state !== "running") return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  // Bubbly squish sound: frequency sweeps low and gains fluctuate
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(320, now);
+  osc.frequency.exponentialRampToValueAtTime(60, now + 0.35);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.15, now + 0.05);
+  gain.gain.linearRampToValueAtTime(0.07, now + 0.2);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.35);
+}
+
+
 
 

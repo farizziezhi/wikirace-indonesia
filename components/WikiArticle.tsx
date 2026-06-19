@@ -21,6 +21,7 @@ interface WikiArticleProps {
   onNavigate: (article: string) => void;
   uiLanguage: "id" | "en";
   bannedArticles?: string[];
+  activePowerUp?: "soft" | "medium" | "hard" | null;
 }
 
 /**
@@ -39,6 +40,7 @@ function WikiArticle({
   onNavigate,
   uiLanguage,
   bannedArticles = [],
+  activePowerUp = null,
 }: WikiArticleProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayedArticle, setDisplayedArticle] = useState(currentArticle);
@@ -46,6 +48,12 @@ function WikiArticle({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bannedWarningTitle, setBannedWarningTitle] = useState<string | null>(null);
+  const [hoverSummary, setHoverSummary] = useState<{
+    x: number;
+    y: number;
+    text: string;
+    loading: boolean;
+  } | null>(null);
 
   const t = translations[uiLanguage];
 
@@ -98,6 +106,94 @@ function WikiArticle({
     return () => window.clearTimeout(timer);
   }, [bannedWarningTitle]);
 
+  // Listen for link hover events when Soft Tyres are active
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node || activePowerUp !== "soft") {
+      setHoverSummary(null);
+      return;
+    }
+
+    let activeTimeout: number | null = null;
+
+    function handleMouseOver(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      if (!anchor) return;
+
+      const href = anchor.getAttribute("href") ?? "";
+      const articleTitle = extractArticleTitle(href, language);
+      if (!articleTitle) return;
+
+      // Clear any pending timeout
+      if (activeTimeout !== null) {
+        window.clearTimeout(activeTimeout);
+      }
+
+      const clientX = event.clientX;
+      const clientY = event.clientY;
+
+      setHoverSummary({
+        x: clientX,
+        y: clientY,
+        text: "",
+        loading: true,
+      });
+
+      // Debounce the Wikipedia fetch by 300ms to avoid unnecessary network queries
+      activeTimeout = window.setTimeout(async () => {
+        try {
+          const wikiLang = language === "en" ? "en" : "id";
+          const res = await fetch(
+            `https://${wikiLang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+              articleTitle.replace(/\s+/g, "_")
+            )}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setHoverSummary((prev) => {
+              if (!prev) return null; // already hovered out
+              return {
+                ...prev,
+                text: data.extract ?? "",
+                loading: false,
+              };
+            });
+          } else {
+            setHoverSummary(null);
+          }
+        } catch {
+          setHoverSummary(null);
+        }
+      }, 300);
+    }
+
+    function handleMouseOut(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      if (!anchor) return;
+
+      if (activeTimeout !== null) {
+        window.clearTimeout(activeTimeout);
+        activeTimeout = null;
+      }
+      setHoverSummary(null);
+    }
+
+    node.addEventListener("mouseover", handleMouseOver);
+    node.addEventListener("mouseout", handleMouseOut);
+
+    return () => {
+      if (activeTimeout !== null) {
+        window.clearTimeout(activeTimeout);
+      }
+      node.removeEventListener("mouseover", handleMouseOver);
+      node.removeEventListener("mouseout", handleMouseOut);
+      setHoverSummary(null);
+    };
+  }, [activePowerUp, language]);
+
+
   // Intercept klik <a> di dalam konten — listener satu kali pada container.
   useEffect(() => {
     const node = containerRef.current;
@@ -129,8 +225,8 @@ function WikiArticle({
 
       if (!articleTitle) return; // bukan artikel valid → ignore
 
-      // Cek apakah artikel terlarang (Ban List)
-      const isBanned = bannedArticles.some(
+      // Cek apakah artikel terlarang (Ban List) - dilewati jika ban Medium aktif
+      const isBanned = activePowerUp !== "medium" && bannedArticles.some(
         (ban) => ban.toLowerCase().replace(/_/g, " ") === articleTitle.toLowerCase().replace(/_/g, " ")
       );
       if (isBanned) {
@@ -144,7 +240,7 @@ function WikiArticle({
 
     node.addEventListener("click", handleClick);
     return () => node.removeEventListener("click", handleClick);
-  }, [onNavigate, language, bannedArticles]);
+  }, [onNavigate, language, bannedArticles, activePowerUp]);
 
   // Saat first load (belum ada konten apa pun), tampilkan spinner besar.
   const isFirstLoad = loading && html === null && error === null;
@@ -269,6 +365,28 @@ function WikiArticle({
           </div>
         )}
       </div>
+
+      {hoverSummary && (
+        <div
+          className="fixed z-[100] max-w-[280px] p-3 chunky bg-playdate-yellow text-charcoal-text text-xs font-semibold pointer-events-none shadow-[4px_4px_0px_#000] border-2 border-charcoal-text"
+          style={{
+            left: Math.min(window.innerWidth - 300, hoverSummary.x + 12),
+            top: Math.min(window.innerHeight - 150, hoverSummary.y + 12),
+            borderRadius: "var(--radius-button)",
+          }}
+        >
+          {hoverSummary.loading ? (
+            <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-charcoal-text/60 animate-pulse">
+              <span className="inline-block w-2.5 h-2.5 border-2 border-charcoal-text border-t-transparent animate-spin rounded-full" />
+              <span>Telemetry Preview...</span>
+            </div>
+          ) : (
+            <div className="leading-relaxed">
+              {hoverSummary.text || "No preview description available."}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
