@@ -2,12 +2,14 @@ import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
 import { getSessionUsername } from "@/lib/auth-server";
-import { getRoom, setRoom } from "@/lib/redis";
+import { getRoom, updateRoomAtomically } from "@/lib/redis";
 import {
   createRouteStep,
   errorResponse,
   findPlayer,
+  sanitizeRoom,
 } from "@/lib/room";
+import type { Room } from "@/lib/types";
 
 /**
  * POST /api/room/use-help
@@ -21,6 +23,7 @@ export async function POST(request: NextRequest) {
   let body: {
     roomId?: unknown;
     clientId?: unknown;
+    playerToken?: unknown;
   };
   try {
     body = await request.json();
@@ -45,56 +48,82 @@ export async function POST(request: NextRequest) {
     return errorResponse("Waktu mulai permainan tidak valid.", 500);
   }
 
-  const player = findPlayer(room, clientId);
-  if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
-  if (player.status !== "playing") {
-    return errorResponse("Pemain tidak dalam status 'playing'.", 409);
-  }
-
-  // --- SECURITY: Session Verification ---
+  // --- SECURITY: Session Verification (Ranked Matchmaking) ---
   if (room.isMatchmaking) {
     const sessionUsername = await getSessionUsername();
-    if (!sessionUsername || sessionUsername !== player.username) {
+    const player = findPlayer(room, clientId);
+    if (!player || !sessionUsername || sessionUsername !== player.username) {
       return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
     }
   }
 
-  if (player.helpUsed) {
-    return errorResponse("Bantuan 'Kembali ke Awal' hanya bisa digunakan 1 kali.", 400);
+  let suspendedUntil = 0;
+  let duration = 30;
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.status !== "playing") {
+        throw new Error("VAL_ERR:Bantuan hanya bisa digunakan saat permainan berlangsung.");
+      }
+      const player = findPlayer(currentRoom, clientId);
+      if (!player) {
+        throw new Error("VAL_ERR:Pemain tidak ada di room ini.");
+      }
+      if (player.status !== "playing") {
+        throw new Error("VAL_ERR:Pemain tidak dalam status 'playing'.");
+      }
+
+      // --- SECURITY: Token Verification (Casual Room) ---
+      if (!currentRoom.isMatchmaking) {
+        const playerToken =
+          request.headers.get("x-player-token") ||
+          (typeof body.playerToken === "string" ? body.playerToken : "");
+        if (!playerToken || playerToken !== player.token) {
+          throw new Error("AUTH_ERR:Akses ditolak: Token tidak cocok.");
+        }
+      }
+
+      if (player.helpUsed) {
+        throw new Error("VAL_ERR:Bantuan 'Kembali ke Awal' hanya bisa digunakan 1 kali.");
+      }
+      if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
+        throw new Error("VAL_ERR:Kamu sedang ditangguhkan, tidak bisa menggunakan bantuan.");
+      }
+      if (player.currentArticle === currentRoom.startArticle) {
+        throw new Error("VAL_ERR:Kamu sudah berada di artikel awal.");
+      }
+
+      const startArticle = currentRoom.startArticle;
+      const step = createRouteStep(startArticle, currentRoom.startTime!);
+      player.route.push(step);
+      player.currentArticle = startArticle;
+      player.helpUsed = true;
+
+      const isCompetitive = currentRoom.gameMode === "competitive" || !currentRoom.gameMode;
+      duration = isCompetitive ? 60 : 30;
+      suspendedUntil = Date.now() + duration * 1000;
+      player.suspendedUntil = suspendedUntil;
+
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
+    }
+    if (errMsg.startsWith("AUTH_ERR:")) {
+      return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
+    }
+    console.error("Gagal memproses bantuan:", err);
+    return errorResponse("Terjadi kesalahan internal server.", 500);
   }
 
-  if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
-    return errorResponse("Kamu sedang ditangguhkan, tidak bisa menggunakan bantuan.", 403);
-  }
+  const finalPlayer = findPlayer(updatedRoom, clientId);
+  if (!finalPlayer) return errorResponse("Pemain tidak ditemukan setelah bantuan.", 500);
 
-  if (player.currentArticle === room.startArticle) {
-    return errorResponse("Kamu sudah berada di artikel awal.", 400);
-  }
-
-  // Setel posisi artikel kembali ke awal dan catat di route
-  const startArticle = room.startArticle;
-  const step = createRouteStep(startArticle, room.startTime);
-  player.route.push(step);
-  player.currentArticle = startArticle;
-  player.helpUsed = true;
-
-  // Denda suspensi berdasarkan gameMode:
-  // Competitive: 60 detik (1 menit)
-  // Casual: 30 detik
-  const isCompetitive = room.gameMode === "competitive" || !room.gameMode;
-  const duration = isCompetitive ? 60 : 30;
-
-  const suspendedUntil = Date.now() + duration * 1000;
-  player.suspendedUntil = suspendedUntil;
-
-  await setRoom(room);
-
-  // Kirim event player_suspended untuk memberi tahu player lain tentang denda bantuan,
-  // lalu player_moved untuk sinkronisasi posisi navigasi terbaru pemain,
-  // lalu sinkronkan room_updated untuk sinkronisasi state.
   await publishRoomEvent(roomId, "player_suspended", {
     clientId,
-    username: player.username,
+    username: finalPlayer.username,
     reason: "help",
     duration,
     suspendedUntil,
@@ -102,11 +131,12 @@ export async function POST(request: NextRequest) {
 
   await publishRoomEvent(roomId, "player_moved", {
     clientId,
-    article: startArticle,
-    route: player.route,
+    article: updatedRoom.startArticle,
+    route: finalPlayer.route,
   });
 
-  await publishRoomEvent(roomId, "room_updated", { room });
+  await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(updatedRoom) });
 
-  return Response.json({ room });
+  return Response.json({ room: sanitizeRoom(updatedRoom) });
 }
+

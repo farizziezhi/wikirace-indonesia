@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getRoom, setRoom } from "@/lib/redis";
-import { errorResponse } from "@/lib/room";
+import { getRoom, updateRoomAtomically } from "@/lib/redis";
+import { errorResponse, sanitizeRoom } from "@/lib/room";
+import type { Room } from "@/lib/types";
 
 /**
  * POST /api/room/play-again
@@ -14,7 +15,7 @@ import { errorResponse } from "@/lib/room";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  let body: { roomId?: unknown; clientId?: unknown };
+  let body: { roomId?: unknown; clientId?: unknown; playerToken?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -31,29 +32,60 @@ export async function POST(request: NextRequest) {
 
   const room = await getRoom(roomId);
   if (!room) return errorResponse("Room tidak ditemukan.", 404);
-  if (room.isMatchmaking) {
-    return errorResponse("Ranked Matchmaking room tidak bisa direset.", 403);
-  }
-  if (room.hostClientId !== clientId) {
-    return errorResponse("Hanya host yang boleh mereset room.", 403);
-  }
-  if (room.status !== "finished") {
-    return errorResponse("Room hanya bisa direset setelah game selesai.", 409);
+
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.isMatchmaking) {
+        throw new Error("VAL_ERR:Ranked Matchmaking room tidak bisa direset.");
+      }
+      if (currentRoom.hostClientId !== clientId) {
+        throw new Error("VAL_ERR:Hanya host yang boleh mereset room.");
+      }
+      if (currentRoom.status !== "finished") {
+        throw new Error("VAL_ERR:Room hanya bisa direset setelah game selesai.");
+      }
+
+      const hostPlayer = currentRoom.players.find((p) => p.clientId === currentRoom.hostClientId);
+      if (!hostPlayer) {
+        throw new Error("VAL_ERR:Host tidak ditemukan di room.");
+      }
+
+      // --- SECURITY: Token Verification (Casual Room) ---
+      const playerToken =
+        request.headers.get("x-player-token") ||
+        (typeof body.playerToken === "string" ? body.playerToken : "");
+      if (!playerToken || playerToken !== hostPlayer.token) {
+        throw new Error("AUTH_ERR:Akses ditolak: Token tidak cocok.");
+      }
+
+      currentRoom.status = "lobby";
+      currentRoom.startArticle = "";
+      currentRoom.endArticle = "";
+      currentRoom.startTime = undefined;
+      for (const player of currentRoom.players) {
+        player.status = "waiting";
+        player.currentArticle = "";
+        player.route = [];
+        player.finishedAt = undefined;
+      }
+
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
+    }
+    if (errMsg.startsWith("AUTH_ERR:")) {
+      return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
+    }
+    console.error("Gagal melakukan reset room:", err);
+    return errorResponse("Terjadi kesalahan internal server.", 500);
   }
 
-  room.status = "lobby";
-  room.startArticle = "";
-  room.endArticle = "";
-  room.startTime = undefined;
-  for (const player of room.players) {
-    player.status = "waiting";
-    player.currentArticle = "";
-    player.route = [];
-    player.finishedAt = undefined;
-  }
+  await publishRoomEvent(roomId, "room_reset", { room: sanitizeRoom(updatedRoom) });
 
-  await setRoom(room);
-  await publishRoomEvent(roomId, "room_reset", { room });
-
-  return Response.json({ room });
+  return Response.json({ room: sanitizeRoom(updatedRoom) });
 }
+

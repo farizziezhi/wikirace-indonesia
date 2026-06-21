@@ -9,7 +9,7 @@ import EmojiReactions from "@/components/EmojiReactions";
 import Game from "@/components/Game";
 import Lobby from "@/components/Lobby";
 import Results from "@/components/Results";
-import { getOrCreateClientId, getSavedUsername, getSavedLanguage } from "@/lib/client-id";
+import { getOrCreateClientId, getSavedUsername, getSavedLanguage, savePlayerToken, getPlayerToken } from "@/lib/client-id";
 import { unlockRaceAudio, playVictoryChime } from "@/lib/race-audio";
 import type { Player, Room, RouteStep } from "@/lib/types";
 import AdContainer from "@/components/AdContainer";
@@ -137,7 +137,7 @@ export default function RoomPage({ params }: RoomPageProps) {
             clientId: identity!.clientId,
           }),
         });
-        const data: { room?: Room; serverTime?: number; error?: string } = await res
+        const data: { room?: Room; serverTime?: number; error?: string; playerToken?: string } = await res
           .json()
           .catch(() => ({}));
 
@@ -156,6 +156,10 @@ export default function RoomPage({ params }: RoomPageProps) {
         }
 
         if (cancelled) return;
+
+        if (data.playerToken) {
+          savePlayerToken(normalizedRoomId, data.playerToken);
+        }
 
         initialRoom = data.room;
         setRoom(initialRoom);
@@ -478,6 +482,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         const payload = JSON.stringify({
           roomId: normalizedRoomId,
           clientId: identity!.clientId,
+          playerToken: getPlayerToken(normalizedRoomId),
         });
         const blob = new Blob([payload], { type: "application/json" });
         navigator.sendBeacon("/api/room/leave", blob);

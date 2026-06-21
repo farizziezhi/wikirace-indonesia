@@ -3,8 +3,9 @@ import type { NextRequest } from "next/server";
 import { publishRoomEvent } from "@/lib/ably";
 import { getSessionUsername } from "@/lib/auth-server";
 import { calculateEloChanges } from "@/lib/elo";
-import { getRoom, setRoom, updatePlayerStats } from "@/lib/redis";
-import { errorResponse, findPlayer } from "@/lib/room";
+import { getRoom, updateRoomAtomically, updatePlayerStats } from "@/lib/redis";
+import { errorResponse, findPlayer, sanitizeRoom } from "@/lib/room";
+import type { Room } from "@/lib/types";
 
 /**
  * POST /api/room/surrender
@@ -13,7 +14,7 @@ import { errorResponse, findPlayer } from "@/lib/room";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  let body: { roomId?: unknown; clientId?: unknown };
+  let body: { roomId?: unknown; clientId?: unknown; playerToken?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -34,69 +35,114 @@ export async function POST(request: NextRequest) {
     return errorResponse("Game tidak dalam status 'playing'.", 409);
   }
 
-  const player = findPlayer(room, clientId);
-  if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
-  if (player.status !== "playing") {
-    return errorResponse("Pemain sudah finished/surrendered.", 409);
-  }
-
-  // --- SECURITY: Session Verification ---
+  // --- SECURITY: Session Verification (Ranked Matchmaking) ---
   if (room.isMatchmaking) {
     const sessionUsername = await getSessionUsername();
-    if (!sessionUsername || sessionUsername !== player.username) {
+    const player = findPlayer(room, clientId);
+    if (!player || !sessionUsername || sessionUsername !== player.username) {
       return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
     }
   }
 
-  player.status = "surrendered";
+  let eloChangesToApply: Array<{
+    username: string;
+    change: number;
+    clicks: number;
+    duration: number;
+  }> = [];
+  let allDone = false;
 
-  // Cek apakah semua pemain non-finished sekarang sudah surrendered (abaikan bot)
-  const stillPlaying = room.players.some((p) => !p.isBot && p.status === "playing");
-  const allDone = !stillPlaying;
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.status !== "playing") {
+        throw new Error("VAL_ERR:Game tidak dalam status 'playing'.");
+      }
 
-  if (allDone) {
-    room.status = "finished";
+      const player = findPlayer(currentRoom, clientId);
+      if (!player) {
+        throw new Error("VAL_ERR:Pemain tidak ada di room ini.");
+      }
+      if (player.status !== "playing") {
+        throw new Error("VAL_ERR:Pemain sudah finished/surrendered.");
+      }
 
-    // Hitung perubahan ELO jika ini room Ranked Matchmaking
-    let eloChanges: Record<string, number> = {};
-    if (room.isMatchmaking) {
-      try {
-        const eloData = room.players.map((p) => ({
-          username: p.username,
-          elo: p.elo ?? 1200,
-          status: p.status,
-          finishedAt: p.finishedAt,
-        }));
+      // --- SECURITY: Token Verification (Casual Room) ---
+      if (!currentRoom.isMatchmaking) {
+        const playerToken =
+          request.headers.get("x-player-token") ||
+          (typeof body.playerToken === "string" ? body.playerToken : "");
+        if (!playerToken || playerToken !== player.token) {
+          throw new Error("AUTH_ERR:Akses ditolak: Token tidak cocok.");
+        }
+      }
 
-        eloChanges = calculateEloChanges(eloData);
+      player.status = "surrendered";
 
-        // Update database ELO masing-masing pemain & update objek room
-        for (const p of room.players) {
-          const change = eloChanges[p.username] || 0;
-          if (p.isBot) {
-            // Update ELO di objek room saja, skip database
+      const stillPlaying = currentRoom.players.some((p) => !p.isBot && p.status === "playing");
+      allDone = !stillPlaying;
+
+      if (allDone) {
+        currentRoom.status = "finished";
+
+        if (currentRoom.isMatchmaking) {
+          const eloData = currentRoom.players.map((p) => ({
+            username: p.username,
+            elo: p.elo ?? 1200,
+            status: p.status,
+            finishedAt: p.finishedAt,
+          }));
+
+          const eloChanges = calculateEloChanges(eloData);
+
+          for (const p of currentRoom.players) {
+            const change = eloChanges[p.username] || 0;
             p.elo = (p.elo ?? 1200) + change;
             p.eloChange = change;
-            continue;
+
+            if (!p.isBot) {
+              eloChangesToApply.push({
+                username: p.username,
+                change,
+                clicks: Math.max(0, p.route.length - 1),
+                duration: p.route.length > 0 ? p.route[p.route.length - 1].timestamp : 0,
+              });
+            }
           }
-          const clicks = Math.max(0, p.route.length - 1);
-          const duration = p.route.length > 0 ? p.route[p.route.length - 1].timestamp : 0;
-          await updatePlayerStats(p.username, change, false, {
-            startArticle: room.startArticle || "",
-            endArticle: room.endArticle || "",
-            clicks,
-            duration,
+        }
+      }
+
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
+    }
+    if (errMsg.startsWith("AUTH_ERR:")) {
+      return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
+    }
+    console.error("Gagal memproses surrender:", err);
+    return errorResponse("Terjadi kesalahan internal server.", 500);
+  }
+
+  if (allDone) {
+    if (updatedRoom.isMatchmaking) {
+      try {
+        for (const item of eloChangesToApply) {
+          await updatePlayerStats(item.username, item.change, false, {
+            startArticle: updatedRoom.startArticle || "",
+            endArticle: updatedRoom.endArticle || "",
+            clicks: item.clicks,
+            duration: item.duration,
           });
-          p.elo = (p.elo ?? 1200) + change;
-          p.eloChange = change;
         }
       } catch (err) {
-        console.error("Gagal menghitung ELO saat menyerah:", err);
+        console.error("Gagal menyimpan riwayat ELO/pertandingan saat menyerah:", err);
       }
     }
 
-    // Bangun allRoutes dengan payload data ELO tambahan
-    const allRoutes = room.players.map((p) => ({
+    const allRoutes = updatedRoom.players.map((p) => ({
       clientId: p.clientId,
       username: p.username,
       status: p.status,
@@ -106,14 +152,11 @@ export async function POST(request: NextRequest) {
       newElo: p.elo ?? 1200,
     }));
 
-    await setRoom(room);
-    await publishRoomEvent(roomId, "game_surrendered", {
-      allRoutes,
-    });
+    await publishRoomEvent(roomId, "game_surrendered", { allRoutes });
   } else {
-    await setRoom(room);
-    await publishRoomEvent(roomId, "room_updated", { room });
+    await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(updatedRoom) });
   }
 
-  return Response.json({ room, allSurrendered: allDone });
+  return Response.json({ room: sanitizeRoom(updatedRoom), allSurrendered: allDone });
 }
+

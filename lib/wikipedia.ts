@@ -104,7 +104,17 @@ export async function fetchArticleHtml(
     if (oldest) articleCache.delete(oldest);
   }
 
-  const promise = fetchArticleHtmlRaw(title, lang);
+  const promise = fetchArticleHtmlRaw(title, lang).then((result) => {
+    // Jangan cache Promise yang gagal (null) — agar bisa retry
+    if (result === null) {
+      articleCache.delete(key);
+    }
+    return result;
+  }).catch((err) => {
+    // Hapus dari cache jika fetch gagal, agar bisa dicoba ulang
+    articleCache.delete(key);
+    throw err;
+  });
   articleCache.set(key, promise);
   return promise;
 }

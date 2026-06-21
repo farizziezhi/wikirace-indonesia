@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
 import { getRoom, removeMatchmakingRoom, setRoom, deleteRoom, addMatchmakingRoom } from "@/lib/redis";
-import { errorResponse, MAX_PLAYERS } from "@/lib/room";
+import { errorResponse, MAX_PLAYERS, sanitizeRoom } from "@/lib/room";
 import { getSessionUsername } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
   }
 
   await setRoom(room);
-  await publishRoomEvent(room.id, "room_updated", { room });
+  await publishRoomEvent(room.id, "room_updated", { room: sanitizeRoom(room) });
 
   // Publish a custom notification chat message that a player was kicked
   await publishRoomEvent(room.id, "chat_message", {
@@ -120,5 +120,5 @@ export async function POST(request: NextRequest) {
     timestamp: Date.now(),
   });
 
-  return Response.json({ success: true, room });
+  return Response.json({ success: true, room: sanitizeRoom(room) });
 }

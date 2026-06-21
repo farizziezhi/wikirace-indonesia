@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { cookies } from "next/headers";
 import { type NextRequest } from "next/server";
 
 import {
@@ -217,6 +218,3 @@ export async function POST(request: NextRequest) {
 
   return Response.json({ error: "Aksi tidak didukung." }, { status: 400 });
 }
-
-// Tambahan helper cookies di file terpisah dibaca lewat standard Next.js
-import { cookies } from "next/headers";

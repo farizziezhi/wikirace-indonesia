@@ -10,6 +10,7 @@ import {
   saveUsername,
   getSavedLanguage,
   saveLanguage,
+  savePlayerToken,
 } from "@/lib/client-id";
 import { isRaceAudioUnlocked, unlockRaceAudio } from "@/lib/race-audio";
 import type { Room, WikiLanguage } from "@/lib/types";
@@ -312,13 +313,17 @@ export default function HomePage() {
         }),
       });
 
-      const data: { roomId?: string; room?: Room; error?: string } =
+      const data: { roomId?: string; room?: Room; error?: string; playerToken?: string } =
         await res.json();
 
       if (!res.ok || !data.roomId) {
         setError(data.error ?? "Gagal membuat room. Coba lagi.");
         setMode("idle");
         return;
+      }
+
+      if (data.playerToken) {
+        savePlayerToken(data.roomId, data.playerToken);
       }
 
       router.push(`/room/${data.roomId}`);
@@ -374,12 +379,16 @@ export default function HomePage() {
         }),
       });
 
-      const data: { room?: Room; error?: string } = await res.json();
+      const data: { room?: Room; error?: string; playerToken?: string } = await res.json();
 
       if (!res.ok) {
         setError(data.error ?? "Gagal bergabung ke room.");
         setMode("idle");
         return;
+      }
+
+      if (data.playerToken) {
+        savePlayerToken(trimmedRoomId, data.playerToken);
       }
 
       router.push(`/room/${trimmedRoomId}`);

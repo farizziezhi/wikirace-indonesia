@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { EmojiReaction } from "@/lib/types";
 import { ALLOWED_EMOJIS } from "@/lib/room";
+import { getPlayerToken } from "@/lib/client-id";
 
 interface EmojiReactionsProps {
   roomId: string;
@@ -114,7 +115,10 @@ export default function EmojiReactions({
           try {
             await fetch("/api/room/react", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "X-Player-Token": getPlayerToken(roomId),
+              },
               body: JSON.stringify({ roomId, clientId: currentClientId, emojis: emojisToSend }),
             });
           } catch {

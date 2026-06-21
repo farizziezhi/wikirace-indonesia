@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getSessionUsername } from "@/lib/auth-server";
-import { getRoom, setRoom } from "@/lib/redis";
-import { errorResponse, findPlayer } from "@/lib/room";
+import { getRoom, updateRoomAtomically } from "@/lib/redis";
+import { errorResponse, findPlayer, sanitizeRoom } from "@/lib/room";
+import type { Room } from "@/lib/types";
 
 /**
  * POST /api/room/pit-stop
@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     roomId?: unknown;
     clientId?: unknown;
     tyreType?: unknown;
+    playerToken?: unknown;
   };
   try {
     body = await request.json();
@@ -48,49 +49,74 @@ export async function POST(request: NextRequest) {
     return errorResponse("Pit stop hanya tersedia pada mode Casual.", 403);
   }
 
-  const player = findPlayer(room, clientId);
-  if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
-  
-  if (player.status !== "playing") {
-    return errorResponse("Pemain tidak dalam status 'playing'.", 409);
-  }
+  let triggerPitAttack = false;
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.status !== "playing") {
+        throw new Error("VAL_ERR:Pit stop hanya bisa digunakan saat permainan berlangsung.");
+      }
+      if (currentRoom.gameMode !== "casual") {
+        throw new Error("VAL_ERR:Pit stop hanya tersedia pada mode Casual.");
+      }
+      const player = findPlayer(currentRoom, clientId);
+      if (!player) {
+        throw new Error("VAL_ERR:Pemain tidak ada di room ini.");
+      }
+      if (player.status !== "playing") {
+        throw new Error("VAL_ERR:Pemain tidak dalam status 'playing'.");
+      }
 
-  // --- SECURITY: Session Verification ---
-  if (room.isMatchmaking) {
-    const sessionUsername = await getSessionUsername();
-    if (!sessionUsername || sessionUsername !== player.username) {
-      return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
+      // --- SECURITY: Token Verification (Casual Room) ---
+      const playerToken =
+        request.headers.get("x-player-token") ||
+        (typeof body.playerToken === "string" ? body.playerToken : "");
+      if (!playerToken || playerToken !== player.token) {
+        throw new Error("AUTH_ERR:Akses ditolak: Token tidak cocok.");
+      }
+
+      if (player.pitStopUsed) {
+        throw new Error("VAL_ERR:Kamu sudah menggunakan Pit Stop pada ronde ini.");
+      }
+      if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
+        throw new Error("VAL_ERR:Kamu sedang ditangguhkan, tidak bisa masuk Pit Stop.");
+      }
+
+      player.pitStopUsed = true;
+      player.activePowerUp = tyreType as "soft" | "medium" | "hard";
+      
+      if (tyreType === "soft" || tyreType === "medium") {
+        player.powerUpExpiresAt = Date.now() + 15000;
+      } else if (tyreType === "hard") {
+        triggerPitAttack = true;
+      }
+
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
     }
+    if (errMsg.startsWith("AUTH_ERR:")) {
+      return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
+    }
+    console.error("Gagal memproses pit-stop:", err);
+    return errorResponse("Terjadi kesalahan internal server.", 500);
   }
 
-  if (player.pitStopUsed) {
-    return errorResponse("Kamu sudah menggunakan Pit Stop pada ronde ini.", 400);
-  }
+  const finalPlayer = findPlayer(updatedRoom, clientId);
 
-  if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
-    return errorResponse("Kamu sedang ditangguhkan, tidak bisa masuk Pit Stop.", 403);
-  }
-
-  // Setel status pit stop pemain
-  player.pitStopUsed = true;
-  player.activePowerUp = tyreType as "soft" | "medium" | "hard";
-  
-  // Power-up soft & medium bertahan selama 15 detik
-  if (tyreType === "soft" || tyreType === "medium") {
-    player.powerUpExpiresAt = Date.now() + 15000;
-  } else if (tyreType === "hard") {
-    // Hard tyre: tebarkan oli/mud ke semua lawan instan
+  if (triggerPitAttack && finalPlayer) {
     await publishRoomEvent(roomId, "pit_attack", {
       type: "debris",
       attackerId: clientId,
-      attackerName: player.username,
+      attackerName: finalPlayer.username,
     });
   }
 
-  await setRoom(room);
+  await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(updatedRoom) });
 
-  // Publikasikan room_updated untuk sinkronisasi state
-  await publishRoomEvent(roomId, "room_updated", { room });
-
-  return Response.json({ room });
+  return Response.json({ room: sanitizeRoom(updatedRoom) });
 }
+

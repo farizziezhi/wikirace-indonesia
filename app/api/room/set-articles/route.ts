@@ -1,11 +1,11 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getRoom, setRoom } from "@/lib/redis";
-import { errorResponse, MAX_ARTICLE_TITLE_LENGTH } from "@/lib/room";
+import { getRoom, updateRoomAtomically } from "@/lib/redis";
+import { errorResponse, MAX_ARTICLE_TITLE_LENGTH, sanitizeRoom } from "@/lib/room";
 import { getChallengePackById } from "@/lib/challenges";
 import { fetchRandomArticle } from "@/lib/wikipedia";
-import type { WikiLanguage } from "@/lib/types";
+import type { WikiLanguage, Room } from "@/lib/types";
 
 /**
  * POST /api/room/set-articles
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     random?: unknown;
     packId?: unknown;
     customRules?: unknown;
+    playerToken?: unknown;
   };
   try {
     body = await request.json();
@@ -56,29 +57,13 @@ export async function POST(request: NextRequest) {
 
   let startArticle = "";
   let endArticle = "";
-  let language: WikiLanguage | undefined =
-    body.language === "id"
-      ? "id"
-      : body.language === "en"
-        ? "en"
-        : undefined;
-  const gameMode =
-    body.gameMode === "casual"
-      ? "casual"
-      : body.gameMode === "competitive"
-        ? "competitive"
-        : undefined;
+  let targetLanguage: WikiLanguage = "id";
 
-  if (packId) {
-    const pack = getChallengePackById(packId);
-    if (!pack) return errorResponse("Pack tidak ditemukan.");
-    startArticle = pack.startArticle;
-    endArticle = pack.endArticle;
-    language = pack.lang as WikiLanguage;
-    room.startArticle = startArticle;
-    room.endArticle = endArticle;
-  } else if (random) {
-    const targetLang = language ?? room.language ?? "id";
+  if (random) {
+    const targetLang =
+      body.language === "en" || body.language === "id"
+        ? (body.language as WikiLanguage)
+        : (room.language ?? "id");
     const s = await fetchRandomArticle(targetLang);
     const e = await fetchRandomArticle(targetLang);
     if (!s || !e || s === e) {
@@ -86,50 +71,112 @@ export async function POST(request: NextRequest) {
     }
     startArticle = s;
     endArticle = e;
-    language = targetLang;
-    room.startArticle = startArticle;
-    room.endArticle = endArticle;
-  } else {
-    if (typeof body.startArticle === "string") {
-      const s = body.startArticle.trim();
-      if (s.length > MAX_ARTICLE_TITLE_LENGTH) {
-        return errorResponse("Judul artikel awal terlalu panjang.");
+    targetLanguage = targetLang;
+  }
+
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.hostClientId !== clientId) {
+        throw new Error("VAL_ERR:Hanya host yang boleh mengatur artikel.");
       }
-      room.startArticle = s;
-    }
-    if (typeof body.endArticle === "string") {
-      const e = body.endArticle.trim();
-      if (e.length > MAX_ARTICLE_TITLE_LENGTH) {
-        return errorResponse("Judul artikel tujuan terlalu panjang.");
+      if (currentRoom.isMatchmaking) {
+        throw new Error("VAL_ERR:Artikel pada Ranked Matchmaking tidak boleh diubah manual.");
       }
-      room.endArticle = e;
+      if (currentRoom.status !== "lobby") {
+        throw new Error("VAL_ERR:Artikel hanya bisa diatur saat di lobby.");
+      }
+
+      const hostPlayer = currentRoom.players.find((p) => p.clientId === currentRoom.hostClientId);
+      if (!hostPlayer) {
+        throw new Error("VAL_ERR:Host tidak ditemukan di room.");
+      }
+
+      // --- SECURITY: Token Verification (Casual Room) ---
+      const playerToken =
+        request.headers.get("x-player-token") ||
+        (typeof body.playerToken === "string" ? body.playerToken : "");
+      if (!playerToken || playerToken !== hostPlayer.token) {
+        throw new Error("AUTH_ERR:Akses ditolak: Token tidak cocok.");
+      }
+
+      let language: WikiLanguage | undefined =
+        body.language === "id"
+          ? "id"
+          : body.language === "en"
+            ? "en"
+            : undefined;
+      const gameMode =
+        body.gameMode === "casual"
+          ? "casual"
+          : body.gameMode === "competitive"
+            ? "competitive"
+            : undefined;
+
+      if (packId) {
+        const pack = getChallengePackById(packId);
+        if (!pack) throw new Error("VAL_ERR:Pack tidak ditemukan.");
+        currentRoom.startArticle = pack.startArticle;
+        currentRoom.endArticle = pack.endArticle;
+        currentRoom.language = pack.lang as WikiLanguage;
+      } else if (random) {
+        currentRoom.startArticle = startArticle;
+        currentRoom.endArticle = endArticle;
+        currentRoom.language = targetLanguage;
+      } else {
+        if (typeof body.startArticle === "string") {
+          const s = body.startArticle.trim();
+          if (s.length > MAX_ARTICLE_TITLE_LENGTH) {
+            throw new Error("VAL_ERR:Judul artikel awal terlalu panjang.");
+          }
+          currentRoom.startArticle = s;
+        }
+        if (typeof body.endArticle === "string") {
+          const e = body.endArticle.trim();
+          if (e.length > MAX_ARTICLE_TITLE_LENGTH) {
+            throw new Error("VAL_ERR:Judul artikel tujuan terlalu panjang.");
+          }
+          currentRoom.endArticle = e;
+        }
+        if (currentRoom.startArticle && currentRoom.endArticle && currentRoom.startArticle === currentRoom.endArticle) {
+          throw new Error("VAL_ERR:Artikel awal dan tujuan tidak boleh sama.");
+        }
+      }
+
+      if (language !== undefined) {
+        currentRoom.language = language;
+      }
+      if (gameMode !== undefined) {
+        currentRoom.gameMode = gameMode;
+      }
+      if (body.customRules && typeof body.customRules === "object") {
+        const rules = body.customRules as any;
+        currentRoom.customRules = {
+          clickLimit: typeof rules.clickLimit === "number" ? Math.max(0, rules.clickLimit) : 0,
+          timeLimit: typeof rules.timeLimit === "number" ? Math.max(0, rules.timeLimit) : 0,
+          bannedArticles: Array.isArray(rules.bannedArticles)
+            ? rules.bannedArticles.map((a: any) => String(a).trim()).filter(Boolean)
+            : [],
+        };
+      }
+
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
     }
-    if (room.startArticle && room.endArticle && room.startArticle === room.endArticle) {
-      return errorResponse("Artikel awal dan tujuan tidak boleh sama.");
+    if (errMsg.startsWith("AUTH_ERR:")) {
+      return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
     }
+    console.error("Gagal melakukan pengaturan artikel:", err);
+    return errorResponse("Terjadi kesalahan internal server.", 500);
   }
 
-  if (language !== undefined) {
-    room.language = language;
-  }
-  if (gameMode !== undefined) {
-    room.gameMode = gameMode;
-  }
-  if (body.customRules && typeof body.customRules === "object") {
-    const rules = body.customRules as any;
-    room.customRules = {
-      clickLimit: typeof rules.clickLimit === "number" ? Math.max(0, rules.clickLimit) : 0,
-      timeLimit: typeof rules.timeLimit === "number" ? Math.max(0, rules.timeLimit) : 0,
-      bannedArticles: Array.isArray(rules.bannedArticles)
-        ? rules.bannedArticles.map((a: any) => String(a).trim()).filter(Boolean)
-        : [],
-    };
-  }
+  await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(updatedRoom) });
 
-  await setRoom(room);
-
-  await publishRoomEvent(roomId, "room_updated", { room });
-
-  return Response.json({ room });
+  return Response.json({ room: sanitizeRoom(updatedRoom) });
 }
+
 

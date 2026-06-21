@@ -1,9 +1,10 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getRoom, removeMatchmakingRoom, setRoom } from "@/lib/redis";
-import { errorResponse } from "@/lib/room";
+import { getRoom, removeMatchmakingRoom, setRoom, updateRoomAtomically } from "@/lib/redis";
+import { errorResponse, sanitizeRoom } from "@/lib/room";
 import { getSessionUsername } from "@/lib/auth-server";
+import type { Room } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -113,7 +114,7 @@ async function generateLogicalBotRoute(
 }
 
 export async function POST(request: NextRequest) {
-  let body: { roomId?: unknown; clientId?: unknown; targetClientId?: unknown; ready?: unknown };
+  let body: { roomId?: unknown; clientId?: unknown; targetClientId?: unknown; ready?: unknown; playerToken?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -135,79 +136,112 @@ export async function POST(request: NextRequest) {
     return errorResponse("Game sudah dimulai atau sudah selesai.", 409);
   }
 
-  // --- SECURITY: Session & Role Verification ---
-  const sessionUsername = await getSessionUsername();
-  if (!sessionUsername) {
-    return errorResponse("Anda harus login.", 401);
-  }
-
-  const callerPlayer = room.players.find((p) => p.clientId === clientId);
-  if (!callerPlayer) {
-    return errorResponse("Pemain pemanggil tidak ada di room.", 403);
-  }
-
-  // Caller username must match the session username
-  if (callerPlayer.username !== sessionUsername) {
-    return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
-  }
-
-  const targetPlayer = room.players.find((p) => p.clientId === targetClientId);
-  if (!targetPlayer) {
-    return errorResponse("Pemain target tidak ditemukan di room.", 404);
-  }
-
-  // If readying someone else, must be a bot and caller must be the host
-  if (targetClientId !== clientId) {
-    if (!targetPlayer.isBot) {
-      return errorResponse("Anda tidak bisa mengubah status ready pemain lain.", 403);
+  // --- SECURITY: Session Verification (Ranked Matchmaking) ---
+  if (room.isMatchmaking) {
+    const sessionUsername = await getSessionUsername();
+    if (!sessionUsername) {
+      return errorResponse("Anda harus login.", 401);
     }
-    if (clientId !== room.hostClientId) {
-      return errorResponse("Hanya host yang bisa mengubah status ready bot.", 403);
+    const callerPlayer = room.players.find((p) => p.clientId === clientId);
+    if (!callerPlayer || callerPlayer.username !== sessionUsername) {
+      return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
     }
   }
 
-  // Update target player's ready state
-  targetPlayer.ready = ready;
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.status !== "lobby") {
+        throw new Error("VAL_ERR:Game sudah dimulai atau sudah selesai.");
+      }
 
-  // Check if everyone is ready and start the game if players.length >= 2
-  const allReady = room.players.length >= 2 && room.players.every((p) => p.ready);
+      const callerPlayer = currentRoom.players.find((p) => p.clientId === clientId);
+      if (!callerPlayer) {
+        throw new Error("VAL_ERR:Pemain pemanggil tidak ada di room.");
+      }
 
-  if (allReady) {
-    if (room.isMatchmaking) {
-      await removeMatchmakingRoom(room.language ?? "id", room.id);
+      // --- SECURITY: Token Verification (Casual Room) ---
+      if (!currentRoom.isMatchmaking) {
+        const playerToken =
+          request.headers.get("x-player-token") ||
+          (typeof body.playerToken === "string" ? body.playerToken : "");
+        if (!playerToken || playerToken !== callerPlayer.token) {
+          throw new Error("AUTH_ERR:Akses ditolak: Token tidak cocok.");
+        }
+      }
+
+      const targetPlayer = currentRoom.players.find((p) => p.clientId === targetClientId);
+      if (!targetPlayer) {
+        throw new Error("VAL_ERR:Pemain target tidak ditemukan di room.");
+      }
+
+      // Jika mengubah status ready orang lain, harus berupa bot dan caller harus host
+      if (targetClientId !== clientId) {
+        if (!targetPlayer.isBot) {
+          throw new Error("VAL_ERR:Anda tidak bisa mengubah status ready pemain lain.");
+        }
+        if (clientId !== currentRoom.hostClientId) {
+          throw new Error("VAL_ERR:Hanya host yang bisa mengubah status ready bot.");
+        }
+      }
+
+      targetPlayer.ready = ready;
+
+      const allReady = currentRoom.players.length >= 2 && currentRoom.players.every((p) => p.ready);
+      if (allReady) {
+        currentRoom.status = "playing";
+        currentRoom.startTime = Date.now() + COUNTDOWN_MS;
+
+        for (const p of currentRoom.players) {
+          p.status = "playing";
+          p.currentArticle = currentRoom.startArticle;
+          p.route = [{ article: currentRoom.startArticle, timestamp: 0 }];
+          p.finishedAt = undefined;
+        }
+      }
+
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
+    }
+    if (errMsg.startsWith("AUTH_ERR:")) {
+      return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
+    }
+    console.error("Gagal memproses ready:", err);
+    return errorResponse("Terjadi kesalahan internal server.", 500);
+  }
+
+  const isStarting = updatedRoom.status === "playing";
+
+  if (isStarting) {
+    if (updatedRoom.isMatchmaking) {
+      await removeMatchmakingRoom(updatedRoom.language ?? "id", updatedRoom.id);
     }
 
-    const startTime = Date.now() + COUNTDOWN_MS;
-    room.status = "playing";
-    room.startTime = startTime;
-
-    for (const player of room.players) {
-      player.status = "playing";
-      player.currentArticle = room.startArticle;
-      player.route = [{ article: room.startArticle, timestamp: 0 }];
-      player.finishedAt = undefined;
-
+    let needsSave = false;
+    for (const player of updatedRoom.players) {
       if (player.isBot) {
-        let clicksCount = 4;
+        needsSave = true;
         let minSec = 10;
         let maxSec = 18;
         
-        const playerElo = room.averageElo ?? 1200;
+        const playerElo = updatedRoom.averageElo ?? 1200;
         if (playerElo >= 1300) {
-          clicksCount = 3;
           minSec = 6;
           maxSec = 12;
         } else if (playerElo < 1100) {
-          clicksCount = 5;
           minSec = 15;
           maxSec = 25;
         }
         
         const route = await generateLogicalBotRoute(
-          room.startArticle,
-          room.endArticle,
-          room.language ?? "id",
-          room.solutionRoute
+          updatedRoom.startArticle,
+          updatedRoom.endArticle,
+          updatedRoom.language ?? "id",
+          updatedRoom.solutionRoute
         );
         
         const timeline: Array<{ article: string; timestamp: number }> = [];
@@ -228,24 +262,25 @@ export async function POST(request: NextRequest) {
         ];
         player.botChats = [
           { text: "GLHF!", timestamp: 3 },
-          { text: room.language === "en" ? "GGwp!" : "GGwp", timestamp: botFinishTime + 1 }
+          { text: updatedRoom.language === "en" ? "GGwp!" : "GGwp", timestamp: botFinishTime + 1 }
         ];
       }
     }
 
-    await setRoom(room);
-    
-    // Publish both room_updated and game_started
-    await publishRoomEvent(room.id, "room_updated", { room });
+    if (needsSave) {
+      await setRoom(updatedRoom);
+    }
+
+    await publishRoomEvent(updatedRoom.id, "room_updated", { room: sanitizeRoom(updatedRoom) });
     await publishRoomEvent(roomId, "game_started", {
-      startArticle: room.startArticle,
-      endArticle: room.endArticle,
-      startTime,
+      startArticle: updatedRoom.startArticle,
+      endArticle: updatedRoom.endArticle,
+      startTime: updatedRoom.startTime,
     });
   } else {
-    await setRoom(room);
-    await publishRoomEvent(room.id, "room_updated", { room });
+    await publishRoomEvent(updatedRoom.id, "room_updated", { room: sanitizeRoom(updatedRoom) });
   }
 
-  return Response.json({ success: true, room });
+  return Response.json({ success: true, room: sanitizeRoom(updatedRoom) });
 }
+

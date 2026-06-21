@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type { NextRequest } from "next/server";
 
 import { getChallengePackById } from "@/lib/challenges";
@@ -9,6 +10,7 @@ import {
   generateRoomId,
   MAX_CLIENT_ID_LENGTH,
   MAX_USERNAME_LENGTH,
+  sanitizeRoom,
 } from "@/lib/room";
 import type { Room, WikiLanguage } from "@/lib/types";
 
@@ -84,6 +86,8 @@ export async function POST(request: NextRequest) {
     roomId = generateRoomId();
   }
 
+  const hostToken = crypto.randomUUID();
+
   const room: Room = {
     id: roomId,
     hostClientId: clientId,
@@ -92,7 +96,7 @@ export async function POST(request: NextRequest) {
     gameMode: "competitive",
     startArticle,
     endArticle,
-    players: [createPlayer(clientId, username, true)],
+    players: [createPlayer(clientId, username, true, hostToken)],
     createdAt: Date.now(),
     customRules: {
       clickLimit: 0,
@@ -103,5 +107,6 @@ export async function POST(request: NextRequest) {
 
   await setRoom(room);
 
-  return Response.json({ roomId, room });
+  return Response.json({ roomId, room: sanitizeRoom(room), playerToken: hostToken });
 }
+

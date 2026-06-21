@@ -50,3 +50,16 @@ export function saveLanguage(lang: "id" | "en"): void {
   window.localStorage.setItem(LANGUAGE_KEY, lang);
 }
 
+/** Simpan token player untuk room tertentu di sessionStorage. */
+export function savePlayerToken(roomId: string, token: string): void {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(`wikirace:token:${roomId.toUpperCase()}`, token);
+}
+
+/** Ambil token player untuk room tertentu dari sessionStorage. */
+export function getPlayerToken(roomId: string): string {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem(`wikirace:token:${roomId.toUpperCase()}`) ?? "";
+}
+
+

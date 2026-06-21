@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 
 import type { WikiLanguage } from "@/lib/types";
 import { extractArticleTitle, fetchArticleHtml } from "@/lib/wikipedia";
@@ -73,8 +74,15 @@ function WikiArticle({
             setLoading(false);
             return;
           }
+          // Sanitasi HTML dari Wikipedia untuk mencegah XSS.
+          // DOMPurify mempertahankan <a>, <img>, <table>, dll.
+          // tapi menghapus <script>, <iframe>, <object>, dan event handlers on*.
+          const cleanHtml = DOMPurify.sanitize(result, {
+            FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "textarea", "button"],
+            FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus", "onblur", "onsubmit", "onchange"],
+          });
           setDisplayedArticle(currentArticle);
-          setHtml(result);
+          setHtml(cleanHtml);
           setLoading(false);
         })
         .catch(() => {

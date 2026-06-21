@@ -2,8 +2,9 @@ import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
 import { getSessionUsername } from "@/lib/auth-server";
-import { getRoom, setRoom } from "@/lib/redis";
-import { errorResponse, findPlayer } from "@/lib/room";
+import { getRoom, updateRoomAtomically } from "@/lib/redis";
+import { errorResponse, findPlayer, sanitizeRoom } from "@/lib/room";
+import type { Room } from "@/lib/types";
 
 /**
  * POST /api/room/suspend
@@ -17,6 +18,7 @@ export async function POST(request: NextRequest) {
     roomId?: unknown;
     clientId?: unknown;
     reason?: unknown;
+    playerToken?: unknown;
   };
   try {
     body = await request.json();
@@ -40,42 +42,73 @@ export async function POST(request: NextRequest) {
     return errorResponse("Pemain hanya bisa disuspen saat permainan berlangsung.", 409);
   }
 
-  const player = findPlayer(room, clientId);
-  if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
-  if (player.status !== "playing") {
-    return errorResponse("Pemain tidak dalam status 'playing'.", 409);
-  }
-
-  // --- SECURITY: Session Verification ---
+  // --- SECURITY: Session Verification (Ranked Matchmaking) ---
   if (room.isMatchmaking) {
     const sessionUsername = await getSessionUsername();
-    if (!sessionUsername || sessionUsername !== player.username) {
+    const player = findPlayer(room, clientId);
+    if (!player || !sessionUsername || sessionUsername !== player.username) {
       return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
     }
   }
 
-  // Durasi suspensi (detik) berdasarkan gameMode:
-  // Competitive: 120 detik (2 menit)
-  // Casual/Santai: 60 detik (1 menit)
-  const isCompetitive = room.gameMode === "competitive" || !room.gameMode;
-  const duration = isCompetitive ? 120 : 60;
+  let duration = 60;
+  let suspendedUntil = 0;
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.status !== "playing") {
+        throw new Error("VAL_ERR:Pemain hanya bisa disuspen saat permainan berlangsung.");
+      }
+      const player = findPlayer(currentRoom, clientId);
+      if (!player) {
+        throw new Error("VAL_ERR:Pemain tidak ada di room ini.");
+      }
+      if (player.status !== "playing") {
+        throw new Error("VAL_ERR:Pemain tidak dalam status 'playing'.");
+      }
 
-  const suspendedUntil = Date.now() + duration * 1000;
-  player.suspendedUntil = suspendedUntil;
+      // --- SECURITY: Token Verification (Casual Room) ---
+      if (!currentRoom.isMatchmaking) {
+        const playerToken =
+          request.headers.get("x-player-token") ||
+          (typeof body.playerToken === "string" ? body.playerToken : "");
+        if (!playerToken || playerToken !== player.token) {
+          throw new Error("AUTH_ERR:Akses ditolak: Token tidak cocok.");
+        }
+      }
 
-  await setRoom(room);
+      const isCompetitive = currentRoom.gameMode === "competitive" || !currentRoom.gameMode;
+      duration = isCompetitive ? 120 : 60;
+      suspendedUntil = Date.now() + duration * 1000;
+      player.suspendedUntil = suspendedUntil;
 
-  // Publish event player_suspended agar player lain bisa lihat alert kecurangan,
-  // lalu sinkronkan room_updated untuk sinkronisasi state.
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
+    }
+    if (errMsg.startsWith("AUTH_ERR:")) {
+      return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
+    }
+    console.error("Gagal melakukan suspensi:", err);
+    return errorResponse("Terjadi kesalahan internal server.", 500);
+  }
+
+  const finalPlayer = findPlayer(updatedRoom, clientId);
+  if (!finalPlayer) return errorResponse("Pemain tidak ditemukan setelah suspensi.", 500);
+
   await publishRoomEvent(roomId, "player_suspended", {
     clientId,
-    username: player.username,
+    username: finalPlayer.username,
     reason,
     duration,
     suspendedUntil,
   });
 
-  await publishRoomEvent(roomId, "room_updated", { room });
+  await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(updatedRoom) });
 
-  return Response.json({ room, suspendedUntil });
+  return Response.json({ room: sanitizeRoom(updatedRoom), suspendedUntil });
 }
+

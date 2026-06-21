@@ -67,9 +67,9 @@ export default function RootLayout({
     "@graph": [
       {
         "@type": "SoftwareApplication",
-        "@id": "https://wikirace-indonesia.vercel.app/#webapp",
+        "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id"}/#webapp`,
         "name": "WikiRace Indonesia",
-        "url": "https://wikirace-indonesia.vercel.app",
+        "url": process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id",
         "applicationCategory": "GameApplication",
         "operatingSystem": "All",
         "genre": "Educational Game, Puzzle",
@@ -83,7 +83,7 @@ export default function RootLayout({
       },
       {
         "@type": "FAQPage",
-        "@id": "https://wikirace-indonesia.vercel.app/#faq",
+        "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id"}/#faq`,
         "mainEntity": [
           {
             "@type": "Question",

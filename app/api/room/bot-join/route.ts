@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { getRoom, setRoom } from "@/lib/redis";
-import { errorResponse, createPlayer } from "@/lib/room";
+import { errorResponse, createPlayer, sanitizeRoom } from "@/lib/room";
 import { publishRoomEvent } from "@/lib/ably";
 import { getSessionUsername } from "@/lib/auth-server";
 import { getRandomBotName } from "@/lib/bot-names";
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Simpan ke Redis & sebarkan event room_updated ke seluruh client via Ably
     await setRoom(room);
-    await publishRoomEvent(room.id, "room_updated", { room });
+    await publishRoomEvent(room.id, "room_updated", { room: sanitizeRoom(room) });
 
     // Kirim pesan chat sambutan dari bot ke lobi
     await publishRoomEvent(room.id, "chat_message", {
@@ -105,9 +105,10 @@ export async function POST(request: NextRequest) {
       timestamp: Date.now(),
     });
 
-    return Response.json({ success: true, room });
+    return Response.json({ success: true, room: sanitizeRoom(room) });
   } catch (err) {
     console.error("Gagal menambahkan bot ke lobi:", err);
     return errorResponse("Terjadi kesalahan server internal.", 500);
   }
 }
+

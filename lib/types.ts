@@ -35,6 +35,7 @@ export interface Player {
   botTimeline?: RouteStep[];
   botEmojis?: Array<{ emoji: string; timestamp: number }>;
   botChats?: Array<{ text: string; timestamp: number }>;
+  token?: string;
 }
 
 export type RoomStatus = "lobby" | "playing" | "finished";

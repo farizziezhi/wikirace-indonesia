@@ -3,13 +3,22 @@ import type { NextRequest } from "next/server";
 import { publishRoomEvent } from "@/lib/ably";
 import { getSessionUsername } from "@/lib/auth-server";
 import { calculateEloChanges } from "@/lib/elo";
-import { getRoom, setRoom, updatePlayerStats, getBotStreak, incrementBotStreak, resetBotStreak } from "@/lib/redis";
+import {
+  getRoom,
+  updateRoomAtomically,
+  updatePlayerStats,
+  getBotStreak,
+  incrementBotStreak,
+  resetBotStreak,
+} from "@/lib/redis";
 import {
   createRouteStep,
   errorResponse,
   findPlayer,
   MAX_ARTICLE_TITLE_LENGTH,
+  sanitizeRoom,
 } from "@/lib/room";
+import type { Room } from "@/lib/types";
 
 /**
  * POST /api/room/navigate
@@ -22,6 +31,7 @@ export async function POST(request: NextRequest) {
     roomId?: unknown;
     clientId?: unknown;
     article?: unknown;
+    playerToken?: unknown;
   };
   try {
     body = await request.json();
@@ -52,148 +62,234 @@ export async function POST(request: NextRequest) {
     return errorResponse("Room belum punya startTime.", 500);
   }
 
-  const player = findPlayer(room, clientId);
-  if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
-  if (player.status !== "playing") {
-    return errorResponse("Pemain tidak dalam status 'playing'.", 409);
-  }
-
-  // --- SECURITY: Session Verification ---
+  // --- SECURITY: Session Verification (Ranked Matchmaking) ---
   if (room.isMatchmaking) {
     const sessionUsername = await getSessionUsername();
-    if (!sessionUsername || sessionUsername !== player.username) {
+    const player = findPlayer(room, clientId);
+    if (!player || !sessionUsername || sessionUsername !== player.username) {
       return errorResponse("Akses ditolak: Sesi tidak cocok dengan clientId pemain.", 403);
     }
   }
 
-  if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
-    return errorResponse("Kamu sedang ditangguhkan (suspended) dan tidak bisa navigasi.", 403);
-  }
-
-  const elapsedSeconds = Math.floor((Date.now() - room.startTime) / 1000);
+  // Pre-fetch bot streaks untuk pemain manusia jika ini Ranked Matchmaking
+  const botStreaks: Record<string, number> = {};
   if (room.isMatchmaking) {
-    if (elapsedSeconds >= 300) {
-      return errorResponse("Waktu bermain telah habis (maksimal 5 menit).", 403);
-    }
-  } else if (room.customRules?.timeLimit && room.customRules.timeLimit > 0) {
-    if (elapsedSeconds >= room.customRules.timeLimit) {
-      player.status = "surrendered";
-      await setRoom(room);
-      await publishRoomEvent(roomId, "player_moved", {
-        clientId,
-        article: player.currentArticle,
-        route: player.route,
-        status: "surrendered",
-      });
-      return errorResponse("Waktu bermain telah habis!", 403);
+    for (const p of room.players) {
+      if (!p.isBot) {
+        botStreaks[p.username] = await getBotStreak(p.username);
+      }
     }
   }
 
-  // --- CUSTOM RULES: Click Limit Check ---
-  const currentClicks = player.route.length - 1;
-  if (room.customRules?.clickLimit && room.customRules.clickLimit > 0) {
-    if (currentClicks >= room.customRules.clickLimit) {
-      return errorResponse("Kuota klik Anda telah habis!", 403);
-    }
-  }
+  let eloChangesToApply: Array<{
+    username: string;
+    change: number;
+    isWin: boolean;
+    clicks: number;
+    duration: number;
+  }> = [];
+  let isWon = false;
 
-  // --- CUSTOM RULES: Ban List Check ---
-  const hasMediumTyre = player.activePowerUp === "medium" && player.powerUpExpiresAt && Date.now() < player.powerUpExpiresAt;
-  if (
-    !hasMediumTyre &&
-    room.customRules?.bannedArticles &&
-    room.customRules.bannedArticles.some(
-      (ban) => ban.toLowerCase().replace(/_/g, " ") === article.toLowerCase().replace(/_/g, " ")
-    )
-  ) {
-    return errorResponse(`Artikel "${article}" dilarang di room ini!`, 403);
-  }
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.status !== "playing") {
+        throw new Error("VAL_ERR:Game tidak dalam status 'playing'.");
+      }
 
-  const step = createRouteStep(article, room.startTime);
-  player.route.push(step);
-  player.currentArticle = article;
+      const player = findPlayer(currentRoom, clientId);
+      if (!player) {
+        throw new Error("VAL_ERR:Pemain tidak ada di room ini.");
+      }
+      if (player.status !== "playing") {
+        throw new Error("VAL_ERR:Pemain tidak dalam status 'playing'.");
+      }
 
-  // --- CUSTOM RULES: Post-move Click Expiry Check ---
-  const clicksAfter = player.route.length - 1;
-  if (room.customRules?.clickLimit && room.customRules.clickLimit > 0) {
-    if (clicksAfter >= room.customRules.clickLimit && article !== room.endArticle) {
-      player.status = "surrendered";
-    }
-  }
+      // --- SECURITY: Token Verification (Casual Room) ---
+      if (!currentRoom.isMatchmaking) {
+        const playerToken =
+          request.headers.get("x-player-token") ||
+          (typeof body.playerToken === "string" ? body.playerToken : "");
+        if (!playerToken || playerToken !== player.token) {
+          throw new Error("AUTH_ERR:Akses ditolak: Token tidak cocok.");
+        }
+      }
 
-  // Jika pemain mencapai artikel akhir -> MENANG!
-  if (article === room.endArticle) {
-    player.status = "finished";
-    player.finishedAt = Date.now();
-    room.status = "finished";
+      if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
+        throw new Error("VAL_ERR:Kamu sedang ditangguhkan (suspended) dan tidak bisa navigasi.");
+      }
 
-    // Hitung perubahan ELO jika ini room Ranked Matchmaking
-    let eloChanges: Record<string, number> = {};
-    if (room.isMatchmaking) {
-      try {
-        const eloData = room.players.map((p) => ({
-          username: p.username,
-          elo: p.elo ?? 1200,
-          status: p.status,
-          finishedAt: p.finishedAt,
-        }));
+      const elapsedSeconds = Math.floor((Date.now() - currentRoom.startTime!) / 1000);
+      if (currentRoom.isMatchmaking) {
+        if (elapsedSeconds >= 300) {
+          throw new Error("VAL_ERR:Waktu bermain telah habis (maksimal 5 menit).");
+        }
+      } else if (currentRoom.customRules?.timeLimit && currentRoom.customRules.timeLimit > 0) {
+        if (elapsedSeconds >= currentRoom.customRules.timeLimit) {
+          player.status = "surrendered";
+          return currentRoom;
+        }
+      }
 
-        eloChanges = calculateEloChanges(eloData);
+      // --- CUSTOM RULES: Click Limit Check ---
+      const currentClicks = player.route.length - 1;
+      if (currentRoom.customRules?.clickLimit && currentRoom.customRules.clickLimit > 0) {
+        if (currentClicks >= currentRoom.customRules.clickLimit) {
+          throw new Error("VAL_ERR:Kuota klik Anda telah habis!");
+        }
+      }
 
-        // Deteksi apakah ada bot dalam permainan
-        const hasBot = room.players.some((p) => p.isBot);
+      // --- CUSTOM RULES: Ban List Check ---
+      const hasMediumTyre =
+        player.activePowerUp === "medium" &&
+        player.powerUpExpiresAt &&
+        Date.now() < player.powerUpExpiresAt;
+      if (
+        !hasMediumTyre &&
+        currentRoom.customRules?.bannedArticles &&
+        currentRoom.customRules.bannedArticles.some(
+          (ban) =>
+            ban.toLowerCase().replace(/_/g, " ") ===
+            article.toLowerCase().replace(/_/g, " "),
+        )
+      ) {
+        throw new Error(`VAL_ERR:Artikel "${article}" dilarang di room ini!`);
+      }
 
-        // Update database ELO masing-masing pemain & update objek room
-        for (const p of room.players) {
-          let change = eloChanges[p.username] || 0;
-          const isWin = p.clientId === clientId; // Hanya pemain aktif ini yang menang
+      const step = createRouteStep(article, currentRoom.startTime!);
+      player.route.push(step);
+      player.currentArticle = article;
 
-          if (p.isBot) {
-            // Update ELO di objek room saja, skip database
-            p.elo = (p.elo ?? 1200) + change;
-            p.eloChange = change;
-            continue;
-          }
+      // --- CUSTOM RULES: Post-move Click Expiry Check ---
+      const clicksAfter = player.route.length - 1;
+      if (currentRoom.customRules?.clickLimit && currentRoom.customRules.clickLimit > 0) {
+        if (clicksAfter >= currentRoom.customRules.clickLimit && article !== currentRoom.endArticle) {
+          player.status = "surrendered";
+        }
+      }
 
-          // Pemain manusia
-          if (hasBot) {
-            if (isWin && change > 0) {
-              const currentElo = p.elo ?? 1200;
-              if (currentElo >= 1300) {
-                // ELO >= 1300 tidak mendapat ELO dari bot
-                change = 0;
-              } else {
-                // Terapkan ELO decay berturut-turut
-                const streak = await incrementBotStreak(p.username);
-                let multiplier = 1.0;
-                if (streak === 2) multiplier = 0.5;
-                else if (streak >= 3) multiplier = 0.0;
-                change = Math.round(change * multiplier);
+      // Jika pemain mencapai artikel akhir -> MENANG!
+      if (article === currentRoom.endArticle) {
+        player.status = "finished";
+        player.finishedAt = Date.now();
+        currentRoom.status = "finished";
+        isWon = true;
+
+        // Hitung perubahan ELO jika ini room Ranked Matchmaking
+        if (currentRoom.isMatchmaking) {
+          const eloData = currentRoom.players.map((p) => ({
+            username: p.username,
+            elo: p.elo ?? 1200,
+            status: p.status,
+            finishedAt: p.finishedAt,
+          }));
+
+          const eloChanges = calculateEloChanges(eloData);
+          const hasBot = currentRoom.players.some((p) => p.isBot);
+
+          for (const p of currentRoom.players) {
+            let change = eloChanges[p.username] || 0;
+            const isWin = p.clientId === clientId;
+
+            if (p.isBot) {
+              p.elo = (p.elo ?? 1200) + change;
+              p.eloChange = change;
+              continue;
+            }
+
+            // Pemain manusia
+            if (hasBot) {
+              if (isWin && change > 0) {
+                const currentElo = p.elo ?? 1200;
+                if (currentElo >= 1300) {
+                  change = 0;
+                } else {
+                  const currentStreak = botStreaks[p.username] ?? 0;
+                  const nextStreak = currentStreak + 1;
+                  let multiplier = 1.0;
+                  if (nextStreak === 2) multiplier = 0.5;
+                  else if (nextStreak >= 3) multiplier = 0.0;
+                  change = Math.round(change * multiplier);
+                }
               }
             }
+
+            p.elo = (p.elo ?? 1200) + change;
+            p.eloChange = change;
+
+            eloChangesToApply.push({
+              username: p.username,
+              change,
+              isWin,
+              clicks: Math.max(0, p.route.length - 1),
+              duration: p.route.length > 0 ? p.route[p.route.length - 1].timestamp : 0,
+            });
+          }
+        }
+      }
+
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
+    }
+    if (errMsg.startsWith("AUTH_ERR:")) {
+      return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
+    }
+    console.error("Gagal memproses navigasi:", err);
+    return errorResponse("Terjadi kesalahan internal server.", 500);
+  }
+
+  const finalPlayer = findPlayer(updatedRoom, clientId);
+  if (!finalPlayer) return errorResponse("Pemain tidak ditemukan setelah navigasi.", 500);
+
+  // Cek apakah pemain menyerah karena batas waktu terlewati
+  const elapsedSeconds = Math.floor((Date.now() - updatedRoom.startTime!) / 1000);
+  if (
+    !updatedRoom.isMatchmaking &&
+    updatedRoom.customRules?.timeLimit &&
+    updatedRoom.customRules.timeLimit > 0 &&
+    elapsedSeconds >= updatedRoom.customRules.timeLimit &&
+    finalPlayer.status === "surrendered"
+  ) {
+    await publishRoomEvent(roomId, "player_moved", {
+      clientId,
+      article: finalPlayer.currentArticle,
+      route: finalPlayer.route,
+      status: "surrendered",
+    });
+    return errorResponse("Waktu bermain telah habis!", 403);
+  }
+
+  if (isWon) {
+    // Terapkan perubahan ELO ke database di luar transaksi
+    if (updatedRoom.isMatchmaking) {
+      try {
+        const hasBot = updatedRoom.players.some((p) => p.isBot);
+        for (const item of eloChangesToApply) {
+          if (hasBot) {
+            if (item.isWin && item.change > 0) {
+              await incrementBotStreak(item.username);
+            }
           } else {
-            // Bermain melawan manusia asli -> reset bot streak
-            await resetBotStreak(p.username);
+            await resetBotStreak(item.username);
           }
 
-          const clicks = Math.max(0, p.route.length - 1);
-          const duration = p.route.length > 0 ? p.route[p.route.length - 1].timestamp : 0;
-          await updatePlayerStats(p.username, change, isWin, {
-            startArticle: room.startArticle || "",
-            endArticle: room.endArticle || "",
-            clicks,
-            duration,
+          await updatePlayerStats(item.username, item.change, item.isWin, {
+            startArticle: updatedRoom.startArticle || "",
+            endArticle: updatedRoom.endArticle || "",
+            clicks: item.clicks,
+            duration: item.duration,
           });
-          p.elo = (p.elo ?? 1200) + change;
-          p.eloChange = change;
         }
       } catch (err) {
-        console.error("Gagal menghitung ELO:", err);
+        console.error("Gagal menyimpan riwayat ELO/pertandingan:", err);
       }
     }
 
-    // Bangun allRoutes dengan payload data ELO tambahan
-    const allRoutes = room.players.map((p) => ({
+    const allRoutes = updatedRoom.players.map((p) => ({
       clientId: p.clientId,
       username: p.username,
       status: p.status,
@@ -203,31 +299,27 @@ export async function POST(request: NextRequest) {
       newElo: p.elo ?? 1200,
     }));
 
-    await setRoom(room);
-
-    // Kirim event navigasi terakhir, lalu kirim hasil kemenangan
     await publishRoomEvent(roomId, "player_moved", {
       clientId,
       article,
-      route: player.route,
-      status: player.status,
+      route: finalPlayer.route,
+      status: finalPlayer.status,
     });
     await publishRoomEvent(roomId, "game_won", {
       winnerId: clientId,
       allRoutes,
     });
 
-    return Response.json({ room, won: true });
+    return Response.json({ room: sanitizeRoom(updatedRoom), won: true });
   }
-
-  await setRoom(room);
 
   await publishRoomEvent(roomId, "player_moved", {
     clientId,
     article,
-    route: player.route,
-    status: player.status,
+    route: finalPlayer.route,
+    status: finalPlayer.status,
   });
 
-  return Response.json({ room, won: false });
+  return Response.json({ room: sanitizeRoom(updatedRoom), won: false });
 }
+

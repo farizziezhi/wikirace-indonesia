@@ -50,11 +50,20 @@ export async function POST(request: NextRequest) {
   const player = findPlayer(room, clientId);
   if (!player) return errorResponse("Pemain tidak ada di room ini.", 404);
 
-  // --- SECURITY: Session Verification ---
+  // --- SECURITY: Session / Token Verification ---
   if (room.isMatchmaking) {
     const sessionUsername = await getSessionUsername();
     if (!sessionUsername || sessionUsername !== player.username) {
       return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
+    }
+  } else {
+    const playerToken =
+      request.headers.get("x-player-token") ||
+      (body && typeof body === "object" && typeof (body as any).playerToken === "string"
+        ? (body as any).playerToken
+        : "");
+    if (!playerToken || playerToken !== player.token) {
+      return errorResponse("Akses ditolak: Token tidak cocok.", 403);
     }
   }
 
@@ -68,3 +77,4 @@ export async function POST(request: NextRequest) {
 
   return Response.json({ ok: true });
 }
+

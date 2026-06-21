@@ -9,7 +9,7 @@ import { ensureDbInitialized, turso } from "./turso";
 export function hashPassword(password: string): { hash: string; salt: string } {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto
-    .pbkdf2Sync(password, salt, 1000, 64, "sha512")
+    .pbkdf2Sync(password, salt, 100_000, 64, "sha512")
     .toString("hex");
   return { hash, salt };
 }
@@ -23,7 +23,7 @@ export function verifyPassword(
   salt: string,
 ): boolean {
   const checkHash = crypto
-    .pbkdf2Sync(password, salt, 1000, 64, "sha512")
+    .pbkdf2Sync(password, salt, 100_000, 64, "sha512")
     .toString("hex");
   return checkHash === hash;
 }
@@ -84,3 +84,50 @@ export async function deleteSessionCookie(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete("wikirace_session");
 }
+
+import type { Room, Player } from "./types";
+
+/**
+ * Memverifikasi apakah request berasal dari pemain yang sah.
+ * Untuk room Ranked Matchmaking, diverifikasi via session cookie.
+ * Untuk room casual, diverifikasi via token per-pemain yang disimpan di Redis.
+ */
+export async function verifyPlayerSessionOrToken(
+  request: Request,
+  body: any,
+  room: Room,
+  player: Player
+): Promise<{ allowed: boolean; error?: string }> {
+  if (room.isMatchmaking) {
+    const sessionUsername = await getSessionUsername();
+    if (!sessionUsername || sessionUsername !== player.username) {
+      return { allowed: false, error: "Akses ditolak: Sesi tidak cocok dengan pemain." };
+    }
+  } else {
+    const playerToken =
+      request.headers.get("x-player-token") ||
+      (body && typeof body === "object" && typeof body.playerToken === "string"
+        ? body.playerToken
+        : "");
+    if (!playerToken || playerToken !== player.token) {
+      return { allowed: false, error: "Akses ditolak: Token tidak cocok dengan pemain." };
+    }
+  }
+  return { allowed: true };
+}
+
+/**
+ * Memverifikasi apakah request berasal dari host yang sah.
+ */
+export async function verifyHostSessionOrToken(
+  request: Request,
+  body: any,
+  room: Room
+): Promise<{ allowed: boolean; error?: string }> {
+  const hostPlayer = room.players.find((p) => p.clientId === room.hostClientId);
+  if (!hostPlayer) {
+    return { allowed: false, error: "Host tidak ditemukan di room." };
+  }
+  return verifyPlayerSessionOrToken(request, body, room, hostPlayer);
+}
+

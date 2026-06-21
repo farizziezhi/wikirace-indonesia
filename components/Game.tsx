@@ -18,6 +18,7 @@ import {
 } from "@/lib/achievements";
 import { playCountdownBeep, playCheatAlarm, playPitStopSound, playPowerUpEquippedSound, playOilSplatSound } from "@/lib/race-audio";
 import type { Room } from "@/lib/types";
+import { getPlayerToken } from "@/lib/client-id";
 
 import WikiArticle from "./WikiArticle";
 import AdContainer from "./AdContainer";
@@ -561,7 +562,10 @@ export default function Game({
           const finalTyre = selectedTyre || "medium";
           void fetch("/api/room/pit-stop", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-Player-Token": getPlayerToken(room.id),
+            },
             body: JSON.stringify({
               roomId: room.id,
               clientId: currentClientId,
@@ -658,7 +662,10 @@ export default function Game({
         // Panggil endpoint suspensi server
         void fetch("/api/room/suspend", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Player-Token": getPlayerToken(room.id),
+          },
           body: JSON.stringify({
             roomId: room.id,
             clientId: currentClientId,
@@ -853,7 +860,10 @@ export default function Game({
       try {
         const res = await fetch("/api/room/navigate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Player-Token": getPlayerToken(room.id),
+          },
           body: JSON.stringify({
             roomId: room.id,
             clientId: currentClientId,
@@ -905,7 +915,10 @@ export default function Game({
     try {
       const res = await fetch("/api/room/surrender", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,
@@ -950,7 +963,10 @@ export default function Game({
     try {
       const res = await fetch("/api/room/use-help", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,

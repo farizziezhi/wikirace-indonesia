@@ -8,6 +8,7 @@ import type { ChatMessage, Room } from "@/lib/types";
 import { MAX_CHAT_LENGTH } from "@/lib/room";
 import { translations } from "@/lib/translations";
 import { playPitRadioClick, speakRadioMessage } from "@/lib/race-audio";
+import { getPlayerToken } from "@/lib/client-id";
 
 interface ChatPanelProps {
   room: Room;
@@ -124,7 +125,10 @@ export default function ChatPanel({
     try {
       await fetch("/api/room/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,
@@ -284,7 +288,10 @@ export default function ChatPanel({
               try {
                 await fetch("/api/room/chat", {
                   method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                  headers: {
+                    "Content-Type": "application/json",
+                    "X-Player-Token": getPlayerToken(room.id),
+                  },
                   body: JSON.stringify({
                     roomId: room.id,
                     clientId: currentClientId,

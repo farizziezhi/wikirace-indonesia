@@ -64,10 +64,59 @@ export async function setRoom(room: Room): Promise<void> {
   );
 }
 
+/**
+ * Melakukan pembaruan state room secara atomik di Redis/Valkey menggunakan
+ * pola WATCH/MULTI/EXEC untuk mencegah race condition.
+ */
+export async function updateRoomAtomically(
+  roomId: string,
+  updateFn: (room: Room) => Room | Promise<Room>,
+): Promise<Room> {
+  const client = getValkeyClient();
+  const key = roomKey(roomId);
+  const maxRetries = 15;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    await client.watch(key);
+
+    const data = await client.get(key);
+    if (!data) {
+      await client.unwatch();
+      throw new Error("Room tidak ditemukan.");
+    }
+
+    let room: Room;
+    try {
+      room = JSON.parse(data) as Room;
+    } catch {
+      await client.unwatch();
+      throw new Error("Format data room tidak valid.");
+    }
+
+    const updatedRoom = await updateFn(room);
+
+    const tx = client.multi();
+    tx.set(key, JSON.stringify(updatedRoom), "EX", ROOM_TTL_SECONDS);
+
+    const results = await tx.exec();
+    if (results === null) {
+      // Transaksi batal karena data berubah di tengah proses. Backoff & retry.
+      console.warn(`Retry updateRoomAtomically untuk room ${roomId}, percobaan ke-${attempt}`);
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * 50 + 10));
+      continue;
+    }
+
+    return updatedRoom;
+  }
+
+  throw new Error("Gagal mengupdate room setelah beberapa kali percobaan karena konflik konkuren.");
+}
+
 export async function deleteRoom(roomId: string): Promise<void> {
   const client = getValkeyClient();
   await client.del(roomKey(roomId));
 }
+
 
 // ---------- Matchmaking Helpers (Valkey / Redis) ----------
 

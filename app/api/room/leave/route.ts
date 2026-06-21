@@ -9,7 +9,7 @@ import {
   removeMatchmakingRoom,
   setRoom,
 } from "@/lib/redis";
-import { errorResponse, MAX_PLAYERS } from "@/lib/room";
+import { errorResponse, MAX_PLAYERS, sanitizeRoom } from "@/lib/room";
 
 /**
  * POST /api/room/leave
@@ -38,12 +38,23 @@ export async function POST(request: NextRequest) {
     return Response.json({ ok: true, roomDeleted: true });
   }
 
-  // --- SECURITY: Session Verification ---
+  // --- SECURITY: Session / Token Verification ---
   const player = room.players.find((p) => p.clientId === clientId);
-  if (player && room.isMatchmaking) {
-    const sessionUsername = await getSessionUsername();
-    if (!sessionUsername || sessionUsername !== player.username) {
-      return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
+  if (player) {
+    if (room.isMatchmaking) {
+      const sessionUsername = await getSessionUsername();
+      if (!sessionUsername || sessionUsername !== player.username) {
+        return errorResponse("Akses ditolak: Sesi tidak cocok.", 403);
+      }
+    } else {
+      const playerToken =
+        request.headers.get("x-player-token") ||
+        (body && typeof body === "object" && typeof (body as any).playerToken === "string"
+          ? (body as any).playerToken
+          : "");
+      if (!playerToken || playerToken !== player.token) {
+        return errorResponse("Akses ditolak: Token tidak cocok.", 403);
+      }
     }
   }
 
@@ -85,15 +96,15 @@ export async function POST(request: NextRequest) {
       }
 
       await setRoom(room);
-      await publishRoomEvent(roomId, "room_updated", { room });
-      return Response.json({ ok: true, room });
+      await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(room) });
+      return Response.json({ ok: true, room: sanitizeRoom(room) });
     }
   }
 
   const beforeLen = room.players.length;
   room.players = room.players.filter((p) => p.clientId !== clientId);
   if (room.players.length === beforeLen) {
-    return Response.json({ ok: true, room });
+    return Response.json({ ok: true, room: sanitizeRoom(room) });
   }
 
   if (isMatchmaking) {
@@ -112,7 +123,7 @@ export async function POST(request: NextRequest) {
   }
 
   await setRoom(room);
-  await publishRoomEvent(roomId, "room_updated", { room });
+  await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(room) });
 
-  return Response.json({ ok: true, room });
+  return Response.json({ ok: true, room: sanitizeRoom(room) });
 }

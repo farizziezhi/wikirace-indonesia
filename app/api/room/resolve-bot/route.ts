@@ -1,9 +1,10 @@
 import type { NextRequest } from "next/server";
-import { getRoom, setRoom, updatePlayerStats } from "@/lib/redis";
-import { errorResponse, findPlayer } from "@/lib/room";
+import { getRoom, updateRoomAtomically, updatePlayerStats } from "@/lib/redis";
+import { errorResponse, findPlayer, sanitizeRoom } from "@/lib/room";
 import { publishRoomEvent } from "@/lib/ably";
 import { getSessionUsername } from "@/lib/auth-server";
 import { calculateEloChanges } from "@/lib/elo";
+import type { Room } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -26,132 +27,158 @@ export async function POST(request: NextRequest) {
   if (!botClientId) return errorResponse("botClientId wajib diisi.");
   if (!clientId) return errorResponse("clientId wajib diisi.");
 
-  try {
-    const room = await getRoom(roomId);
-    if (!room) return errorResponse("Room tidak ditemukan.", 404);
+  const room = await getRoom(roomId);
+  if (!room) return errorResponse("Room tidak ditemukan.", 404);
 
-    if (room.status !== "playing") {
-      return errorResponse("Game tidak dalam status 'playing'.", 409);
-    }
-    if (!room.startTime) {
-      return errorResponse("Room belum memiliki startTime.", 500);
-    }
-
-    // --- KEAMANAN: Verifikasi Pengirim ---
+  // --- SECURITY: Session Verification (Ranked Matchmaking) ---
+  if (room.isMatchmaking) {
+    const sessionUsername = await getSessionUsername();
     const caller = findPlayer(room, clientId);
-    if (!caller) return errorResponse("Pengirim tidak ditemukan di room ini.", 404);
-    if (caller.isBot) return errorResponse("Pengirim tidak boleh bot.", 400);
+    if (!caller || !sessionUsername || sessionUsername !== caller.username) {
+      return errorResponse("Akses ditolak: Sesi tidak cocok dengan clientId pengirim.", 403);
+    }
+  }
 
-    if (room.isMatchmaking) {
-      const sessionUsername = await getSessionUsername();
-      if (!sessionUsername || sessionUsername !== caller.username) {
-        return errorResponse("Akses ditolak: Sesi tidak cocok dengan clientId pengirim.", 403);
+  let eloChangesToApply: Array<{
+    username: string;
+    change: number;
+    clicks: number;
+    duration: number;
+  }> = [];
+
+  let updatedRoom: Room;
+  try {
+    updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
+      if (currentRoom.status !== "playing") {
+        throw new Error("VAL_ERR:Game tidak dalam status 'playing'.");
       }
-    }
+      const caller = findPlayer(currentRoom, clientId);
+      if (!caller) {
+        throw new Error("VAL_ERR:Pengirim tidak ditemukan di room ini.");
+      }
+      if (caller.isBot) {
+        throw new Error("VAL_ERR:Pengirim tidak boleh bot.");
+      }
 
-    const botPlayer = findPlayer(room, botClientId);
-    if (!botPlayer) return errorResponse("Bot tidak ditemukan di room ini.", 404);
-    if (!botPlayer.isBot) return errorResponse("Player target bukan bot.", 400);
+      const botPlayer = findPlayer(currentRoom, botClientId);
+      if (!botPlayer) {
+        throw new Error("VAL_ERR:Bot tidak ditemukan di room ini.");
+      }
+      if (!botPlayer.isBot) {
+        throw new Error("VAL_ERR:Player target bukan bot.");
+      }
+      if (botPlayer.status !== "playing") {
+        throw new Error("VAL_ERR:Bot sudah selesai atau menyerah.");
+      }
 
-    if (botPlayer.status !== "playing") {
-      return errorResponse("Bot sudah selesai atau menyerah.", 409);
-    }
+      // --- SECURITY: Validasi Waktu Selesai Bot Server-Side ---
+      if (!botPlayer.botTimeline || botPlayer.botTimeline.length === 0) {
+        throw new Error("VAL_ERR:Bot tidak memiliki timeline navigasi.");
+      }
 
-    // --- KEAMANAN: Validasi Waktu Selesai Bot Server-Side ---
-    if (!botPlayer.botTimeline || botPlayer.botTimeline.length === 0) {
-      return errorResponse("Bot tidak memiliki timeline navigasi.", 500);
-    }
+      const lastStep = botPlayer.botTimeline[botPlayer.botTimeline.length - 1];
+      const botFinishOffset = lastStep.timestamp; // detik sejak start
+      const botFinishTime = currentRoom.startTime! + botFinishOffset * 1000; // ms epoch
 
-    const lastStep = botPlayer.botTimeline[botPlayer.botTimeline.length - 1];
-    const botFinishOffset = lastStep.timestamp; // detik sejak start
-    const botFinishTime = room.startTime + botFinishOffset * 1000; // ms epoch
+      // Jika dipanggil terlalu cepat dari clock server asli
+      if (Date.now() < botFinishTime) {
+        throw new Error("VAL_ERR:Bot belum selesai bermain berdasarkan clock server.");
+      }
 
-    // Jika dipanggil terlalu cepat dari clock server asli
-    if (Date.now() < botFinishTime) {
-      return errorResponse("Bot belum selesai bermain berdasarkan clock server.", 400);
-    }
+      // Ubah status bot menjadi finished dan isi rute penuh bot dari timeline
+      botPlayer.status = "finished";
+      botPlayer.finishedAt = botFinishTime;
+      botPlayer.currentArticle = currentRoom.endArticle;
+      botPlayer.route = botPlayer.botTimeline.map((step) => ({
+        article: step.article,
+        timestamp: step.timestamp,
+      }));
 
-    // Ubah status bot menjadi finished dan isi rute penuh bot dari timeline
-    botPlayer.status = "finished";
-    botPlayer.finishedAt = botFinishTime;
-    botPlayer.currentArticle = room.endArticle;
+      // Selesaikan game
+      currentRoom.status = "finished";
 
-    // Sinkronisasi riwayat rute bot di state room agar lengkap di scoreboard
-    botPlayer.route = botPlayer.botTimeline.map((step) => ({
-      article: step.article,
-      timestamp: step.timestamp,
-    }));
-
-    // Selesaikan game
-    room.status = "finished";
-
-    // Hitung ELO jika room Ranked
-    let eloChanges: Record<string, number> = {};
-    if (room.isMatchmaking) {
-      try {
-        const eloData = room.players.map((p) => ({
+      // Hitung ELO jika room Ranked
+      if (currentRoom.isMatchmaking) {
+        const eloData = currentRoom.players.map((p) => ({
           username: p.username,
           elo: p.elo ?? 1200,
           status: p.status,
           finishedAt: p.finishedAt,
         }));
 
-        eloChanges = calculateEloChanges(eloData);
+        const eloChanges = calculateEloChanges(eloData);
 
         // Update ELO di room state & update database stats Turso untuk manusia
-        for (const p of room.players) {
+        for (const p of currentRoom.players) {
           const change = eloChanges[p.username] || 0;
-          
-          if (!p.isBot) {
-            // Pemain manusia kalah dari bot (isWin = false)
-            const clicks = Math.max(0, p.route.length - 1);
-            const duration = p.route.length > 0 ? p.route[p.route.length - 1].timestamp : 0;
-            await updatePlayerStats(p.username, change, false, {
-              startArticle: room.startArticle || "",
-              endArticle: room.endArticle || "",
-              clicks,
-              duration,
-            });
-          }
           p.elo = (p.elo ?? 1200) + change;
           p.eloChange = change;
+          
+          if (!p.isBot) {
+            eloChangesToApply.push({
+              username: p.username,
+              change,
+              clicks: Math.max(0, p.route.length - 1),
+              duration: p.route.length > 0 ? p.route[p.route.length - 1].timestamp : 0,
+            });
+          }
         }
-      } catch (err) {
-        console.error("Gagal menghitung ELO di resolve-bot:", err);
       }
+
+      return currentRoom;
+    });
+  } catch (err: any) {
+    const errMsg = err.message || "";
+    if (errMsg.startsWith("VAL_ERR:")) {
+      return errorResponse(errMsg.replace("VAL_ERR:", ""));
     }
+    console.error("Gagal memproses penyelesaian bot:", err);
+    return errorResponse("Terjadi kesalahan server internal.", 500);
+  }
 
-    // Susun data rute lengkap untuk dikirim via Ably
-    const allRoutes = room.players.map((p) => ({
-      clientId: p.clientId,
-      username: p.username,
-      status: p.status,
-      route: p.route,
-      finishedAt: p.finishedAt,
-      eloChange: p.eloChange || 0,
-      newElo: p.elo ?? 1200,
-    }));
+  // Terapkan ELO ke database di luar transaksi
+  if (updatedRoom.isMatchmaking) {
+    try {
+      for (const item of eloChangesToApply) {
+        await updatePlayerStats(item.username, item.change, false, {
+          startArticle: updatedRoom.startArticle || "",
+          endArticle: updatedRoom.endArticle || "",
+          clicks: item.clicks,
+          duration: item.duration,
+        });
+      }
+    } catch (err) {
+      console.error("Gagal menyimpan riwayat ELO/pertandingan saat bot selesai:", err);
+    }
+  }
 
-    await setRoom(room);
+  // Susun data rute lengkap untuk dikirim via Ably
+  const allRoutes = updatedRoom.players.map((p) => ({
+    clientId: p.clientId,
+    username: p.username,
+    status: p.status,
+    route: p.route,
+    finishedAt: p.finishedAt,
+    eloChange: p.eloChange || 0,
+    newElo: p.elo ?? 1200,
+  }));
 
-    // Kirim pesan chat dari bot yang menang
+  const botPlayer = findPlayer(updatedRoom, botClientId);
+  if (botPlayer) {
     await publishRoomEvent(roomId, "chat_message", {
       id: `bot-msg-${Math.random().toString(36).substring(2, 11)}`,
       clientId: botClientId,
       username: botPlayer.username,
-      text: room.language === "en" ? "GGwp! Good run." : "GGwp! Game yang seru.",
+      text: updatedRoom.language === "en" ? "GGwp! Good run." : "GGwp! Game yang seru.",
       timestamp: Date.now(),
     });
-
-    // Kirim pesan kemenangan bot ke Ably agar semua browser ter-update otomatis
-    await publishRoomEvent(roomId, "game_won", {
-      winnerId: botClientId,
-      allRoutes,
-    });
-
-    return Response.json({ success: true, room });
-  } catch (err) {
-    console.error("Gagal memproses penyelesaian bot:", err);
-    return errorResponse("Terjadi kesalahan server internal.", 500);
   }
+
+  await publishRoomEvent(roomId, "game_won", {
+    winnerId: botClientId,
+    allRoutes,
+  });
+
+  return Response.json({ success: true, room: sanitizeRoom(updatedRoom) });
 }
+

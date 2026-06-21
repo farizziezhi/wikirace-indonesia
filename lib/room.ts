@@ -40,6 +40,7 @@ export function createPlayer(
   clientId: string,
   username: string,
   isHost: boolean,
+  token?: string,
 ): Player {
   return {
     clientId,
@@ -51,8 +52,24 @@ export function createPlayer(
     suspendedUntil: 0,
     helpUsed: false,
     ready: false,
+    token,
   };
 }
+
+/** Salin objek Player tanpa menyertakan secret token agar tidak bocor ke client. */
+export function sanitizePlayer(player: Player): Player {
+  const { token, ...rest } = player;
+  return rest as Player;
+}
+
+/** Salin objek Room dengan menyensor/menghapus secret token di setiap pemain. */
+export function sanitizeRoom(room: Room): Room {
+  return {
+    ...room,
+    players: room.players.map(sanitizePlayer),
+  };
+}
+
 
 /** Bentuk RouteStep baru relatif terhadap waktu game dimulai. */
 export function createRouteStep(article: string, startTime: number): RouteStep {

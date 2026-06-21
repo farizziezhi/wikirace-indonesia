@@ -7,6 +7,7 @@ import { computeResultBadges, type AchievementBadge } from "@/lib/achievements";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { Player, Room, RouteStep } from "@/lib/types";
 import { translations } from "@/lib/translations";
+import { getPlayerToken } from "@/lib/client-id";
 
 import RouteReplay from "./RouteReplay";
 import AdContainer from "./AdContainer";
@@ -60,7 +61,10 @@ export default function Results({
     try {
       const res = await fetch("/api/room/play-again", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,
@@ -92,7 +96,10 @@ export default function Results({
     try {
       await fetch("/api/room/leave", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,
@@ -134,7 +141,10 @@ export default function Results({
     try {
       await fetch("/api/room/leave", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,

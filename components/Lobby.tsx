@@ -10,6 +10,7 @@ import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
 import AdContainer from "./AdContainer";
 import { translations } from "@/lib/translations";
+import { getPlayerToken } from "@/lib/client-id";
 
 interface LobbyProps {
   room: Room;
@@ -288,7 +289,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
       try {
         const res = await fetch("/api/room/set-articles", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Player-Token": getPlayerToken(room.id),
+          },
           body: JSON.stringify({
             roomId: room.id,
             clientId: currentClientId,
@@ -357,7 +361,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
     try {
       const res = await fetch("/api/room/start", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,
@@ -388,7 +395,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
     try {
       const res = await fetch("/api/room/set-articles", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,
@@ -467,7 +477,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
     try {
       await fetch("/api/room/leave", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,
@@ -493,7 +506,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
     try {
       const res = await fetch("/api/room/set-articles", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,
@@ -522,7 +538,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
     try {
       const res = await fetch("/api/room/ready", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
         body: JSON.stringify({
           roomId: room.id,
           clientId: currentClientId,

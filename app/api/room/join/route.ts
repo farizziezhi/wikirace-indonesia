@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
@@ -15,6 +16,7 @@ import {
   MAX_CLIENT_ID_LENGTH,
   MAX_PLAYERS,
   MAX_USERNAME_LENGTH,
+  sanitizeRoom,
 } from "@/lib/room";
 
 /**
@@ -65,10 +67,17 @@ export async function POST(request: NextRequest) {
   }
 
   const activeUsername = sessionUsername || usernameInput;
+  let token = "";
 
   // Reconnect: pemain dengan clientId yang sama tinggal kembali ke room.
   const existing = findPlayer(room, clientId);
-  if (!existing) {
+  if (existing) {
+    if (!existing.token) {
+      existing.token = crypto.randomUUID();
+      await setRoom(room);
+    }
+    token = existing.token;
+  } else {
     if (room.isMatchmaking) {
       return errorResponse("Ranked Matchmaking room hanya dapat dimasuki melalui antrean matchmaking otomatis.", 403);
     }
@@ -97,7 +106,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const newPlayer = createPlayer(clientId, activeUsername, false);
+    token = crypto.randomUUID();
+    const newPlayer = createPlayer(clientId, activeUsername, false, token);
     newPlayer.elo = userElo;
     room.players.push(newPlayer);
 
@@ -117,7 +127,8 @@ export async function POST(request: NextRequest) {
     await setRoom(room);
   }
 
-  await publishRoomEvent(roomId, "room_updated", { room });
+  await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(room) });
 
-  return Response.json({ room, serverTime: Date.now() });
+  return Response.json({ room: sanitizeRoom(room), playerToken: token, serverTime: Date.now() });
 }
+
