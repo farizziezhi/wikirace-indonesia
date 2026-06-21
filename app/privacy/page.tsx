@@ -175,7 +175,22 @@ export default function PrivacyPage() {
             {/* Section 6 */}
             <div>
               <h2 className="text-base sm:text-lg font-black text-lime-accent mb-2 uppercase font-mono">
-                6. Hubungi Kami / Contact Us
+                6. Google AdSense & Cookie Periklanan / Google AdSense & Advertising Cookies
+              </h2>
+              <p className="mb-2">
+                Kami menampilkan iklan yang disediakan oleh Google AdSense. Google menggunakan cookie (seperti cookie DoubleClick) untuk menayangkan iklan kepada pengguna berdasarkan kunjungan mereka ke situs kami dan situs lainnya di internet. Anda dapat memilih untuk membatalkan penayangan iklan yang dipersonalisasi dengan mengunjungi halaman <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="underline font-bold text-lime-accent">Setelan Iklan Google</a>.
+              </p>
+              <p className="italic text-warm-cream/70">
+                We display advertisements provided by Google AdSense. Google uses cookies (such as the DoubleClick cookie) to serve ads to users based on their visits to our site and other sites on the internet. You may opt out of personalized advertising by visiting the <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="underline font-bold text-lime-accent">Google Ad Settings</a> page.
+              </p>
+            </div>
+
+            <hr className="border-warm-cream/15" />
+
+            {/* Section 7 */}
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-lime-accent mb-2 uppercase font-mono">
+                7. Hubungi Kami / Contact Us
               </h2>
               <p className="mb-1">
                 Jika Anda memiliki pertanyaan tentang Kebijakan Privasi ini, silakan hubungi tim pengembang kami melalui email di:

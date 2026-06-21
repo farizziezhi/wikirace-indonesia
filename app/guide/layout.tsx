@@ -29,6 +29,11 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
         "@type": "HowToStep",
         "name": "Temukan Tautan Wikipedia",
         "text": "Jelajahi artikel Wikipedia hanya dengan mengklik link biru di dalam teks artikel tanpa menggunakan kolom pencarian eksternal sampai Anda mencapai target."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Gunakan Strategi Artikel Penghubung",
+        "text": "Gunakan artikel hub besar seperti negara, benua, atau abad untuk menghubungkan dan melompati kategori topik yang jauh dengan cepat."
       }
     ],
     "totalTime": "PT5M"

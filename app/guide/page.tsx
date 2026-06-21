@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getSavedLanguage, saveLanguage } from "@/lib/client-id";
 import { playPitRadioClick } from "@/lib/race-audio";
 
-type TabId = "basics" | "ranked" | "solo" | "custom";
+type TabId = "basics" | "ranked" | "solo" | "custom" | "strategy";
 
 export default function GuidePage() {
   const [lang, setLang] = useState<"id" | "en">("id");
@@ -34,6 +34,7 @@ export default function GuidePage() {
     ranked: { id: "🏆 Ranked", en: "🏆 Ranked" },
     solo: { id: "⏱️ Solo", en: "⏱️ Solo" },
     custom: { id: "⛔ Custom", en: "⛔ Custom" },
+    strategy: { id: "🏎️ Strategi", en: "🏎️ Strategy" },
   };
 
   return (
@@ -105,7 +106,7 @@ export default function GuidePage() {
 
           {/* Segmented Tab Controls (Neobrutalist F1 Dials) */}
           <div className="flex border-b border-warm-cream/10 bg-charcoal-text/20 p-2 gap-1.5 overflow-x-auto scrollbar-none w-full shrink-0">
-            {(["basics", "ranked", "solo", "custom"] as TabId[]).map((tab) => {
+            {(["basics", "ranked", "solo", "custom", "strategy"] as TabId[]).map((tab) => {
               const active = activeTab === tab;
               return (
                 <button
@@ -142,128 +143,177 @@ export default function GuidePage() {
               </div>
             </div>
 
-            {activeTab === "basics" && (
-              <div className="flex flex-col gap-4">
-                <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
-                  🏁 {lang === "en" ? "WHAT IS WIKIRACE?" : "APA ITU WIKIRACE?"}
-                </h2>
-                <p>
-                  {lang === "en"
-                    ? "WikiRace (also known as the Wikipedia Game) is a race of clicks and logic. Your goal is to navigate from a starting Wikipedia article to a target goal article using ONLY the blue hyperlinks within the article body."
-                    : "WikiRace (dikenal juga sebagai Wikipedia Game) adalah kompetisi logika dan kecepatan. Tujuan utamamu adalah berpindah dari artikel Wikipedia awal ke artikel tujuan HANYA dengan mengeklik tautan (link) biru di dalam konten artikel."}
-                </p>
-                
-                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl font-mono text-xs flex flex-col gap-2.5">
-                  <span className="font-bold text-burnt-orange">⚙️ {lang === "en" ? "TELEMETRY RULES" : "ATURAN BALAPAN"}</span>
-                  <ul className="list-disc list-inside space-y-1 text-warm-cream/80">
-                    <li>{lang === "en" ? "Only blue links inside the article body are active." : "Hanya tautan biru di dalam konten utama artikel yang aktif."}</li>
-                    <li>{lang === "en" ? "Browser navigation keys (Back/Forward) and keyboard shortcuts (Ctrl+F) are strictly blocked to prevent cheating." : "Tombol navigasi browser (Kembali/Maju) dan pintasan pencarian (Ctrl+F) diblokir untuk mencegah kecurangan."}</li>
-                    <li>{lang === "en" ? "Hovering over links reveals their titles. Use this telemetry to plan your next apex!" : "Mengarahkan kursor ke link akan menampilkan judul artikel. Gunakan data ini untuk merencanakan tikungan rute berikutnya!"}</li>
-                  </ul>
-                </div>
+            {/* Panel 1: Basics (Rendered statically, toggle visibility with hidden class) */}
+            <div className={activeTab === "basics" ? "flex flex-col gap-4 animate-fade-in" : "hidden"}>
+              <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
+                🏁 {lang === "en" ? "WHAT IS WIKIRACE?" : "APA ITU WIKIRACE?"}
+              </h2>
+              <p>
+                {lang === "en"
+                  ? "WikiRace (also known as the Wikipedia Game) is a race of clicks and logic. Your goal is to navigate from a starting Wikipedia article to a target goal article using ONLY the blue hyperlinks within the article body."
+                  : "WikiRace (dikenal juga sebagai Wikipedia Game) adalah kompetisi logika dan kecepatan. Tujuan utamamu adalah berpindah dari artikel Wikipedia awal ke artikel tujuan HANYA dengan mengeklik tautan (link) biru di dalam konten artikel."}
+              </p>
+              
+              <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl font-mono text-xs flex flex-col gap-2.5">
+                <span className="font-bold text-burnt-orange">⚙️ {lang === "en" ? "TELEMETRY RULES" : "ATURAN BALAPAN"}</span>
+                <ul className="list-disc list-inside space-y-1 text-warm-cream/80">
+                  <li>{lang === "en" ? "Only blue links inside the article body are active." : "Hanya tautan biru di dalam konten utama artikel yang aktif."}</li>
+                  <li>{lang === "en" ? "Browser navigation keys (Back/Forward) and keyboard shortcuts (Ctrl+F) are strictly blocked to prevent cheating." : "Tombol navigasi browser (Kembali/Maju) dan pintasan pencarian (Ctrl+F) diblokir untuk mencegah kecurangan."}</li>
+                  <li>{lang === "en" ? "Hovering over links reveals their titles. Use this telemetry to plan your next apex!" : "Mengarahkan kursor ke link akan menampilkan judul artikel. Gunakan data ini untuk merencanakan tikungan rute berikutnya!"}</li>
+                </ul>
+              </div>
 
-                <div className="border-l-3 border-lime-accent pl-4 py-1.5 italic text-warm-cream/70">
-                  {lang === "en"
-                    ? "Example: Start from 'Formula 1' ➔ click 'Internal Combustion Engine' ➔ click 'Gasoline' ➔ click 'Oil' ➔ reach Target 'Fossil Fuel'!"
-                    : "Contoh: Mulai dari 'Formula 1' ➔ klik 'Mesin Pembakaran Dalam' ➔ klik 'Bensin' ➔ klik 'Minyak Bumi' ➔ sampai ke Target 'Bahan Bakar Fosil'!"}
+              <div className="border-l-3 border-lime-accent pl-4 py-1.5 italic text-warm-cream/70">
+                {lang === "en"
+                  ? "Example: Start from 'Formula 1' ➔ click 'Internal Combustion Engine' ➔ click 'Gasoline' ➔ click 'Oil' ➔ reach Target 'Fossil Fuel'!"
+                  : "Contoh: Mulai dari 'Formula 1' ➔ klik 'Mesin Pembakaran Dalam' ➔ klik 'Bensin' ➔ klik 'Minyak Bumi' ➔ sampai ke Target 'Bahan Bakar Fosil'!"}
+              </div>
+            </div>
+
+            {/* Panel 2: Ranked */}
+            <div className={activeTab === "ranked" ? "flex flex-col gap-4 animate-fade-in" : "hidden"}>
+              <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
+                🏆 {lang === "en" ? "RANKED ARENA & ELO SYSTEM" : "ARENA RANKED & SISTEM ELO"}
+              </h2>
+              <p>
+                {lang === "en"
+                  ? "Compete head-to-head in real-time. Winning matches raises your ELO rating and shifts you up the Global Standings leaderboard, while losing drops it. Matchmaking requires identical language settings."
+                  : "Bersaing secara real-time satu lawan satu. Kemenangan akan menaikkan rating ELO-mu dan menggeser posisimu di papan peringkat global, sedangkan kekalahan akan menurunkannya. Bahasa room harus sama saat matchmaking."}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-2">
+                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl">
+                  <span className="font-mono font-black text-xs text-lime-accent block mb-1">🤖 BOT MATCHMAKING</span>
+                  <p className="text-xs text-warm-cream/70">
+                    {lang === "en"
+                      ? "If matchmaking queue exceeds 1 minute, an AI Driver Bot (ELO-calibrated) will enter the lobby. Bot paths are 100% realistic and calculated on-the-fly."
+                      : "Jika antrean matchmaking melebihi 1 menit, AI Driver Bot (terkalibrasi sesuai ELO Anda) akan masuk ke lobi. Jalur Bot 100% logis dan dihitung secara langsung."}
+                  </p>
+                </div>
+                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl">
+                  <span className="font-mono font-black text-xs text-burnt-orange block mb-1">🔥 DAILY STREAK BADGE</span>
+                  <p className="text-xs text-warm-cream/70">
+                    {lang === "en"
+                      ? "Complete the deterministically seeded Daily Challenge on the homepage to start a streak. Consecutive daily wins upgrade your streak badge on your profile!"
+                      : "Selesaikan Tantangan Harian di homepage untuk memulai streak. Kemenangan berturut-turut akan meng-upgrade lencana api streak di profilmu!"}
+                  </p>
                 </div>
               </div>
-            )}
 
-            {activeTab === "ranked" && (
-              <div className="flex flex-col gap-4">
-                <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
-                  🏆 {lang === "en" ? "RANKED ARENA & ELO SYSTEM" : "ARENA RANKED & SISTEM ELO"}
-                </h2>
-                <p>
-                  {lang === "en"
-                    ? "Compete head-to-head in real-time. Winning matches raises your ELO rating and shifts you up the Global Standings leaderboard, while losing drops it. Matchmaking requires identical language settings."
-                    : "Bersaing secara real-time satu lawan satu. Kemenangan akan menaikkan rating ELO-mu dan menggeser posisimu di papan peringkat global, sedangkan kekalahan akan menurunkannya. Bahasa room harus sama saat matchmaking."}
-                </p>
+              <div className="bg-burnt-orange/10 border border-burnt-orange/30 p-3 rounded-lg text-xs font-mono text-burnt-orange text-center">
+                {lang === "en"
+                  ? "🚨 LEAVING OR SURRENDERING IN RANKED WILL PENALIZE ELO AUTOMATICALLY!"
+                  : "🚨 KELUAR ATAU MENYERAH SAAT BALAPAN RANKED AKAN MENGURANGI ELO SECARA OTOMATIS!"}
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-2">
-                  <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl">
-                    <span className="font-mono font-black text-xs text-lime-accent block mb-1">🤖 BOT MATCHMAKING</span>
-                    <p className="text-xs text-warm-cream/70">
-                      {lang === "en"
-                        ? "If matchmaking queue exceeds 1 minute, an AI Driver Bot (ELO-calibrated) will enter the lobby. Bot paths are 100% realistic and calculated on-the-fly."
-                        : "Jika antrean matchmaking melebihi 1 menit, AI Driver Bot (terkalibrasi sesuai ELO Anda) akan masuk ke lobi. Jalur Bot 100% logis dan dihitung secara langsung."}
-                    </p>
-                  </div>
-                  <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl">
-                    <span className="font-mono font-black text-xs text-burnt-orange block mb-1">🔥 DAILY STREAK BADGE</span>
-                    <p className="text-xs text-warm-cream/70">
-                      {lang === "en"
-                        ? "Complete the deterministically seeded Daily Challenge on the homepage to start a streak. Consecutive daily wins upgrade your streak badge on your profile!"
-                        : "Selesaikan Tantangan Harian di homepage untuk memulai streak. Kemenangan berturut-turut akan meng-upgrade lencana api streak di profilmu!"}
-                    </p>
-                  </div>
-                </div>
+            {/* Panel 3: Solo */}
+            <div className={activeTab === "solo" ? "flex flex-col gap-4 animate-fade-in" : "hidden"}>
+              <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
+                ⏱️ {lang === "en" ? "SOLO PRACTICE GARAGE" : "GARASI LATIHAN SOLO"}
+              </h2>
+              <p>
+                {lang === "en"
+                  ? "Refine your lines in the Solo Garage. Training here has no impact on ELO, making it ideal for casual exploration or route testing."
+                  : "Pertajam instingmu di Garasi Latihan Solo. Latihan di sini tidak memengaruhi ELO, menjadikannya ideal untuk eksplorasi santai atau pengujian rute baru."}
+              </p>
 
-                <div className="bg-burnt-orange/10 border border-burnt-orange/30 p-3 rounded-lg text-xs font-mono text-burnt-orange text-center">
-                  {lang === "en"
-                    ? "🚨 LEAVING OR SURRENDERING IN RANKED WILL PENALIZE ELO AUTOMATICALLY!"
-                    : "🚨 KELUAR ATAU MENYERAH SAAT BALAPAN RANKED AKAN MENGURANGI ELO SECARA OTOMATIS!"}
+              <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl font-mono text-xs flex flex-col gap-2.5">
+                <span className="font-bold text-lime-accent">🛠️ {lang === "en" ? "TUNING MODULES" : "MODUL LATIHAN"}</span>
+                <div className="space-y-1.5 text-warm-cream/80">
+                  <p><strong>• {lang === "en" ? "Curated Themes" : "Kategori Pilihan"}:</strong> {lang === "en" ? "Race on pre-verified tracks sorted by Popular themes (History, Science, Sports)." : "Balapan di rute yang telah verifikasi berdasarkan tema populer (Sejarah, Sains, Olahraga)."}</p>
+                  <p><strong>• {lang === "en" ? "Wild Random" : "Wikipedia Acak"}:</strong> {lang === "en" ? "Let the engine select two completely random reachable articles." : "Biarkan mesin memilih dua artikel acak yang dipastikan saling terhubung."}</p>
+                  <p><strong>• {lang === "en" ? "Custom Setup" : "Kustom Mandiri"}:</strong> {lang === "en" ? "Input your own Start and Target articles to practice specific paths." : "Masukkan sendiri judul artikel Awal dan Akhir untuk melatih rute spesifik."}</p>
                 </div>
               </div>
-            )}
 
-            {activeTab === "solo" && (
-              <div className="flex flex-col gap-4">
-                <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
-                  ⏱️ {lang === "en" ? "SOLO PRACTICE GARAGE" : "GARASI LATIHAN SOLO"}
-                </h2>
-                <p>
-                  {lang === "en"
-                    ? "Refine your lines in the Solo Garage. Training here has no impact on ELO, making it ideal for casual exploration or route testing."
-                    : "Pertajam instingmu di Garasi Latihan Solo. Latihan di sini tidak memengaruhi ELO, menjadikannya ideal untuk eksplorasi santai atau pengujian rute baru."}
-                </p>
+              <p className="text-xs italic text-warm-cream/60">
+                {lang === "en"
+                  ? "Choose 'Time Attack' to race against the clock, or 'Free Roam' to explore Wikipedia at your own pace without pressure."
+                  : "Pilih 'Time Attack' untuk berkejaran dengan waktu, atau 'Free Roam' untuk menjelajahi Wikipedia secara santai tanpa tekanan waktu."}
+              </p>
+            </div>
 
-                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl font-mono text-xs flex flex-col gap-2.5">
-                  <span className="font-bold text-lime-accent">🛠️ {lang === "en" ? "TUNING MODULES" : "MODUL LATIHAN"}</span>
-                  <div className="space-y-1.5 text-warm-cream/80">
-                    <p><strong>• {lang === "en" ? "Curated Themes" : "Kategori Pilihan"}:</strong> {lang === "en" ? "Race on pre-verified tracks sorted by Popular themes (History, Science, Sports)." : "Balapan di rute yang telah terverifikasi berdasarkan tema populer (Sejarah, Sains, Olahraga)."}</p>
-                    <p><strong>• {lang === "en" ? "Wild Random" : "Wikipedia Acak"}:</strong> {lang === "en" ? "Let the engine select two completely random reachable articles." : "Biarkan mesin memilih dua artikel acak yang dipastikan saling terhubung."}</p>
-                    <p><strong>• {lang === "en" ? "Custom Setup" : "Kustom Mandiri"}:</strong> {lang === "en" ? "Input your own Start and Target articles to practice specific paths." : "Masukkan sendiri judul artikel Awal dan Akhir untuk melatih rute spesifik."}</p>
-                  </div>
-                </div>
+            {/* Panel 4: Custom */}
+            <div className={activeTab === "custom" ? "flex flex-col gap-4 animate-fade-in" : "hidden"}>
+              <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
+                ⛔ {lang === "en" ? "CUSTOM PARTY LOBBY" : "LOBI MABAR KUSTOM"}
+              </h2>
+              <p>
+                {lang === "en"
+                  ? "Create a custom party room using a Room Code to play with friends. Custom rooms do not affect ELO, allowing the host to tune cockpit game limits and special restrictions."
+                  : "Buat lobi permainan kustom menggunakan Kode Room untuk bermain bersama teman. Room kustom tidak memengaruhi ELO, sehingga Host bebas menyetel batasan mekanis."}
+              </p>
 
-                <p className="text-xs italic text-warm-cream/60">
-                  {lang === "en"
-                    ? "Choose 'Time Attack' to race against the clock, or 'Free Roam' to explore Wikipedia at your own pace without pressure."
-                    : "Pilih 'Time Attack' untuk berkejaran dengan waktu, atau 'Free Roam' untuk menjelajahi Wikipedia secara santai tanpa tekanan waktu."}
-                </p>
-              </div>
-            )}
-
-            {activeTab === "custom" && (
-              <div className="flex flex-col gap-4">
-                <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
-                  ⛔ {lang === "en" ? "CUSTOM PARTY LOBBY" : "LOBI MABAR KUSTOM"}
-                </h2>
-                <p>
-                  {lang === "en"
-                    ? "Create a custom party room using a Room Code to play with friends. Custom rooms do not affect ELO, allowing the host to tune cockpit game limits and special restrictions."
-                    : "Buat lobi permainan kustom menggunakan Kode Room untuk bermain bersama teman. Room kustom tidak memengaruhi ELO, sehingga Host bebas menyetel batasan mekanis."}
-                </p>
-
-                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl font-mono text-xs flex flex-col gap-2.5">
-                  <span className="font-bold text-burnt-orange">🎛️ {lang === "en" ? "HOST COCKPIT RULES" : "ATURAN KENDALI HOST"}</span>
-                  <div className="space-y-1.5 text-warm-cream/80">
-                    <p><strong>• {lang === "en" ? "Click Limit" : "Batas Klik"}:</strong> {lang === "en" ? "Max allowed link clicks. Exceeding disqualifies the player." : "Jumlah klik tautan maksimal. Melebihi batas akan mendiskualifikasi pemain."}</p>
-                    <p><strong>• {lang === "en" ? "Time Limit" : "Batas Waktu"}:</strong> {lang === "en" ? "Countdown timer. Reaching 00:00 triggers local engine failure (DQ)." : "Hitung mundur waktu bermain. Menyentuh 00:00 memicu kegagalan mesin (DQ)."}</p>
-                    <p><strong>• {lang === "en" ? "Banned Articles" : "Larangan Artikel (Ban List)"}:</strong> {lang === "en" ? "Host can ban specific articles (e.g. 'United States', 'Earth'). Clicking a banned link plays an alarm beep and blocks navigation." : "Host dapat melarang artikel tertentu (misal: 'Amerika Serikat'). Mengeklik link terlarang memicu beeps alarm dan memblokir rute."}</p>
-                    <p><strong>• {lang === "en" ? "Emergency GPS Help" : "Bantuan GPS Darurat"}:</strong> {lang === "en" ? "Allows players to use a 'Solution Helper' showing the shortest route calculated by our background BFS engine." : "Mengizinkan pemain memakai 'Bantuan Solusi' yang memperlihatkan rute terpendek hasil kalkulasi mesin BFS."}</p>
-                  </div>
+              <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl font-mono text-xs flex flex-col gap-2.5">
+                <span className="font-bold text-burnt-orange">🎛️ {lang === "en" ? "HOST COCKPIT RULES" : "ATURAN KENDALI HOST"}</span>
+                <div className="space-y-1.5 text-warm-cream/80">
+                  <p><strong>• {lang === "en" ? "Click Limit" : "Batas Klik"}:</strong> {lang === "en" ? "Max allowed link clicks. Exceeding disqualifies the player." : "Jumlah klik tautan maksimal. Melebihi batas akan mendiskualifikasi pemain."}</p>
+                  <p><strong>• {lang === "en" ? "Time Limit" : "Batas Waktu"}:</strong> {lang === "en" ? "Countdown timer. Reaching 00:00 triggers local engine failure (DQ)." : "Hitung mundur waktu bermain. Menyentuh 00:00 memicu kegagalan mesin (DQ)."}</p>
+                  <p><strong>• {lang === "en" ? "Banned Articles" : "Larangan Artikel (Ban List)"}:</strong> {lang === "en" ? "Host can ban specific articles (e.g. 'United States', 'Earth'). Clicking a banned link plays an alarm beep and blocks navigation." : "Host dapat melarang artikel tertentu (misal: 'Amerika Serikat'). Mengeklik link terlarang memicu beeps alarm dan memblokir rute."}</p>
+                  <p><strong>• {lang === "en" ? "Emergency GPS Help" : "Bantuan GPS Darurat"}:</strong> {lang === "en" ? "Allows players to use a 'Solution Helper' showing the shortest route calculated by our background BFS engine." : "Mengizinkan pemain memakai 'Bantuan Solusi' yang memperlihatkan rute terpendek hasil kalkulasi mesin BFS."}</p>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Panel 5: Strategy (NEW - for high-value SEO/GEO content) */}
+            <div className={activeTab === "strategy" ? "flex flex-col gap-4 animate-fade-in" : "hidden"}>
+              <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">
+                🏎️ {lang === "en" ? "WIKIRACE RACING STRATEGIES" : "STRATEGI BALAPAN WIKIRACE"}
+              </h2>
+              <p>
+                {lang === "en"
+                  ? "To achieve the fastest times and lowest click counts, you must think associationally and navigate Wikipedia like a veteran driver. Here are the key telemetry strategies:"
+                  : "Untuk mencapai waktu tercepat dan jumlah klik paling sedikit, Anda harus berpikir secara asosiatif dan menavigasi Wikipedia layaknya pembalap veteran. Berikut adalah strategi telemetri utama:"}
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl">
+                  <span className="font-mono font-black text-xs text-lime-accent block mb-1">🌍 1. HUB ARTICLES (ARTIKEL PENGHUBUNG)</span>
+                  <p className="text-xs text-warm-cream/70 leading-relaxed">
+                    {lang === "en"
+                      ? "Identify large 'Hub' articles containing lists or broad topics, such as countries (e.g., 'Indonesia', 'United States'), continents, or centuries. Navigating to a Hub allows you to quickly pivot to almost any other unrelated topic on Earth."
+                      : "Identifikasi artikel 'Hub' besar yang mengandung daftar atau topik luas, seperti negara (misal: 'Indonesia', 'Amerika Serikat'), benua, atau abad. Masuk ke Hub memungkinkan Anda berputar haluan secara cepat ke hampir semua topik lain di Bumi."}
+                  </p>
+                </div>
+                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl">
+                  <span className="font-mono font-black text-xs text-burnt-orange block mb-1">🗺️ 2. GEOGRAPHIC & TIME SHORTCUTS</span>
+                  <p className="text-xs text-warm-cream/70 leading-relaxed">
+                    {lang === "en"
+                      ? "If the target is a historical figure, search for their birth country or century. If the target is a biological concept, navigate through related sciences (e.g., 'Biology' ➔ 'Chemistry' ➔ 'Atom')."
+                      : "Jika targetnya adalah tokoh sejarah, cari negara kelahiran atau abad hidupnya. Jika targetnya adalah konsep biologi, navigasikan melalui ilmu sains terkait (misal: 'Biologi' ➔ 'Kimia' ➔ 'Atom')."}
+                  </p>
+                </div>
+                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl">
+                  <span className="font-mono font-black text-xs text-lime-accent block mb-1">🔗 3. ASSOCIATIVE LEAPS (LOMPATAN ASOSIATIF)</span>
+                  <p className="text-xs text-warm-cream/70 leading-relaxed">
+                    {lang === "en"
+                      ? "Don't just click randomly. Read the first paragraph of an article—it contains definitions and context that link to wider fields. Connect distant categories by finding shared entities (e.g., a movie actor ➔ their birth country ➔ local industries)."
+                      : "Jangan asal klik secara acak. Bacalah paragraf pertama artikel—ini berisi definisi dan konteks yang terhubung ke bidang yang lebih luas. Hubungkan kategori yang sangat jauh melalui entitas bersama (misal: aktor film ➔ negara kelahiran ➔ industri lokal)."}
+                  </p>
+                </div>
+                <div className="bg-charcoal-text/40 border border-warm-gray/15 p-4 rounded-xl">
+                  <span className="font-mono font-black text-xs text-burnt-orange block mb-1">⚡ 4. CLICKS MINIMIZATION</span>
+                  <p className="text-xs text-warm-cream/70 leading-relaxed">
+                    {lang === "en"
+                      ? "In custom rooms with Click Limits, plan one step ahead. Before clicking a link, read the current paragraph to see if other links might lead to a larger Hub article first, saving clicks later."
+                      : "Di lobi kustom dengan Batas Klik, rencanakan satu langkah di depan. Sebelum mengeklik link, bacalah paragraf saat ini untuk melihat apakah link lain dapat membawa Anda ke artikel Hub yang lebih besar terlebih dahulu."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-l-3 border-lime-accent pl-4 py-1.5 italic text-warm-cream/70 text-xs">
+                {lang === "en"
+                  ? "Pro Tip: Learn to scan the 'See Also' and 'References' sections at the bottom of Wikipedia pages. They often contain direct highway links to major hubs!"
+                  : "Tip Pro: Pelajari cara memindai bagian 'Lihat Juga' dan 'Referensi' di bagian bawah halaman Wikipedia. Bagian tersebut sering kali menyimpan link jalan tol langsung ke hub utama!"}
+              </div>
+            </div>
           </div>
 
           {/* Footer Checkered Line */}
           <div className="mt-auto bg-charcoal-text/30 px-6 py-4 border-t border-warm-cream/10 text-center flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span className="text-[10px] font-mono text-warm-cream/40">
-              {lang === "en" ? "WIKIRACE INDONESIA © 2026 • SIRKUIT DATA WIKIPEDIA" : "WIKIRACE INDONESIA © 2026 • SIRKUIT DATA WIKIPEDIA"}
+              WIKIRACE INDONESIA © 2026 • SIRKUIT DATA WIKIPEDIA
             </span>
             <Link
               href="/"
