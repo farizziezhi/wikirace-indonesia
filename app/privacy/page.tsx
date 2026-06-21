@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Kebijakan Privasi | WikiRace Indonesia",
+  description: "Kebijakan privasi perlindungan data pribadi, transparansi data, dan penggunaan cookie teknis di WikiRace Indonesia.",
+};
 
 export default function PrivacyPage() {
   const lastUpdatedId = "11 Juni 2026";

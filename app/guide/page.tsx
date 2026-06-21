@@ -126,6 +126,22 @@ export default function GuidePage() {
 
           {/* Guide Content Panel */}
           <div className="flex-1 p-6 sm:p-8 text-sm sm:text-base leading-relaxed text-warm-cream/90 flex flex-col gap-6">
+            {/* Quick Summary / TL;DR (GEO optimization) */}
+            <div className="bg-charcoal-text/40 border-l-4 border-lime-accent p-4 rounded-r-xl text-xs font-mono">
+              <p className="font-black text-lime-accent uppercase tracking-wider mb-1">
+                ⚡ Quick Summary / TL;DR:
+              </p>
+              <p className="text-warm-cream/90 leading-relaxed font-semibold">
+                {lang === "en"
+                  ? "WikiRace (Wikipedia Game) is a speedrun game. Navigate from a starting Wikipedia article to a target article using only the blue links inside the article content. No search bar, no browser back buttons, just pure logic and speed!"
+                  : "WikiRace (Wikipedia Game) adalah balapan klik. Jelajahi Wikipedia dari artikel awal ke artikel tujuan hanya dengan mengklik link biru di dalam artikel. Tanpa kolom pencarian, tanpa tombol back browser, murni kecepatan dan logika!"}
+              </p>
+              <div className="mt-2 text-[10px] text-warm-cream/55 flex justify-between items-center border-t border-warm-cream/10 pt-2 flex-wrap gap-2">
+                <span>👤 {lang === "en" ? "Author: WikiRace Dev Team" : "Penulis: Tim Pengembang WikiRace"}</span>
+                <span>📅 {lang === "en" ? "Last Updated: June 21, 2026" : "Pembaruan: 21 Juni 2026"}</span>
+              </div>
+            </div>
+
             {activeTab === "basics" && (
               <div className="flex flex-col gap-4">
                 <h2 className="text-lg font-black text-lime-accent uppercase font-mono tracking-tight flex items-center gap-1.5">

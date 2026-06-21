@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Syarat & Ketentuan | WikiRace Indonesia",
+  description: "Syarat dan ketentuan bermain, panduan fair play kompetitif, aturan ELO, dan kebijakan penggunaan layanan WikiRace Indonesia.",
+};
 
 export default function TermsPage() {
   const lastUpdatedId = "11 Juni 2026";
