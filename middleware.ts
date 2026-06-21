@@ -38,6 +38,19 @@ async function inMemoryAllow(key: string) {
   const filtered = arr.filter((t) => t >= windowStart);
   filtered.push(now);
   inMemoryMap.set(key, filtered);
+
+  // Bersihkan entri lama jika Map bertambah besar (menghindari memory leak)
+  if (inMemoryMap.size > 500) {
+    for (const [k, timestamps] of inMemoryMap.entries()) {
+      const active = timestamps.filter((t) => t >= windowStart);
+      if (active.length === 0) {
+        inMemoryMap.delete(k);
+      } else {
+        inMemoryMap.set(k, active);
+      }
+    }
+  }
+
   return filtered.length <= INMEMORY_LIMIT;
 }
 

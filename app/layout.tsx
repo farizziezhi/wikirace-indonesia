@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id",
   ),
+  alternates: {
+    canonical: "/",
+  },
   title: {
     default: "WikiRace Indonesia - Play Wikipedia Game | Balapan Wikipedia Online",
     template: "%s | WikiRace Indonesia",

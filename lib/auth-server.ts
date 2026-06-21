@@ -28,6 +28,9 @@ export function verifyPassword(
   return checkHash === hash;
 }
 
+let lastPruneTime = 0;
+const PRUNE_INTERVAL = 1000 * 60 * 60; // 1 jam
+
 /**
  * Mengambil nama pengguna dari sesi aktif saat ini berdasarkan cookie.
  */
@@ -35,6 +38,19 @@ export async function getSessionUsername(): Promise<string | null> {
   await ensureDbInitialized();
   const cookieStore = await cookies();
   const token = cookieStore.get("wikirace_session")?.value;
+
+  // Jalankan pembersihan sesi kedaluwarsa secara berkala di latar belakang
+  const now = Date.now();
+  if (now - lastPruneTime > PRUNE_INTERVAL) {
+    lastPruneTime = now;
+    turso.execute({
+      sql: "DELETE FROM sessions WHERE expires_at < :now",
+      args: { now },
+    }).catch((err) => {
+      console.error("Gagal membersihkan sesi kedaluwarsa:", err);
+    });
+  }
+
   if (!token) return null;
 
   try {
