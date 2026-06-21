@@ -42,8 +42,43 @@ async function inMemoryAllow(key: string) {
 }
 
 export async function middleware(request: NextRequest) {
-  // Only apply rate limiting to /api/ routes
+  // Only apply rate limiting & CSRF to /api/ routes
   if (request.nextUrl.pathname.startsWith("/api/")) {
+    const method = request.method;
+    const pathname = request.nextUrl.pathname;
+
+    // CSRF Protection for state-changing requests
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && pathname !== "/api/webhooks/saweria") {
+      const origin = request.headers.get("origin");
+      const referer = request.headers.get("referer");
+      const host = request.headers.get("host") || request.headers.get("x-forwarded-host") || "";
+
+      let allowed = true;
+      if (origin) {
+        try {
+          const originHost = new URL(origin).host;
+          if (originHost !== host) {
+            allowed = false;
+          }
+        } catch {
+          allowed = false;
+        }
+      } else if (referer) {
+        try {
+          const refererHost = new URL(referer).host;
+          if (refererHost !== host) {
+            allowed = false;
+          }
+        } catch {
+          allowed = false;
+        }
+      }
+
+      if (!allowed) {
+        return NextResponse.json({ error: "Akses ditolak: Proteksi CSRF memblokir request ini." }, { status: 403 });
+      }
+    }
+
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
 
     if (useUpstash && upstashLimiter) {

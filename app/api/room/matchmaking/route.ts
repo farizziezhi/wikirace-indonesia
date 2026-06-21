@@ -14,6 +14,7 @@ import {
   popMatchmakingPath,
   pushMatchmakingPath,
   getMatchmakingPoolSize,
+  getValkeyClient,
 } from "@/lib/redis";
 import {
   createPlayer,
@@ -48,6 +49,24 @@ async function fetchWikiLinks(title: string, lang: string): Promise<string[]> {
   }
 }
 
+async function fetchWikiLinksCached(title: string, lang: string): Promise<string[]> {
+  try {
+    const client = getValkeyClient();
+    const cacheKey = `wiki:links:${lang}:${title}`;
+    const cached = await client.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const links = await fetchWikiLinks(title, lang);
+    if (links.length > 0) {
+      await client.set(cacheKey, JSON.stringify(links), "EX", 300); // 5 mins
+    }
+    return links;
+  } catch (err) {
+    console.warn("[matchmaking] Cache error for links:", err);
+    return fetchWikiLinks(title, lang);
+  }
+}
+
 async function generateRandomWalkPath(
   lang: WikiLanguage,
   elo: number,
@@ -73,7 +92,7 @@ async function generateRandomWalkPath(
     let success = true;
 
     for (let i = 0; i < steps; i++) {
-      const links = await fetchWikiLinks(current, lang);
+      const links = await fetchWikiLinksCached(current, lang);
       const candidates = links.filter((l) => !visited.has(l));
       if (candidates.length === 0) {
         success = false;

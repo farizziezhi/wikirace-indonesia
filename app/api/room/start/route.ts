@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getRoom, removeMatchmakingRoom, setRoom, updateRoomAtomically } from "@/lib/redis";
+import { getRoom, removeMatchmakingRoom, setRoom, updateRoomAtomically, getValkeyClient } from "@/lib/redis";
 import { errorResponse, sanitizeRoom } from "@/lib/room";
 import type { Room } from "@/lib/types";
 
@@ -54,6 +54,42 @@ async function fetchWikiBacklinks(title: string, lang: string): Promise<string[]
   }
 }
 
+async function fetchWikiLinksCached(title: string, lang: string): Promise<string[]> {
+  try {
+    const client = getValkeyClient();
+    const cacheKey = `wiki:links:${lang}:${title}`;
+    const cached = await client.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const links = await fetchWikiLinks(title, lang);
+    if (links.length > 0) {
+      await client.set(cacheKey, JSON.stringify(links), "EX", 300); // 5 mins
+    }
+    return links;
+  } catch (err) {
+    console.warn("[start] Cache error for links:", err);
+    return fetchWikiLinks(title, lang);
+  }
+}
+
+async function fetchWikiBacklinksCached(title: string, lang: string): Promise<string[]> {
+  try {
+    const client = getValkeyClient();
+    const cacheKey = `wiki:backlinks:${lang}:${title}`;
+    const cached = await client.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const backlinks = await fetchWikiBacklinks(title, lang);
+    if (backlinks.length > 0) {
+      await client.set(cacheKey, JSON.stringify(backlinks), "EX", 300); // 5 mins
+    }
+    return backlinks;
+  } catch (err) {
+    console.warn("[start] Cache error for backlinks:", err);
+    return fetchWikiBacklinks(title, lang);
+  }
+}
+
 async function generateLogicalBotRoute(
   start: string,
   end: string,
@@ -65,8 +101,8 @@ async function generateLogicalBotRoute(
   }
 
   try {
-    const backlinks = await fetchWikiBacklinks(end, lang);
-    const startLinks = await fetchWikiLinks(start, lang);
+    const backlinks = await fetchWikiBacklinksCached(end, lang);
+    const startLinks = await fetchWikiLinksCached(start, lang);
     
     if (startLinks.includes(end)) {
       return [start, end];
@@ -80,7 +116,7 @@ async function generateLogicalBotRoute(
     
     const sampleY = startLinks.slice(0, 8);
     for (const y of sampleY) {
-      const yLinks = await fetchWikiLinks(y, lang);
+      const yLinks = await fetchWikiLinksCached(y, lang);
       const intersect3 = yLinks.filter(z => backlinks.includes(z));
       if (intersect3.length > 0) {
         const z = intersect3[Math.floor(Math.random() * intersect3.length)];
@@ -92,7 +128,7 @@ async function generateLogicalBotRoute(
       const route = [start];
       let current = start;
       for (let i = 0; i < 2; i++) {
-        const links = await fetchWikiLinks(current, lang);
+        const links = await fetchWikiLinksCached(current, lang);
         if (links.length === 0) break;
         const connection = links.find(l => backlinks.includes(l));
         if (connection) {
