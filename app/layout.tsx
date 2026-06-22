@@ -90,56 +90,56 @@ export default function RootLayout({
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Apa itu WikiRace Indonesia?",
+            "name": "Apakah WikiRace Indonesia gratis dimainkan?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text":
-                "WikiRace Indonesia (dikenal juga sebagai Wikipedia Game) adalah permainan edukasi online di mana Anda harus menelusuri Wikipedia dari artikel start ke artikel finish yang ditentukan hanya dengan mengklik link biru di dalam artikel tersebut.",
+                "Ya, game WikiRace Indonesia sepenuhnya 100% gratis dimainkan selamanya, bebas dari iklan spanduk yang mengganggu, serta tidak menjual data pribadi Anda.",
             },
           },
           {
             "@type": "Question",
-            "name": "What is WikiRace Indonesia (Wikipedia Game)?",
+            "name": "Is the Wikipedia Game free to play?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text":
-                "WikiRace Indonesia (also known as the Wikipedia Game) is a free online speedrun game where you navigate from a starting Wikipedia article to a destination article using only the blue hyperlinks inside the articles.",
+                "Yes, WikiRace Indonesia is 100% free with no intrusive ads, paying limits, or hidden fees.",
             },
           },
           {
             "@type": "Question",
-            "name": "Bagaimana cara bermain WikiRace Indonesia?",
+            "name": "Apakah mendukung rute Wikipedia Bahasa Inggris?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text":
-                "Anda diberikan sebuah artikel awal dan artikel tujuan. Klik link biru di dalam halaman Wikipedia untuk berpindah artikel sampai Anda menemukan artikel tujuan. Pemain dengan waktu tercepat atau jumlah klik paling sedikit memenangkan permainan.",
+                "Tentu saja! Anda cukup mengganti pilihan Bahasa Wikipedia ke bendera 🇺🇸 (English) di form bermain untuk bertanding menggunakan database Wikipedia versi global.",
             },
           },
           {
             "@type": "Question",
-            "name": "How do you play the Wikipedia Game (WikiRace)?",
+            "name": "Does it support English Wikipedia routes?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text":
-                "You are given a starting article and a target article. Click the blue hyperlinks within the Wikipedia pages to move from article to article until you reach the target. The player who reaches the target first or with the fewest clicks wins.",
+                "Yes! You can toggle the Wikipedia Language to the US flag 🇺🇸 (English) on the main lobby form to play with the global English Wikipedia database.",
             },
           },
           {
             "@type": "Question",
-            "name": "Apakah game ini gratis?",
+            "name": "Bagaimana sistem penentuan peringkat ELO dihitung?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text":
-                "Ya, WikiRace Indonesia 100% gratis dimainkan selamanya tanpa biaya atau iklan yang mengganggu.",
+                "Setiap kali Anda menang di mode Ranked multiplayer, rating ELO Anda akan meningkat. Sebaliknya jika kalah, ELO Anda akan berkurang. Peringkat di Papan Skor diurutkan berdasarkan ELO tertinggi secara global.",
             },
           },
           {
             "@type": "Question",
-            "name": "Is WikiRace Indonesia free to play?",
+            "name": "How does the ELO rating system work?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text":
-                "Yes, WikiRace Indonesia is 100% free to play with no intrusive ads or hidden subscription fees.",
+                "Winning in Ranked matchmaking mode grants you ELO rating points, while losing decreases them. The global leaderboard displays players based on their ELO ratings.",
             },
           },
         ],

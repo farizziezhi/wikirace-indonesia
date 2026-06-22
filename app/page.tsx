@@ -1571,6 +1571,12 @@ export default function HomePage() {
             </a>
             .
           </p>
+          <p
+            className="text-center text-charcoal-text/50 font-mono"
+            style={{ fontSize: "11px", marginTop: "2px" }}
+          >
+            {language === "en" ? "Last Updated: June 2026" : "Pembaruan Terakhir: Juni 2026"}
+          </p>
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-1">
             <Link href="/guide" className="hover:text-charcoal-text hover:underline transition">
               {language === "en" ? "Game Guide" : "Pedoman Bermain"}

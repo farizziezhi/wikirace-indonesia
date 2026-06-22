@@ -31,6 +31,51 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   };
 }
 
-export default function ProfileLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+export default async function ProfileLayout({ children, params }: LayoutProps) {
+  const { username } = await params;
+  const decodedUsername = decodeURIComponent(username);
+  let gamesPlayed = 0;
+  let wins = 0;
+
+  try {
+    const stats = await getPlayerStats(decodedUsername);
+    if (stats) {
+      gamesPlayed = stats.games_played;
+      wins = stats.wins;
+    }
+  } catch (err) {
+    // Fail-silent
+  }
+
+  const profileSchema = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "mainEntity": {
+      "@type": "Person",
+      "name": decodedUsername,
+      "alternateName": decodedUsername,
+      "interactionStatistic": [
+        {
+          "@type": "InteractionCounter",
+          "interactionType": "https://schema.org/WriteAction",
+          "userInteractionCount": gamesPlayed,
+        },
+        {
+          "@type": "InteractionCounter",
+          "interactionType": "https://schema.org/LikeAction",
+          "userInteractionCount": wins,
+        },
+      ],
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(profileSchema) }}
+      />
+      {children}
+    </>
+  );
 }

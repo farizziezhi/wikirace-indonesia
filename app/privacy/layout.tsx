@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Kebijakan Privasi",
   description: "Kebijakan Privasi resmi permainan WikiRace Indonesia.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 export default function PrivacyLayout({
