@@ -69,6 +69,14 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "WebSite",
+        "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id"}/#website`,
+        "url": process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id",
+        "name": "WikiRace Indonesia",
+        "alternateName": ["WikiRace ID", "Wiki Race Indonesia"],
+        "inLanguage": ["id", "en"],
+      },
+      {
         "@type": "SoftwareApplication",
         "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id"}/#webapp`,
         "name": "WikiRace Indonesia",
