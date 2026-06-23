@@ -7,7 +7,7 @@ import { avatarColor, initials } from "@/lib/avatar";
 import type { ChatMessage, Room } from "@/lib/types";
 import { MAX_CHAT_LENGTH } from "@/lib/room";
 import { translations } from "@/lib/translations";
-import { playPitRadioClick, speakRadioMessage } from "@/lib/race-audio";
+import { playChatBeep, playPitRadioClick, speakRadioMessage } from "@/lib/race-audio";
 import { getPlayerToken } from "@/lib/client-id";
 
 interface ChatPanelProps {
@@ -79,6 +79,8 @@ export default function ChatPanel({
       // Play text-to-speech if it's a team radio transmission
       if (data.text.startsWith("📻")) {
         speakRadioMessage(data.text, language);
+      } else if (data.clientId !== currentClientId) {
+        playChatBeep();
       }
 
       // Increment unread kalau panel collapsed.

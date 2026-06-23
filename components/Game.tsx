@@ -22,6 +22,7 @@ import { getPlayerToken } from "@/lib/client-id";
 
 import WikiArticle from "./WikiArticle";
 import AdContainer from "./AdContainer";
+import AudioToggleWidget from "./AudioToggleWidget";
 import { translations } from "@/lib/translations";
 
 interface GameProps {
@@ -376,6 +377,7 @@ const GameHeader = memo(
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <AudioToggleWidget />
             {showPitStopButton && (
               <button
                 type="button"

@@ -8,6 +8,32 @@ let audioContext: AudioContext | null = null;
 let unlocked = false;
 
 const STORAGE_KEY = "wikirace:audio-unlocked";
+const MUTE_STORAGE_KEY = "wikirace:audio-muted";
+
+let isMuted = false;
+if (typeof window !== "undefined") {
+  try {
+    isMuted = window.localStorage.getItem(MUTE_STORAGE_KEY) === "1";
+  } catch {
+    // ignore
+  }
+}
+
+export function isAudioMuted(): boolean {
+  return isMuted;
+}
+
+export function toggleMuteAudio(): boolean {
+  isMuted = !isMuted;
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(MUTE_STORAGE_KEY, isMuted ? "1" : "0");
+    } catch {
+      // ignore
+    }
+  }
+  return isMuted;
+}
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -51,7 +77,7 @@ export async function unlockRaceAudio(): Promise<boolean> {
 }
 
 export function playCountdownBeep(step: "3" | "2" | "1" | "GO"): void {
-  if (!isRaceAudioUnlocked()) return;
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
 
   const ctx = getAudioContext();
   if (!ctx || ctx.state !== "running") return;
@@ -80,6 +106,8 @@ export function playCountdownBeep(step: "3" | "2" | "1" | "GO"): void {
 }
 
 export function playCheatAlarm(): void {
+  if (isAudioMuted()) return;
+
   const ctx = getAudioContext();
   if (!ctx) return;
 
@@ -116,7 +144,7 @@ export function playCheatAlarm(): void {
 }
 
 export function playBannedBeep(): void {
-  if (!isRaceAudioUnlocked()) return;
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
 
   const ctx = getAudioContext();
   if (!ctx || ctx.state !== "running") return;
@@ -141,7 +169,7 @@ export function playBannedBeep(): void {
 }
 
 export function playVictoryChime(): void {
-  if (!isRaceAudioUnlocked()) return;
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
 
   const ctx = getAudioContext();
   if (!ctx || ctx.state !== "running") return;
@@ -169,7 +197,7 @@ export function playVictoryChime(): void {
 }
 
 export function playPitRadioClick(): void {
-  if (!isRaceAudioUnlocked()) return;
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
 
   const ctx = getAudioContext();
   if (!ctx || ctx.state !== "running") return;
@@ -193,6 +221,7 @@ export function playPitRadioClick(): void {
 }
 
 export function speakRadioMessage(text: string, lang: "id" | "en"): void {
+  if (isAudioMuted()) return;
   if (typeof window === "undefined" || !window.speechSynthesis) return;
 
   try {
@@ -242,7 +271,7 @@ export function speakRadioMessage(text: string, lang: "id" | "en"): void {
 }
 
 export function playPitStopSound(): void {
-  if (!isRaceAudioUnlocked()) return;
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
 
   const ctx = getAudioContext();
   if (!ctx || ctx.state !== "running") return;
@@ -276,7 +305,7 @@ export function playPitStopSound(): void {
 }
 
 export function playPowerUpEquippedSound(): void {
-  if (!isRaceAudioUnlocked()) return;
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
 
   const ctx = getAudioContext();
   if (!ctx || ctx.state !== "running") return;
@@ -306,7 +335,7 @@ export function playPowerUpEquippedSound(): void {
 }
 
 export function playOilSplatSound(): void {
-  if (!isRaceAudioUnlocked()) return;
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
 
   const ctx = getAudioContext();
   if (!ctx || ctx.state !== "running") return;
@@ -332,6 +361,52 @@ export function playOilSplatSound(): void {
   osc.stop(now + 0.35);
 }
 
+export function playEmojiPop(): void {
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
 
+  const ctx = getAudioContext();
+  if (!ctx || ctx.state !== "running") return;
 
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
 
+  osc.type = "sine";
+  // Quick pitch sweep upwards: 600Hz -> 1000Hz (bubble pop)
+  osc.frequency.setValueAtTime(600, now);
+  osc.frequency.exponentialRampToValueAtTime(1000, now + 0.08);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.05, now + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.09);
+}
+
+export function playChatBeep(): void {
+  if (isAudioMuted() || !isRaceAudioUnlocked()) return;
+
+  const ctx = getAudioContext();
+  if (!ctx || ctx.state !== "running") return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = "sine";
+  // Simple notification sweep: 600Hz -> 800Hz
+  osc.frequency.setValueAtTime(600, now);
+  osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.03, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.09);
+}

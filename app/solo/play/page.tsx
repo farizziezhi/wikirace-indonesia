@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import WikiArticle from "@/components/WikiArticle";
+import AudioToggleWidget from "@/components/AudioToggleWidget";
 import type { WikiLanguage } from "@/lib/types";
 import { getSavedLanguage } from "@/lib/client-id";
 import { playVictoryChime } from "@/lib/race-audio";
@@ -279,6 +280,8 @@ Mainkan gratis di: https://wikiraceid.web.id`;
             >
               ← Keluar
             </button>
+            <div className="h-4 w-px bg-very-dark" />
+            <AudioToggleWidget dark />
             <div className="h-4 w-px bg-very-dark" />
             <span
               className="px-2 py-0.5 text-[10px] font-black tracking-widest rounded bg-very-dark text-lime-accent uppercase"

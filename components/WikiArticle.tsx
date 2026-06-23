@@ -201,6 +201,63 @@ function WikiArticle({
     };
   }, [activePowerUp, language]);
 
+  // Background prefetching on link hover to speed up navigation
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
+    let activePrefetchTimeout: number | null = null;
+    let hoveredTitle: string | null = null;
+
+    function handleMouseOver(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      if (!anchor) return;
+
+      const href = anchor.getAttribute("href") ?? "";
+      const articleTitle = extractArticleTitle(href, language);
+      if (!articleTitle) return;
+
+      // Avoid prefetching if it's already hovered
+      if (articleTitle === hoveredTitle) return;
+
+      if (activePrefetchTimeout !== null) {
+        window.clearTimeout(activePrefetchTimeout);
+      }
+
+      hoveredTitle = articleTitle;
+
+      activePrefetchTimeout = window.setTimeout(() => {
+        // Prefetch the article HTML in background. It will be cached inside articleCache
+        void fetchArticleHtml(articleTitle, language).catch(() => {
+          // ignore background errors
+        });
+      }, 150);
+    }
+
+    function handleMouseOut(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      if (!anchor) return;
+
+      if (activePrefetchTimeout !== null) {
+        window.clearTimeout(activePrefetchTimeout);
+        activePrefetchTimeout = null;
+      }
+      hoveredTitle = null;
+    }
+
+    node.addEventListener("mouseover", handleMouseOver);
+    node.addEventListener("mouseout", handleMouseOut);
+
+    return () => {
+      if (activePrefetchTimeout !== null) {
+        window.clearTimeout(activePrefetchTimeout);
+      }
+      node.removeEventListener("mouseover", handleMouseOver);
+      node.removeEventListener("mouseout", handleMouseOut);
+    };
+  }, [language]);
 
   // Intercept klik <a> di dalam konten — listener satu kali pada container.
   useEffect(() => {

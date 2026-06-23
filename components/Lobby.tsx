@@ -9,6 +9,7 @@ import { avatarColor, initials } from "@/lib/avatar";
 import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
 import AdContainer from "./AdContainer";
+import AudioToggleWidget from "./AudioToggleWidget";
 import { translations } from "@/lib/translations";
 import { getPlayerToken } from "@/lib/client-id";
 
@@ -663,6 +664,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
                 </div>
 
                 <div className="flex items-center justify-center gap-2 mt-1">
+                  <AudioToggleWidget dark />
                   <button
                     type="button"
                     onClick={handleLeave}
@@ -957,6 +959,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, language
             {room.id}
           </div>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3 px-4 z-10">
+            <AudioToggleWidget dark />
             <button
               type="button"
               onClick={handleCopyCode}

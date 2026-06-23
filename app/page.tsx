@@ -17,6 +17,7 @@ import type { Room, WikiLanguage } from "@/lib/types";
 import { LANGUAGE_OPTIONS } from "@/lib/wikipedia";
 import AdContainer from "@/components/AdContainer";
 import OnlineCountWidget from "@/components/OnlineCountWidget";
+import AudioToggleWidget from "@/components/AudioToggleWidget";
 
 const MAX_USERNAME_LENGTH = 20;
 
@@ -546,7 +547,10 @@ export default function HomePage() {
                 WikiRace · ID
               </span>
             </div>
-            <OnlineCountWidget />
+            <div className="flex items-center gap-2">
+              <AudioToggleWidget />
+              <OnlineCountWidget />
+            </div>
           </div>
 
           <h1

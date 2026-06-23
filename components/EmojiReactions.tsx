@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { EmojiReaction } from "@/lib/types";
 import { ALLOWED_EMOJIS } from "@/lib/room";
 import { getPlayerToken } from "@/lib/client-id";
+import { playEmojiPop } from "@/lib/race-audio";
 
 interface EmojiReactionsProps {
   roomId: string;
@@ -59,6 +60,8 @@ export default function EmojiReactions({
       const emojisToRender = data.emojis ?? (data.emoji ? [data.emoji] : []);
       if (emojisToRender.length === 0) return;
 
+      playEmojiPop();
+
       // Render each emoji with a slight random delay/offset
       emojisToRender.forEach((emoji, index) => {
         const id = `${data.timestamp}-${data.clientId}-${index}-${Math.random().toString(36).slice(2, 6)}`;
@@ -91,6 +94,7 @@ export default function EmojiReactions({
       cooldownRef.current = true;
 
       // Optimistic: trigger local floating juga.
+      playEmojiPop();
       const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const x = 10 + Math.random() * 80;
       setFloating((prev) => {
