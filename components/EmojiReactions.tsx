@@ -7,13 +7,13 @@ import type { EmojiReaction } from "@/lib/types";
 import { ALLOWED_EMOJIS } from "@/lib/room";
 import { getPlayerToken } from "@/lib/client-id";
 import { playEmojiPop } from "@/lib/race-audio";
+import { useUiLang } from "@/lib/use-ui-lang";
 
 interface EmojiReactionsProps {
   roomId: string;
   currentClientId: string;
   ablyChannel: Ably.RealtimeChannel;
   isChatExpanded: boolean;
-  language: "id" | "en";
 }
 
 /** Cooldown antar kirim emoji (ms). */
@@ -34,8 +34,8 @@ export default function EmojiReactions({
   currentClientId,
   ablyChannel,
   isChatExpanded,
-  language,
 }: EmojiReactionsProps) {
+  const language = useUiLang();
   const [floating, setFloating] = useState<FloatingEmoji[]>([]);
   const cooldownRef = useRef(false);
   const [isOpen, setIsOpen] = useState(false);

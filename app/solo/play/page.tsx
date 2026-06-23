@@ -7,6 +7,7 @@ import AudioToggleWidget from "@/components/AudioToggleWidget";
 import type { WikiLanguage } from "@/lib/types";
 import { getSavedLanguage } from "@/lib/client-id";
 import { playVictoryChime } from "@/lib/race-audio";
+import { useUiLang } from "@/lib/use-ui-lang";
 
 type SoloMode = "time-attack" | "free-roam";
 
@@ -98,11 +99,7 @@ function SoloPlayContent() {
 
   const [currentArticle, setCurrentArticle] = useState(startArticle);
   const [clicks, setClicks] = useState(0);
-  const [uiLanguage, setUiLanguage] = useState<"id" | "en">("id");
-
-  useEffect(() => {
-    setUiLanguage(getSavedLanguage());
-  }, []);
+  const uiLanguage = useUiLang();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [finished, setFinished] = useState(false);
   const [route, setRoute] = useState<string[]>([startArticle]);

@@ -99,7 +99,7 @@ export default async function OpengraphImage({
               textTransform: "uppercase",
             }}
           >
-            WikiRace · ID
+            WikiRace Indonesia
           </div>
         </div>
 

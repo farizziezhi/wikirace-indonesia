@@ -64,7 +64,7 @@ export default function OpengraphImage() {
               textTransform: "uppercase",
             }}
           >
-            WikiRace · ID
+            WikiRace Indonesia
           </div>
         </div>
 

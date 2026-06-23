@@ -50,6 +50,25 @@ export function saveLanguage(lang: "id" | "en"): void {
   window.localStorage.setItem(LANGUAGE_KEY, lang);
 }
 
+/* ------------------------------------------------------------------ */
+/*  Bahasa Tampilan UI — independen dari bahasa artikel Wikipedia      */
+/* ------------------------------------------------------------------ */
+
+const UI_LANGUAGE_KEY = "wikirace:uiLanguage";
+
+/** Ambil bahasa UI dari localStorage (default 'en'). */
+export function getSavedUiLanguage(): "id" | "en" {
+  if (typeof window === "undefined") return "en";
+  const val = window.localStorage.getItem(UI_LANGUAGE_KEY);
+  return val === "id" ? "id" : "en";
+}
+
+/** Simpan pilihan bahasa UI. */
+export function saveUiLanguage(lang: "id" | "en"): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(UI_LANGUAGE_KEY, lang);
+}
+
 /** Simpan token player untuk room tertentu di sessionStorage. */
 export function savePlayerToken(roomId: string, token: string): void {
   if (typeof window === "undefined") return;

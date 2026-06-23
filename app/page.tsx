@@ -11,6 +11,8 @@ import {
   getSavedLanguage,
   saveLanguage,
   savePlayerToken,
+  getSavedUiLanguage,
+  saveUiLanguage,
 } from "@/lib/client-id";
 import { isRaceAudioUnlocked, unlockRaceAudio } from "@/lib/race-audio";
 import type { Room, WikiLanguage } from "@/lib/types";
@@ -18,6 +20,7 @@ import { LANGUAGE_OPTIONS } from "@/lib/wikipedia";
 import AdContainer from "@/components/AdContainer";
 import OnlineCountWidget from "@/components/OnlineCountWidget";
 import AudioToggleWidget from "@/components/AudioToggleWidget";
+import LanguageToggle from "@/components/LanguageToggle";
 
 const MAX_USERNAME_LENGTH = 20;
 
@@ -47,6 +50,7 @@ export default function HomePage() {
   const [username, setUsername] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [language, setLanguage] = useState<WikiLanguage>("id");
+  const [uiLang, setUiLang] = useState<"id" | "en">("en");
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("idle");
@@ -79,6 +83,7 @@ export default function HomePage() {
     window.setTimeout(() => {
       setUsername(getSavedUsername());
       setLanguage(getSavedLanguage());
+      setUiLang(getSavedUiLanguage());
       setHydrated(true);
       setAudioUnlocked(isRaceAudioUnlocked());
 
@@ -107,11 +112,21 @@ export default function HomePage() {
       }
     }, 0);
 
+    // Listen for UI language changes from LanguageToggle
+    const handleUiLangChange = (e: Event) => {
+      setUiLang((e as CustomEvent).detail as "id" | "en");
+    };
+    window.addEventListener("uiLanguageChanged", handleUiLangChange);
+
     // Muat data sesi aktif, leaderboard global & top donatur
     void checkAuthSession();
     void loadLeaderboard();
     void loadTopDonators();
     void loadDailyChallenge(getSavedLanguage());
+
+    return () => {
+      window.removeEventListener("uiLanguageChanged", handleUiLangChange);
+    };
   }, []);
 
   // Sync username jika user login
@@ -544,10 +559,11 @@ export default function HomePage() {
                 className="font-extrabold uppercase tabular-nums"
                 style={{ fontSize: 17, letterSpacing: "0.18em" }}
               >
-                WikiRace · ID
+                WikiRace Indonesia
               </span>
             </div>
             <div className="flex items-center gap-2">
+              <LanguageToggle onChange={setUiLang} />
               <AudioToggleWidget />
               <OnlineCountWidget />
             </div>
@@ -569,14 +585,14 @@ export default function HomePage() {
                 border: "1px solid var(--color-warm-gray)",
               }}
             >
-              {language === "en" ? "Article A" : "artikel A"}
+              {uiLang === "en" ? "Article A" : "artikel A"}
             </span>{" "}
-            {language === "en" ? "to" : "ke"}{" "}
+            {uiLang === "en" ? "to" : "ke"}{" "}
             <span
               className="inline-block bg-charcoal-text text-warm-cream px-2"
               style={{ borderRadius: 8 }}
             >
-              {language === "en" ? "Article B" : "artikel B"}
+              {uiLang === "en" ? "Article B" : "artikel B"}
             </span>
             .
           </h1>
@@ -589,7 +605,7 @@ export default function HomePage() {
               maxWidth: 460,
             }}
           >
-            {language === "en"
+            {uiLang === "en"
               ? "Real-time multiplayer speedrun on Wikipedia. Sign up to play Ranked ELO matches or join custom rooms."
               : "Multiplayer realtime di Wikipedia Bahasa Indonesia. Daftar untuk main Ranked atau masuk room secara santai."}
           </p>
@@ -604,7 +620,7 @@ export default function HomePage() {
           >
             <div className="flex flex-col gap-1">
               <span className="font-extrabold text-[11px] uppercase tracking-wider text-charcoal-text/60 flex items-center gap-1.5">
-                💖 {language === "en" ? "Top Donators" : "Donatur Teratas"}
+                💖 {uiLang === "en" ? "Top Donators" : "Donatur Teratas"}
               </span>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 {/* Always show Dev */}
@@ -614,7 +630,7 @@ export default function HomePage() {
 
                 {topDonators.length === 0 ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-light-beige text-charcoal-text/80 px-2.5 py-1 border border-dashed border-warm-gray rounded-md">
-                    ☕ {language === "en" ? "Be the First Donator!" : "Jadilah Donatur Pertama!"}
+                    ☕ {uiLang === "en" ? "Be the First Donator!" : "Jadilah Donatur Pertama!"}
                   </span>
                 ) : (
                   topDonators.slice(0, 3).map((donator, idx) => {
@@ -641,7 +657,7 @@ export default function HomePage() {
                 fontSize: "11px",
               }}
             >
-              {language === "en" ? "Hall of Fame ➔" : "Hall of Fame ➔"}
+              {uiLang === "en" ? "Hall of Fame ➔" : "Hall of Fame ➔"}
             </Link>
           </div>
 
@@ -649,18 +665,18 @@ export default function HomePage() {
           <section className="mt-2 hidden w-full grid-cols-3 gap-3 lg:grid">
             <HowToCard
               n={1}
-              title={language === "en" ? "Choose name" : "Pilih nama"}
-              body={language === "en" ? "Play instantly or log in to save your ELO rating." : "Main instan atau login untuk menyimpan rating ELO."}
+              title={uiLang === "en" ? "Choose name" : "Pilih nama"}
+              body={uiLang === "en" ? "Play instantly or log in to save your ELO rating." : "Main instan atau login untuk menyimpan rating ELO."}
             />
             <HowToCard
               n={2}
-              title={language === "en" ? "Matchmaking" : "Cari Lawan"}
-              body={language === "en" ? "Click Matchmaking to automatically play against players of similar skill." : "Klik Matchmaking untuk bertanding otomatis dengan lawan seimbang."}
+              title={uiLang === "en" ? "Matchmaking" : "Cari Lawan"}
+              body={uiLang === "en" ? "Click Matchmaking to automatically play against players of similar skill." : "Klik Matchmaking untuk bertanding otomatis dengan lawan seimbang."}
             />
             <HowToCard
               n={3}
-              title={language === "en" ? "Click & run" : "Klik & lari"}
-              body={language === "en" ? "Only click hyperlinks inside articles. Reach the target first to gain ELO!" : "Hanya boleh klik tautan dalam artikel. Sampai duluan, ELO naik!"}
+              title={uiLang === "en" ? "Click & run" : "Klik & lari"}
+              body={uiLang === "en" ? "Only click hyperlinks inside articles. Reach the target first to gain ELO!" : "Hanya boleh klik tautan dalam artikel. Sampai duluan, ELO naik!"}
             />
           </section>
         </header>
@@ -682,7 +698,7 @@ export default function HomePage() {
                 style={{ borderRadius: "var(--radius-input)" }}
               >
                 <div className="text-[11px] font-bold text-charcoal-text/40 leading-relaxed">
-                  {language === "en" ? "Checking session..." : "Memeriksa sesi..."}
+                  {uiLang === "en" ? "Checking session..." : "Memeriksa sesi..."}
                 </div>
                 <div className="flex gap-1.5 shrink-0 opacity-40">
                   <button
@@ -690,14 +706,14 @@ export default function HomePage() {
                     className="btn-primary"
                     style={{ padding: "6px 12px", fontSize: "11px", whiteSpace: "nowrap" }}
                   >
-                    {language === "en" ? "Log In" : "Masuk"}
+                    {uiLang === "en" ? "Log In" : "Masuk"}
                   </button>
                   <button
                     disabled
                     className="btn-white"
                     style={{ padding: "6px 12px", fontSize: "11px", whiteSpace: "nowrap" }}
                   >
-                    {language === "en" ? "Sign Up" : "Daftar"}
+                    {uiLang === "en" ? "Sign Up" : "Daftar"}
                   </button>
                 </div>
               </div>
@@ -742,7 +758,7 @@ export default function HomePage() {
                           🏆 {user.stats?.elo ?? 1200} ELO
                         </span>
                         <span>•</span>
-                        <span>{user.stats?.wins ?? 0} {language === "en" ? "Wins" : "Win"}</span>
+                        <span>{user.stats?.wins ?? 0} {uiLang === "en" ? "Wins" : "Win"}</span>
                       </div>
                     </div>
                   </div>
@@ -777,7 +793,7 @@ export default function HomePage() {
                   <div className="flex flex-col">
                     <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">License Status</span>
                     <span className="text-[10px] font-black uppercase text-lime-accent tracking-widest bg-lime-accent/15 px-2 py-0.5 rounded border border-lime-accent/20 mt-0.5">
-                      {(user.stats?.elo ?? 1200) < 1100 ? (language === "en" ? "NOVICE" : "PEMULA") : (user.stats?.elo ?? 1200) < 1300 ? (language === "en" ? "EXPLORER" : "PENJELAJAH") : (language === "en" ? "SPEEDRUNNER" : "LEGENDA")}
+                      {(user.stats?.elo ?? 1200) < 1100 ? (uiLang === "en" ? "NOVICE" : "PEMULA") : (user.stats?.elo ?? 1200) < 1300 ? (uiLang === "en" ? "EXPLORER" : "PENJELAJAH") : (uiLang === "en" ? "SPEEDRUNNER" : "LEGENDA")}
                     </span>
                   </div>
 
@@ -787,14 +803,14 @@ export default function HomePage() {
                       className="chunky-press bg-charcoal-text text-warm-cream border-2 border-charcoal-text hover:bg-charcoal-deep font-black"
                       style={{ padding: "6px 12px", fontSize: "10px", height: "fit-content", borderRadius: "var(--radius-button)" }}
                     >
-                      {language === "en" ? "Profile" : "Profil"}
+                      {uiLang === "en" ? "Profile" : "Profil"}
                     </Link>
                     <button
                       onClick={handleLogout}
                       className="chunky-press bg-burnt-orange text-warm-cream border-2 border-charcoal-text font-black"
                       style={{ padding: "6px 12px", fontSize: "10px", height: "fit-content", borderRadius: "var(--radius-button)" }}
                     >
-                      {language === "en" ? "Log Out" : "Keluar"}
+                      {uiLang === "en" ? "Log Out" : "Keluar"}
                     </button>
                   </div>
                 </div>
@@ -807,7 +823,7 @@ export default function HomePage() {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">Unregistered Node</span>
                   <div className="text-xs font-bold text-warm-cream/80 max-w-[280px] leading-relaxed">
-                    {language === "en" ? "Log in or Sign up to save ELO score & enter the Leaderboard." : "Masuk atau Daftar untuk menyimpan skor ELO & masuk Papan Peringkat."}
+                    {uiLang === "en" ? "Log in or Sign up to save ELO score & enter the Leaderboard." : "Masuk atau Daftar untuk menyimpan skor ELO & masuk Papan Peringkat."}
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0 w-full sm:w-auto">
@@ -816,14 +832,14 @@ export default function HomePage() {
                     className="chunky-press btn-primary py-2 px-4 text-xs font-extrabold flex-1 sm:flex-none border-2 border-charcoal-text"
                     style={{ whiteSpace: "nowrap", height: "fit-content", boxShadow: "2px 2px 0px #000" }}
                   >
-                    {language === "en" ? "Log In" : "Masuk"}
+                    {uiLang === "en" ? "Log In" : "Masuk"}
                   </button>
                   <button
                     onClick={() => openAuth("register")}
                     className="chunky-press btn-white py-2 px-4 text-xs font-extrabold flex-1 sm:flex-none border-2 border-charcoal-text"
                     style={{ whiteSpace: "nowrap", height: "fit-content", boxShadow: "2px 2px 0px #000" }}
                   >
-                    {language === "en" ? "Sign Up" : "Daftar"}
+                    {uiLang === "en" ? "Sign Up" : "Daftar"}
                   </button>
                 </div>
               </div>
@@ -856,7 +872,7 @@ export default function HomePage() {
 
                 <div className="flex items-center justify-between">
                   <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    🔥 {language === "en" ? "Daily Challenge" : "Tantangan Harian"}
+                    🔥 {uiLang === "en" ? "Daily Challenge" : "Tantangan Harian"}
                   </span>
                   
                   <div className="flex items-center gap-3">
@@ -866,11 +882,11 @@ export default function HomePage() {
                           ? "text-lime-accent animate-pulse" 
                           : "text-warm-cream/70"
                       }`}>
-                        🔥 {dailyInfo?.streak ?? 0} {language === "en" ? "Day Streak" : "Hari Streak"}
+                        🔥 {dailyInfo?.streak ?? 0} {uiLang === "en" ? "Day Streak" : "Hari Streak"}
                       </span>
                     ) : (
                       <span className="text-[10px] text-warm-cream/40 font-bold uppercase tracking-wider">
-                        {language === "en" ? "Daily" : "Harian"}
+                        {uiLang === "en" ? "Daily" : "Harian"}
                       </span>
                     )}
 
@@ -883,7 +899,7 @@ export default function HomePage() {
                         height: "18px",
                         fontSize: "9px",
                       }}
-                      title={language === "en" ? "Minimize" : "Perkecil"}
+                      title={uiLang === "en" ? "Minimize" : "Perkecil"}
                     >
                       ➖
                     </button>
@@ -894,17 +910,17 @@ export default function HomePage() {
                   <div className="flex items-center gap-2 py-2">
                     <div className="border-warm-cream border-t-transparent animate-spin w-4 h-4 rounded-full border-2" />
                     <span className="text-[11px] text-warm-cream/50 uppercase tracking-wide font-bold">
-                      {language === "en" ? "Loading challenge..." : "Memuat tantangan..."}
+                      {uiLang === "en" ? "Loading challenge..." : "Memuat tantangan..."}
                     </span>
                   </div>
                 ) : dailyInfo?.challenge ? (
                   <div className="flex flex-col gap-2.5">
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <h4 className="font-extrabold text-sm text-lime-accent truncate">
-                        {language === "id" ? dailyInfo.challenge.name : (dailyInfo.challenge.nameEn || dailyInfo.challenge.name)}
+                        {uiLang === "id" ? dailyInfo.challenge.name : (dailyInfo.challenge.nameEn || dailyInfo.challenge.name)}
                       </h4>
                       <p className="text-[11px] text-warm-cream/70 leading-normal">
-                        {language === "id" ? dailyInfo.challenge.description : (dailyInfo.challenge.descEn || dailyInfo.challenge.description)}
+                        {uiLang === "id" ? dailyInfo.challenge.description : (dailyInfo.challenge.descEn || dailyInfo.challenge.description)}
                       </p>
                     </div>
 
@@ -920,21 +936,21 @@ export default function HomePage() {
                       {dailyInfo.completed ? (
                         <div className="w-full flex items-center justify-center gap-1.5 bg-lime-accent/15 border border-lime-accent/40 text-lime-accent py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wide">
                           <span>✓</span>
-                          <span>{language === "en" ? "Completed Today" : "Selesai Hari Ini"}</span>
+                          <span>{uiLang === "en" ? "Completed Today" : "Selesai Hari Ini"}</span>
                         </div>
                       ) : (
                         <Link
                           href={`/solo/play?start=${encodeURIComponent(dailyInfo.challenge.startArticle)}&end=${encodeURIComponent(dailyInfo.challenge.endArticle)}&mode=time-attack&lang=${language}&daily=true`}
                           className="w-full text-center bg-lime-accent hover:bg-lime-deep text-charcoal-text font-black text-xs px-4 py-2.5 rounded-lg border border-charcoal-text shadow-[2px_2px_0px_#000] active:translate-y-0.5 active:shadow-[1px_1px_0px_#000] transition-all uppercase tracking-wide cursor-pointer"
                         >
-                          {language === "en" ? "Start Daily Challenge" : "Mulai Tantangan Harian"}
+                          {uiLang === "en" ? "Start Daily Challenge" : "Mulai Tantangan Harian"}
                         </Link>
                       )}
                     </div>
                   </div>
                 ) : (
                   <div className="text-[11px] text-warm-cream/50 italic py-2">
-                    {language === "en" ? "No daily challenge available." : "Tantangan harian tidak tersedia."}
+                    {uiLang === "en" ? "No daily challenge available." : "Tantangan harian tidak tersedia."}
                   </div>
                 )}
               </div>
@@ -946,13 +962,13 @@ export default function HomePage() {
             <button
               onClick={() => setDailyMinimized(false)}
               className="fixed bottom-6 right-6 z-40 bg-charcoal-text text-warm-cream font-black text-xs px-3.5 py-2.5 border-2 border-charcoal-text shadow-[3px_3px_0px_#000] hover:shadow-[4px_4px_0px_#000] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_#000] rounded-xl flex items-center gap-2 cursor-pointer transition-all animate-bounce"
-              title={language === "en" ? "Expand Daily Challenge" : "Buka Tantangan Harian"}
+              title={uiLang === "en" ? "Expand Daily Challenge" : "Buka Tantangan Harian"}
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-accent opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-accent"></span>
               </span>
-              <span>🔥 {language === "en" ? "Daily Challenge" : "Tantangan Harian"}</span>
+              <span>🔥 {uiLang === "en" ? "Daily Challenge" : "Tantangan Harian"}</span>
               {user && dailyInfo?.streak > 0 && (
                 <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded">
                   {dailyInfo.streak}
@@ -966,12 +982,12 @@ export default function HomePage() {
             {invitedTo ? (
               <div className="flex flex-col gap-4">
                 <div className="bg-lime-accent/20 border border-lime-accent p-3.5 text-xs text-charcoal-text" style={{ borderRadius: "var(--radius-input)" }}>
-                  <span className="font-extrabold block mb-1 text-[13px]">{language === "en" ? "📬 Room Invitation: " : "📬 Undangan Room: "}{invitedTo}</span>
-                  {language === "en" ? "Enter your name below to join the race immediately." : "Masukkan nama Anda di bawah untuk langsung bergabung ke balapan."}
+                  <span className="font-extrabold block mb-1 text-[13px]">{uiLang === "en" ? "📬 Room Invitation: " : "📬 Undangan Room: "}{invitedTo}</span>
+                  {uiLang === "en" ? "Enter your name below to join the race immediately." : "Masukkan nama Anda di bawah untuk langsung bergabung ke balapan."}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="username" className="font-bold text-charcoal-text text-sm">{language === "en" ? "Your name" : "Nama kamu"}</label>
+                  <label htmlFor="username" className="font-bold text-charcoal-text text-sm">{uiLang === "en" ? "Your name" : "Nama kamu"}</label>
                   <input
                     id="username"
                     type="text"
@@ -980,7 +996,7 @@ export default function HomePage() {
                     maxLength={MAX_USERNAME_LENGTH}
                     autoComplete="off"
                     spellCheck={false}
-                    placeholder={language === "en" ? "e.g. Andi" : "Contoh: Andi"}
+                    placeholder={uiLang === "en" ? "e.g. Andi" : "Contoh: Andi"}
                     disabled={busy || !hydrated || !!user}
                     className="pd-input"
                   />
@@ -993,7 +1009,7 @@ export default function HomePage() {
                   className="btn-primary w-full"
                   style={{ padding: "12px 18px", fontSize: "15px" }}
                 >
-                  {mode === "joining" ? (language === "en" ? "Joining..." : "Bergabung...") : (language === "en" ? "Join Now" : "Gabung Sekarang")}
+                  {mode === "joining" ? (uiLang === "en" ? "Joining..." : "Bergabung...") : (uiLang === "en" ? "Join Now" : "Gabung Sekarang")}
                 </button>
 
                 <button
@@ -1005,7 +1021,7 @@ export default function HomePage() {
                   className="btn-white w-full"
                   style={{ padding: "8px 14px", fontSize: "12px" }}
                 >
-                  {language === "en" ? "Cancel & Play Other Mode" : "Batal & Main Mode Lain"}
+                  {uiLang === "en" ? "Cancel & Play Other Mode" : "Batal & Main Mode Lain"}
                 </button>
               </div>
             ) : (
@@ -1022,7 +1038,7 @@ export default function HomePage() {
                       color: activeTab === "play" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                     }}
                   >
-                    {language === "en" ? "🎮 Play" : "🎮 Bermain"}
+                    {uiLang === "en" ? "🎮 Play" : "🎮 Bermain"}
                   </button>
                   <button
                     type="button"
@@ -1034,7 +1050,7 @@ export default function HomePage() {
                       color: activeTab === "leaderboard" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                     }}
                   >
-                    {language === "en" ? "🏆 Leaderboard" : "🏆 Papan Skor"}
+                    {uiLang === "en" ? "🏆 Leaderboard" : "🏆 Papan Skor"}
                   </button>
                 </div>
 
@@ -1047,7 +1063,7 @@ export default function HomePage() {
                         htmlFor="username"
                         className="font-bold text-charcoal-text text-sm"
                       >
-                        {language === "en" ? "Your name" : "Nama kamu"}
+                        {uiLang === "en" ? "Your name" : "Nama kamu"}
                       </label>
                       <input
                         id="username"
@@ -1057,13 +1073,13 @@ export default function HomePage() {
                         maxLength={MAX_USERNAME_LENGTH}
                         autoComplete="off"
                         spellCheck={false}
-                        placeholder={language === "en" ? "e.g. Andi" : "Contoh: Andi"}
+                        placeholder={uiLang === "en" ? "e.g. Andi" : "Contoh: Andi"}
                         disabled={busy || !hydrated || !!user}
                         className="pd-input"
                       />
                       {!user && (
                         <div className="flex justify-between items-center text-[11px] text-charcoal-text/50">
-                          <span>{language === "en" ? "💡 Tip: Log in to save ELO" : "💡 Tip: Login untuk simpan ELO"}</span>
+                          <span>{uiLang === "en" ? "💡 Tip: Log in to save ELO" : "💡 Tip: Login untuk simpan ELO"}</span>
                           <span>{username.length}/{MAX_USERNAME_LENGTH}</span>
                         </div>
                       )}
@@ -1073,13 +1089,13 @@ export default function HomePage() {
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-charcoal-text text-sm">
-                          {language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
+                          {uiLang === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
                         </span>
                         <Link
                           href="/guide"
                           className="font-mono font-black text-[10px] uppercase text-burnt-orange hover:text-lime-accent hover:underline flex items-center gap-1 cursor-pointer"
                         >
-                          📖 {language === "en" ? "Game Guide" : "Pedoman Bermain"}
+                          📖 {uiLang === "en" ? "Game Guide" : "Pedoman Bermain"}
                         </Link>
                       </div>
                       <div
@@ -1089,7 +1105,7 @@ export default function HomePage() {
                           border: "1px solid var(--color-warm-gray)",
                         }}
                         role="radiogroup"
-                        aria-label={language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
+                        aria-label={uiLang === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
                       >
                         {LANGUAGE_OPTIONS.map((opt) => {
                           const active = opt.value === language;
@@ -1152,7 +1168,7 @@ export default function HomePage() {
                           color: playMode === "mabar" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                         }}
                       >
-                        {language === "en" ? "👥 Party" : "👥 Mabar"}
+                        {uiLang === "en" ? "👥 Party" : "👥 Mabar"}
                       </button>
                       <button
                         type="button"
@@ -1164,7 +1180,7 @@ export default function HomePage() {
                           color: playMode === "solo" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                         }}
                       >
-                        {language === "en" ? "🏎️ Solo" : "🏎️ Solo"}
+                        {uiLang === "en" ? "🏎️ Solo" : "🏎️ Solo"}
                       </button>
                     </div>
 
@@ -1185,11 +1201,11 @@ export default function HomePage() {
                           }}
                         >
                           {mode === "matchmaking"
-                            ? (language === "en" ? "⚡ Finding Opponent..." : "⚡ Mencari Lawan...")
-                            : (language === "en" ? "⚡ Find Opponent (Ranked)" : "⚡ Cari Lawan (Ranked)")}
+                            ? (uiLang === "en" ? "⚡ Finding Opponent..." : "⚡ Mencari Lawan...")
+                            : (uiLang === "en" ? "⚡ Find Opponent (Ranked)" : "⚡ Cari Lawan (Ranked)")}
                         </button>
                         <p className="text-[11px] text-charcoal-text/60 text-center leading-relaxed">
-                          {language === "en"
+                          {uiLang === "en"
                             ? "Find a balanced opponent in real-time. Your ELO rating will change based on match results."
                             : "Cari lawan seimbang secara realtime. Skor ELO Anda akan naik/turun sesuai hasil permainan."}
                         </p>
@@ -1206,14 +1222,14 @@ export default function HomePage() {
                           style={{ padding: "12px 18px", fontSize: "15px" }}
                         >
                           {mode === "creating"
-                            ? (language === "en" ? "Creating room..." : "Membuat room…")
-                            : (language === "en" ? "Create New Party Room" : "Buat Room Mabar Baru")}
+                            ? (uiLang === "en" ? "Creating room..." : "Membuat room…")
+                            : (uiLang === "en" ? "Create New Party Room" : "Buat Room Mabar Baru")}
                         </button>
 
                         <div className="flex items-center gap-2" aria-hidden>
                           <div className="h-px flex-1 bg-parchment/60" />
                           <span className="font-bold text-[10px] uppercase text-charcoal-text/50">
-                            {language === "en" ? "or join room" : "atau gabung room"}
+                            {uiLang === "en" ? "or join room" : "atau gabung room"}
                           </span>
                           <div className="h-px flex-1 bg-parchment/60" />
                         </div>
@@ -1234,7 +1250,7 @@ export default function HomePage() {
                             autoComplete="off"
                             autoCapitalize="characters"
                             spellCheck={false}
-                            placeholder={language === "en" ? "CODE" : "KODE"}
+                            placeholder={uiLang === "en" ? "CODE" : "KODE"}
                             disabled={busy || !hydrated}
                             className="pd-input"
                             style={{
@@ -1253,8 +1269,8 @@ export default function HomePage() {
                             style={{ padding: "10px 18px", fontSize: "14px" }}
                           >
                             {mode === "joining"
-                              ? (language === "en" ? "Joining..." : "Gabung…")
-                              : (language === "en" ? "Join" : "Gabung")}
+                              ? (uiLang === "en" ? "Joining..." : "Gabung…")
+                              : (uiLang === "en" ? "Join" : "Gabung")}
                           </button>
                         </div>
                       </div>
@@ -1269,10 +1285,10 @@ export default function HomePage() {
                           className="btn-secondary w-full"
                           style={{ padding: "12px 18px", fontSize: "15px" }}
                         >
-                          {language === "en" ? "🏎️ Start Solo Practice" : "🏎️ Mulai Latihan Solo"}
+                          {uiLang === "en" ? "🏎️ Start Solo Practice" : "🏎️ Mulai Latihan Solo"}
                         </button>
                         <p className="text-[11px] text-charcoal-text/60 text-center leading-relaxed">
-                          {language === "en"
+                          {uiLang === "en"
                             ? "Practice solo without affecting ELO. Perfect for casual Wikipedia route training."
                             : "Latihan mandiri tanpa memengaruhi ELO. Sempurna untuk latihan rute Wikipedia secara santai."}
                         </p>
@@ -1288,7 +1304,7 @@ export default function HomePage() {
                       <div className="flex items-center gap-2">
                         <span style={{ fontSize: 16 }}>🏆</span>
                         <h3 className="font-black text-charcoal-text uppercase tracking-tight" style={{ fontSize: "14px" }}>
-                          {language === "en" ? "Global Driver Standings" : "Klasemen Global Pembalap"}
+                          {uiLang === "en" ? "Global Driver Standings" : "Klasemen Global Pembalap"}
                         </h3>
                       </div>
                       <span className="text-[10px] font-mono font-black text-charcoal-text/50 uppercase">Session ELO</span>
@@ -1296,11 +1312,11 @@ export default function HomePage() {
 
                     {leaderboardLoading ? (
                       <div className="flex items-center justify-center py-8 text-charcoal-text/60 text-xs font-bold uppercase tracking-wider animate-pulse">
-                        {language === "en" ? "Loading standings..." : "Memuat klasemen..."}
+                        {uiLang === "en" ? "Loading standings..." : "Memuat klasemen..."}
                       </div>
                     ) : leaderboard.length === 0 ? (
                       <div className="text-center py-8 text-charcoal-text/60 text-xs font-bold uppercase">
-                        {language === "en" ? "No data available." : "Data tidak tersedia."}
+                        {uiLang === "en" ? "No data available." : "Data tidak tersedia."}
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
@@ -1377,18 +1393,18 @@ export default function HomePage() {
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:hidden">
           <HowToCard
             n={1}
-            title={language === "en" ? "Choose name" : "Pilih nama"}
-            body={language === "en" ? "Play instantly or log in to save your ELO rating." : "Main instan atau login untuk menyimpan rating ELO."}
+            title={uiLang === "en" ? "Choose name" : "Pilih nama"}
+            body={uiLang === "en" ? "Play instantly or log in to save your ELO rating." : "Main instan atau login untuk menyimpan rating ELO."}
           />
           <HowToCard
             n={2}
-            title={language === "en" ? "Matchmaking" : "Cari Lawan"}
-            body={language === "en" ? "Click Matchmaking to automatically play against players of similar skill." : "Klik Matchmaking untuk bertanding otomatis dengan lawan seimbang."}
+            title={uiLang === "en" ? "Matchmaking" : "Cari Lawan"}
+            body={uiLang === "en" ? "Click Matchmaking to automatically play against players of similar skill." : "Klik Matchmaking untuk bertanding otomatis dengan lawan seimbang."}
           />
           <HowToCard
             n={3}
-            title={language === "en" ? "Click & run" : "Klik & lari"}
-            body={language === "en" ? "Only click hyperlinks inside articles. Reach the target first to gain ELO!" : "Hanya boleh klik tautan dalam artikel. Sampai duluan, ELO naik!"}
+            title={uiLang === "en" ? "Click & run" : "Klik & lari"}
+            body={uiLang === "en" ? "Only click hyperlinks inside articles. Reach the target first to gain ELO!" : "Hanya boleh klik tautan dalam artikel. Sampai duluan, ELO naik!"}
           />
         </section>
 
@@ -1402,7 +1418,7 @@ export default function HomePage() {
           }}
         >
           {/* Indonesian SEO Content */}
-          <div className={language === "id" ? "flex flex-col gap-6" : "hidden"}>
+          <div className={uiLang === "id" ? "flex flex-col gap-6" : "hidden"}>
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
                 📖 Tentang WikiRace Indonesia
@@ -1473,7 +1489,7 @@ export default function HomePage() {
           </div>
 
           {/* English SEO Content */}
-          <div className={language === "en" ? "flex flex-col gap-6" : "hidden"}>
+          <div className={uiLang === "en" ? "flex flex-col gap-6" : "hidden"}>
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
                 📖 About WikiRace Indonesia
@@ -1558,13 +1574,13 @@ export default function HomePage() {
               boxShadow: "var(--shadow-raised)",
             }}
           >
-            {language === "en" ? "☕ Support Server (Saweria)" : "☕ Dukung Server (Saweria)"}
+            {uiLang === "en" ? "☕ Support Server (Saweria)" : "☕ Dukung Server (Saweria)"}
           </a>
           <p
             className="text-center text-charcoal-text/70"
             style={{ fontSize: "13px" }}
           >
-            {language === "en" ? "Made with ☕ by " : "Dibuat dengan ☕ oleh "}{" "}
+            {uiLang === "en" ? "Made with ☕ by " : "Dibuat dengan ☕ oleh "}{" "}
             <a
             href="https://www.muhfarizzi.tech"
               target="_blank"
@@ -1579,19 +1595,19 @@ export default function HomePage() {
             className="text-center text-charcoal-text/50 font-mono"
             style={{ fontSize: "11px", marginTop: "2px" }}
           >
-            {language === "en" ? "Last Updated: June 2026" : "Pembaruan Terakhir: Juni 2026"}
+            {uiLang === "en" ? "Last Updated: June 2026" : "Pembaruan Terakhir: Juni 2026"}
           </p>
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-1">
             <Link href="/guide" className="hover:text-charcoal-text hover:underline transition">
-              {language === "en" ? "Game Guide" : "Pedoman Bermain"}
+              {uiLang === "en" ? "Game Guide" : "Pedoman Bermain"}
             </Link>
             <span className="opacity-40" aria-hidden="true">•</span>
             <Link href="/privacy" className="hover:text-charcoal-text hover:underline transition">
-              {language === "en" ? "Privacy Policy" : "Kebijakan Privasi"}
+              {uiLang === "en" ? "Privacy Policy" : "Kebijakan Privasi"}
             </Link>
             <span className="opacity-40" aria-hidden="true">•</span>
             <Link href="/terms" className="hover:text-charcoal-text hover:underline transition">
-              {language === "en" ? "Terms & Conditions" : "Syarat & Ketentuan"}
+              {uiLang === "en" ? "Terms & Conditions" : "Syarat & Ketentuan"}
             </Link>
           </div>
         </div>

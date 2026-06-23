@@ -606,7 +606,6 @@ export default function RoomPage({ params }: RoomPageProps) {
           ablyChannel={ablyChannel}
           startTime={startTime}
           clockOffset={clockOffset}
-          language={language}
         />
       ) : gameState === "finished" ? (
         <Results
@@ -615,14 +614,12 @@ export default function RoomPage({ params }: RoomPageProps) {
           allRoutes={finishedSnapshot?.allRoutes ?? {}}
           winnerId={finishedSnapshot?.winnerId ?? null}
           onPlayAgain={handlePlayAgain}
-          language={language}
         />
       ) : (
         <Lobby
           room={room}
           currentClientId={identity.clientId}
           clockOffset={clockOffset}
-          language={language}
         />
       )}
       {showChatAndEmoji && (
@@ -633,14 +630,12 @@ export default function RoomPage({ params }: RoomPageProps) {
             ablyChannel={ablyChannel}
             isExpanded={isChatExpanded}
             onToggleExpand={() => setIsChatExpanded((prev) => !prev)}
-            language={language}
           />
           <EmojiReactions
             roomId={normalizedRoomId}
             currentClientId={identity.clientId}
             ablyChannel={ablyChannel}
             isChatExpanded={isChatExpanded}
-            language={language}
           />
         </>
       )}

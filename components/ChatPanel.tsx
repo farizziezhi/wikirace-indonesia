@@ -9,6 +9,7 @@ import { MAX_CHAT_LENGTH } from "@/lib/room";
 import { translations } from "@/lib/translations";
 import { playChatBeep, playPitRadioClick, speakRadioMessage } from "@/lib/race-audio";
 import { getPlayerToken } from "@/lib/client-id";
+import { useUiLang } from "@/lib/use-ui-lang";
 
 interface ChatPanelProps {
   room: Room;
@@ -16,7 +17,6 @@ interface ChatPanelProps {
   ablyChannel: Ably.RealtimeChannel;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  language: "id" | "en";
 }
 
 /** Maks pesan di buffer lokal (ring buffer). */
@@ -30,8 +30,8 @@ export default function ChatPanel({
   ablyChannel,
   isExpanded,
   onToggleExpand,
-  language,
 }: ChatPanelProps) {
+  const language = useUiLang();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);

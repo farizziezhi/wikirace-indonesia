@@ -8,6 +8,7 @@ import { avatarColor, initials } from "@/lib/avatar";
 import type { Player, Room, RouteStep } from "@/lib/types";
 import { translations } from "@/lib/translations";
 import { getPlayerToken } from "@/lib/client-id";
+import { useUiLang } from "@/lib/use-ui-lang";
 
 import RouteReplay from "./RouteReplay";
 import AdContainer from "./AdContainer";
@@ -21,7 +22,6 @@ interface ResultsProps {
   winnerId: string | null;
   /** Dipanggil setelah `/api/room/play-again` sukses. */
   onPlayAgain: () => void;
-  language: "id" | "en";
 }
 
 export default function Results({
@@ -30,8 +30,8 @@ export default function Results({
   allRoutes,
   winnerId,
   onPlayAgain,
-  language,
 }: ResultsProps) {
+  const language = useUiLang();
   const router = useRouter();
   const isHost = currentClientId === room.hostClientId;
 

@@ -12,19 +12,20 @@ import AdContainer from "./AdContainer";
 import AudioToggleWidget from "./AudioToggleWidget";
 import { translations } from "@/lib/translations";
 import { getPlayerToken } from "@/lib/client-id";
+import { useUiLang } from "@/lib/use-ui-lang";
 
 interface LobbyProps {
   room: Room;
   currentClientId: string;
   clockOffset?: number;
-  language: "id" | "en";
 }
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 8;
 const SAVE_DEBOUNCE_MS = 600;
 
-export default function Lobby({ room, currentClientId, clockOffset = 0, language: uiLanguage }: LobbyProps) {
+export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyProps) {
+  const uiLanguage = useUiLang();
   const t = translations[uiLanguage];
   const router = useRouter();
   const isHost = room.hostClientId === currentClientId;

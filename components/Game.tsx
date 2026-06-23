@@ -23,7 +23,9 @@ import { getPlayerToken } from "@/lib/client-id";
 import WikiArticle from "./WikiArticle";
 import AdContainer from "./AdContainer";
 import AudioToggleWidget from "./AudioToggleWidget";
+import LanguageToggle from "./LanguageToggle";
 import { translations } from "@/lib/translations";
+import { useUiLang } from "@/lib/use-ui-lang";
 
 interface GameProps {
   room: Room;
@@ -32,7 +34,6 @@ interface GameProps {
   /** Timestamp ms saat game dimulai. */
   startTime: number;
   clockOffset?: number;
-  language: "id" | "en";
 }
 
 const MiniLeaderboard = memo(
@@ -40,12 +41,12 @@ const MiniLeaderboard = memo(
     players,
     currentClientId,
     hasBadges,
-    language,
+    uiLang,
   }: {
     players: Room["players"];
     currentClientId: string;
     hasBadges: boolean;
-    language: "id" | "en";
+    uiLang: "id" | "en";
   }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -98,7 +99,7 @@ const MiniLeaderboard = memo(
             borderRadius: "9999px",
             boxShadow: "var(--shadow-floating)",
           }}
-          aria-label={language === "en" ? "Open Scoreboard" : "Buka Papan Skor"}
+          aria-label={uiLang === "en" ? "Open Scoreboard" : "Buka Papan Skor"}
         >
           <span style={{ fontSize: 16 }}>🏆</span>
           <span
@@ -130,14 +131,14 @@ const MiniLeaderboard = memo(
             className="font-bold uppercase text-warm-cream/70"
             style={{ fontSize: "10px", letterSpacing: "0.5px" }}
           >
-            {translations[language].scoreboard}
+            {translations[uiLang].scoreboard}
           </div>
           <button
             type="button"
             onClick={() => setIsExpanded(false)}
             className="text-warm-cream/60 hover:text-warm-cream text-[11px] font-bold"
           >
-            {translations[language].close}
+            {translations[uiLang].close}
           </button>
         </div>
         {miniBoard.map((entry) => (
@@ -194,7 +195,7 @@ const TimerDisplay = memo(function TimerDisplay({
   onTimeout,
   hasSurrendered,
   clockOffset = 0,
-  language,
+  uiLang,
 }: {
   startTime: number;
   isMatchmaking: boolean;
@@ -202,7 +203,7 @@ const TimerDisplay = memo(function TimerDisplay({
   onTimeout?: () => void;
   hasSurrendered: boolean;
   clockOffset?: number;
-  language: "id" | "en";
+  uiLang: "id" | "en";
 }) {
   const normalizedStartTime = useMemo(() => normalizeStartTime(startTime), [startTime]);
   const [elapsed, setElapsed] = useState(() => getElapsedSeconds(normalizedStartTime, clockOffset));
@@ -248,8 +249,8 @@ const TimerDisplay = memo(function TimerDisplay({
       }}
       aria-label={
         isCountdown
-          ? (language === "en" ? "Time left to play" : "Sisa waktu bermain")
-          : (language === "en" ? "Elapsed time" : "Waktu yang sudah berjalan")
+          ? (uiLang === "en" ? "Time left to play" : "Sisa waktu bermain")
+          : (uiLang === "en" ? "Elapsed time" : "Waktu yang sudah berjalan")
       }
     >
       {formatElapsed(timeToDisplay)}
@@ -275,7 +276,7 @@ const GameHeader = memo(
     handlePitStopClick,
     onTimeout,
     clockOffset = 0,
-    language,
+    uiLang,
   }: {
     room: Room;
     clicksCount: number;
@@ -293,7 +294,7 @@ const GameHeader = memo(
     handlePitStopClick: () => void;
     onTimeout?: () => void;
     clockOffset?: number;
-    language: "id" | "en";
+    uiLang: "id" | "en";
   }) => {
     const isMatchmaking = !!room.isMatchmaking;
     const clickLimit = room.customRules?.clickLimit ?? 0;
@@ -319,7 +320,7 @@ const GameHeader = memo(
                 className="font-bold uppercase text-charcoal-text/60"
                 style={{ fontSize: "11px", letterSpacing: "0.6px" }}
               >
-                {language === "en" ? "Target" : "Tujuan"}
+                {uiLang === "en" ? "Target" : "Tujuan"}
               </span>
               <span
                 className="truncate font-extrabold text-charcoal-text"
@@ -340,7 +341,7 @@ const GameHeader = memo(
                 className="font-bold uppercase text-charcoal-text/60"
                 style={{ fontSize: "10px", letterSpacing: "0.6px" }}
               >
-                {language === "en" ? "Clicks Left" : "Sisa Klik"}
+                {uiLang === "en" ? "Clicks Left" : "Sisa Klik"}
               </span>
               <span
                 className={`font-extrabold tabular-nums text-charcoal-text ${
@@ -362,8 +363,8 @@ const GameHeader = memo(
               style={{ fontSize: "10px", letterSpacing: "0.6px" }}
             >
               {isMatchmaking || (room.customRules?.timeLimit && room.customRules.timeLimit > 0)
-                ? (language === "en" ? "Time Left" : "Sisa Waktu")
-                : (language === "en" ? "Time" : "Waktu")}
+                ? (uiLang === "en" ? "Time Left" : "Sisa Waktu")
+                : (uiLang === "en" ? "Time" : "Waktu")}
             </span>
             <TimerDisplay
               startTime={startTime}
@@ -372,7 +373,7 @@ const GameHeader = memo(
               onTimeout={onTimeout}
               hasSurrendered={hasSurrendered}
               clockOffset={clockOffset}
-              language={language}
+              uiLang={uiLang}
             />
           </div>
 
@@ -390,9 +391,9 @@ const GameHeader = memo(
                   padding: "8px 12px",
                   fontSize: "13px",
                 }}
-                title={language === "en" ? "Enter the pit lane to select strategy" : "Masuk ke pit lane untuk memilih strategi"}
+                title={uiLang === "en" ? "Enter the pit lane to select strategy" : "Masuk ke pit lane untuk memilih strategi"}
               >
-                {language === "en" ? "🔧 PIT STOP" : "🔧 MASUK PIT"}
+                {uiLang === "en" ? "🔧 PIT STOP" : "🔧 MASUK PIT"}
               </button>
             )}
 
@@ -408,9 +409,9 @@ const GameHeader = memo(
                   padding: "8px 12px",
                   fontSize: "13px",
                 }}
-                title={language === "en" ? "Return to starting article (penalty suspension)" : "Kembali ke awal artikel (denda suspension)"}
+                title={uiLang === "en" ? "Return to starting article (penalty suspension)" : "Kembali ke awal artikel (denda suspension)"}
               >
-                {language === "en" ? "Back to Start 🔁" : "Kembali ke Awal 🔁"}
+                {uiLang === "en" ? "Back to Start 🔁" : "Kembali ke Awal 🔁"}
               </button>
             )}
 
@@ -436,10 +437,10 @@ const GameHeader = memo(
               }}
             >
               {hasSurrendered
-                ? (language === "en" ? "Done" : "Sudah")
+                ? (uiLang === "en" ? "Done" : "Sudah")
                 : confirmingSurrender
-                  ? (language === "en" ? "Sure?" : "Yakin?")
-                  : (language === "en" ? "Surrender" : "Menyerah")}
+                  ? (uiLang === "en" ? "Sure?" : "Yakin?")
+                  : (uiLang === "en" ? "Surrender" : "Menyerah")}
             </button>
           </div>
         </div>
@@ -464,8 +465,8 @@ const GameHeader = memo(
             }}
           >
             {isTimeout
-              ? (language === "en" ? "⏰ Time's up! Waiting for other players to finish…" : "⏰ Waktu habis! Menunggu pemain lain selesai…")
-              : (language === "en" ? "You have surrendered. Waiting for other players to finish…" : "Kamu sudah menyerah. Menunggu pemain lain selesai…")}
+              ? (uiLang === "en" ? "⏰ Time's up! Waiting for other players to finish…" : "⏰ Waktu habis! Menunggu pemain lain selesai…")
+              : (uiLang === "en" ? "You have surrendered. Waiting for other players to finish…" : "Kamu sudah menyerah. Menunggu pemain lain selesai…")}
           </div>
         )}
       </header>
@@ -496,8 +497,8 @@ export default function Game({
   ablyChannel,
   startTime,
   clockOffset = 0,
-  language,
 }: GameProps) {
+  const uiLang = useUiLang();
   const router = useRouter();
 
   const me = useMemo(
@@ -1015,10 +1016,10 @@ export default function Game({
             }}
           >
             {suspensionNotice.reason === "ctrl_f"
-              ? (language === "en"
+              ? (uiLang === "en"
                   ? `⚠️ ${suspensionNotice.username} suspended for ${suspensionNotice.duration === 120 ? "2 minutes" : "1 minute"} for pressing Ctrl+F (Cheating detected!)`
                   : `⚠️ ${suspensionNotice.username} disuspen ${suspensionNotice.duration === 120 ? "2 menit" : "1 menit"} karena menekan Ctrl+F (Kecurangan terdeteksi!)`)
-              : (language === "en"
+              : (uiLang === "en"
                   ? `🔄 ${suspensionNotice.username} returned to start and suspended for ${suspensionNotice.duration} seconds.`
                   : `🔄 ${suspensionNotice.username} kembali ke awal dan disuspen ${suspensionNotice.duration} detik.`)}
           </div>
@@ -1029,7 +1030,7 @@ export default function Game({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/90 px-6 text-center text-warm-cream"
           aria-live="assertive"
-          aria-label={language === "en" ? "Race countdown" : "Countdown race"}
+          aria-label={uiLang === "en" ? "Race countdown" : "Countdown race"}
         >
           <div className="flex flex-col items-center gap-4">
             <div
@@ -1046,7 +1047,7 @@ export default function Game({
               className="font-bold uppercase text-lime-accent"
               style={{ fontSize: "14px", letterSpacing: "0.18em" }}
             >
-              {language === "en" ? "Race starting" : "Game dimulai"}
+              {uiLang === "en" ? "Race starting" : "Game dimulai"}
             </div>
           </div>
         </div>
@@ -1057,7 +1058,7 @@ export default function Game({
           players={room.players}
           currentClientId={currentClientId}
           hasBadges={liveBadges.length > 0}
-          language={language}
+          uiLang={uiLang}
         />
       )}
 
@@ -1078,7 +1079,7 @@ export default function Game({
         isPitStopDisabled={pitActive || (suspensionTimeLeft > 0) || usingHelp}
         handlePitStopClick={handlePitStopClick}
         clockOffset={clockOffset}
-        language={language}
+        uiLang={uiLang}
       />
 
       {/* ============================================================ */}
@@ -1100,12 +1101,12 @@ export default function Game({
               >
                 <div className="text-4xl" aria-hidden>⏳</div>
                 <h3 className="font-black text-xl uppercase tracking-wider text-burnt-orange">
-                  {language === "en" ? "ACCESS SUSPENDED" : "AKSES DITANGGUHKAN"}
+                  {uiLang === "en" ? "ACCESS SUSPENDED" : "AKSES DITANGGUHKAN"}
                 </h3>
                 <p className="text-sm text-charcoal-text/80 leading-relaxed">
                   {mySuspensionReason === "ctrl_f" 
-                    ? (language === "en" ? "Word search (Ctrl+F) detected! Searching words is forbidden for game fairness." : "Pencarian kata (Ctrl+F) terdeteksi! Dilarang mencari kata demi kejujuran permainan.")
-                    : (language === "en" ? "You used help to return to start." : "Anda menggunakan bantuan untuk kembali ke awal.")}
+                    ? (uiLang === "en" ? "Word search (Ctrl+F) detected! Searching words is forbidden for game fairness." : "Pencarian kata (Ctrl+F) terdeteksi! Dilarang mencari kata demi kejujuran permainan.")
+                    : (uiLang === "en" ? "You used help to return to start." : "Anda menggunakan bantuan untuk kembali ke awal.")}
                 </p>
                 <div
                   className="font-black text-4xl tabular-nums bg-charcoal-text text-lime-accent px-4 py-2 mt-2"
@@ -1114,7 +1115,7 @@ export default function Game({
                   {formatElapsed(suspensionTimeLeft)}
                 </div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-charcoal-text/50">
-                  {language === "en" ? "Wait until penalty expires" : "Tunggu hingga hukuman selesai"}
+                  {uiLang === "en" ? "Wait until penalty expires" : "Tunggu hingga hukuman selesai"}
                 </span>
               </div>
             </div>
@@ -1136,12 +1137,12 @@ export default function Game({
                 <span className="animate-pulse">{localActivePowerUp === "soft" ? "🔴" : "🟡"}</span>
                 <span>
                   {localActivePowerUp === "soft"
-                    ? (language === "en" ? "SOFT TYRES ACTIVE: LINK PREVIEWS ENABLED" : "BAN SOFT AKTIF: PREVIEW LINK AKTIF")
-                    : (language === "en" ? "MEDIUM TYRES ACTIVE: BAN BYPASS ENABLED" : "BAN MEDIUM AKTIF: ABREVIASI BAN AKTIF")}
+                    ? (uiLang === "en" ? "SOFT TYRES ACTIVE: LINK PREVIEWS ENABLED" : "BAN SOFT AKTIF: PREVIEW LINK AKTIF")
+                    : (uiLang === "en" ? "MEDIUM TYRES ACTIVE: BAN BYPASS ENABLED" : "BAN MEDIUM AKTIF: ABREVIASI BAN AKTIF")}
                 </span>
               </div>
               <div className="tabular-nums opacity-95">
-                {powerUpTimeLeft.toFixed(1)}s {language === "en" ? "LEFT" : "SISA"}
+                {powerUpTimeLeft.toFixed(1)}s {uiLang === "en" ? "LEFT" : "SISA"}
               </div>
             </div>
           )}
@@ -1172,10 +1173,10 @@ export default function Game({
               >
                 <div className="text-4xl animate-bounce" aria-hidden>🧹</div>
                 <h3 className="font-black text-xl uppercase tracking-wider text-burnt-orange">
-                  {translations[language].debrisAlertTitle}
+                  {translations[uiLang].debrisAlertTitle}
                 </h3>
                 <p className="text-xs font-extrabold leading-relaxed text-charcoal-text/80">
-                  {translations[language].debrisAlertDesc.replace("{username}", attackerName)}
+                  {translations[uiLang].debrisAlertDesc.replace("{username}", attackerName)}
                 </p>
                 
                 <button
@@ -1192,7 +1193,7 @@ export default function Game({
                   }}
                   className="chunky-press w-full bg-charcoal-text text-warm-cream font-mono font-black text-sm uppercase py-3 border-2 border-charcoal-text shadow-[4px_4px_0px_#000] rounded-xl hover:bg-charcoal-text/90"
                 >
-                  {translations[language].wipeScreen.replace("{count}", splatClicksLeft.toString())}
+                  {translations[uiLang].wipeScreen.replace("{count}", splatClicksLeft.toString())}
                 </button>
               </div>
             </div>
@@ -1204,7 +1205,7 @@ export default function Game({
               endArticle={room.endArticle}
               language={room.language ?? "id"}
               onNavigate={handleNavigate}
-              uiLanguage={language}
+              uiLanguage={uiLang}
               activePowerUp={localActivePowerUp}
               bannedArticles={room.customRules?.bannedArticles}
             />
@@ -1225,10 +1226,10 @@ export default function Game({
 
             <div className="mt-2 flex flex-col items-center gap-1">
               <h2 className="font-mono font-black text-2xl text-lime-accent uppercase tracking-wider animate-pulse">
-                {translations[language].pitInClickTitle}
+                {translations[uiLang].pitInClickTitle}
               </h2>
               <p className="text-sm font-semibold opacity-70">
-                {translations[language].pitInClickDesc}
+                {translations[uiLang].pitInClickDesc}
               </p>
             </div>
 
@@ -1238,7 +1239,7 @@ export default function Game({
                 {pitTimeLeft.toFixed(1)}s
               </div>
               <span className="font-mono font-bold text-xs uppercase tracking-widest text-warm-cream/50 mt-1">
-                {language === "en" ? "LIMIT TIME FOR SELECTION" : "BATAS WAKTU MEMILIH"}
+                {uiLang === "en" ? "LIMIT TIME FOR SELECTION" : "BATAS WAKTU MEMILIH"}
               </span>
             </div>
 
@@ -1262,15 +1263,15 @@ export default function Game({
                 }}
               >
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
-                  <span>{translations[language].softTyresTitle}</span>
+                  <span>{translations[uiLang].softTyresTitle}</span>
                   {selectedTyre === "soft" && (
                     <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
-                      🎯 {language === "en" ? "CHOSEN" : "TERPILIH"}
+                      🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
-                  {translations[language].softTyresDesc}
+                  {translations[uiLang].softTyresDesc}
                 </p>
               </button>
 
@@ -1292,15 +1293,15 @@ export default function Game({
                 }}
               >
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
-                  <span>{translations[language].mediumTyresTitle}</span>
+                  <span>{translations[uiLang].mediumTyresTitle}</span>
                   {selectedTyre === "medium" && (
                     <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
-                      🎯 {language === "en" ? "CHOSEN" : "TERPILIH"}
+                      🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
-                  {translations[language].mediumTyresDesc}
+                  {translations[uiLang].mediumTyresDesc}
                 </p>
               </button>
 
@@ -1322,15 +1323,15 @@ export default function Game({
                 }}
               >
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
-                  <span>{translations[language].hardTyresTitle}</span>
+                  <span>{translations[uiLang].hardTyresTitle}</span>
                   {selectedTyre === "hard" && (
                     <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
-                      🎯 {language === "en" ? "CHOSEN" : "TERPILIH"}
+                      🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
-                  {translations[language].hardTyresDesc}
+                  {translations[uiLang].hardTyresDesc}
                 </p>
               </button>
             </div>
@@ -1350,15 +1351,15 @@ export default function Game({
                 style={{ borderRadius: "var(--radius-button)" }}
               >
                 <div className="flex items-center gap-2">
-                  <span>⚡ {language === "en" ? "STRATEGY:" : "STRATEGI:"}</span>
+                  <span>⚡ {uiLang === "en" ? "STRATEGY:" : "STRATEGI:"}</span>
                   <span className="font-black underline decoration-2">
                     {selectedTyre 
                       ? (selectedTyre === "soft" ? "🔴 SOFT COMPOUND" : selectedTyre === "medium" ? "🟡 MEDIUM COMPOUND" : "⚪ HARD COMPOUND")
-                      : (language === "en" ? "SELECT A TYRE!" : "PILIH BAN SEKARANG!")}
+                      : (uiLang === "en" ? "SELECT A TYRE!" : "PILIH BAN SEKARANG!")}
                   </span>
                 </div>
                 <span className="text-xs opacity-90 font-bold">
-                  {language === "en" ? "AUTO-FIT AT " : "AUTO-FIT PADA "}
+                  {uiLang === "en" ? "AUTO-FIT AT " : "AUTO-FIT PADA "}
                   <span className="font-black tabular-nums">{pitTimeLeft.toFixed(1)}s</span>
                 </span>
               </div>
