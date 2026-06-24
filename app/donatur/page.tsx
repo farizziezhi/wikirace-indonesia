@@ -186,7 +186,7 @@ export default function DonatorsPage() {
               <div className="order-1 md:order-2 flex flex-col gap-2">
                 {gold ? (
                   <div
-                    className="bg-lime-accent/10 p-6 flex flex-col gap-3.5 relative border-3 border-lime-accent text-charcoal-text overflow-hidden"
+                    className="bg-lime-accent/10 p-6 flex flex-col gap-3.5 relative border-3 border-lime-accent text-charcoal-text"
                     style={{
                       borderRadius: "var(--radius-input)",
                       boxShadow: "6px 6px 0px var(--color-charcoal-text)",
