@@ -14,19 +14,9 @@ export default function Loading() {
           boxShadow: "6px 6px 0px #282C20",
         }}
       >
-        {/* Checkered racing stripe */}
-        <div className="absolute top-0 left-0 right-0 h-3 overflow-hidden" style={{ borderRadius: "var(--radius-rounded) var(--radius-rounded) 0 0" }}>
-          <div
-            className="w-full h-full"
-            style={{
-              background: "repeating-conic-gradient(#282C20 0% 25%, #D2FF00 0% 50%) 0 0 / 12px 12px",
-            }}
-          />
-        </div>
-
         {/* Animated pulsing logo */}
         <div className="mt-4 mb-6">
-          <div className="inline-block text-4xl animate-pulse">🏁</div>
+          <div className="inline-block text-4xl animate-pulse">⏳</div>
         </div>
 
         {/* Skeleton loading bar */}

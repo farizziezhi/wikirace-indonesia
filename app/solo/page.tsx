@@ -7,6 +7,7 @@ import { LANGUAGE_OPTIONS, searchArticles } from "@/lib/wikipedia";
 import { SOLO_THEMES, SoloTheme, CURATED_ARTICLES } from "@/lib/solo-curated";
 import { getSavedLanguage, saveLanguage } from "@/lib/client-id";
 import { playCountdownBeep, unlockRaceAudio } from "@/lib/race-audio";
+import { useUiLang } from "@/lib/use-ui-lang";
 
 type SoloMode = "time-attack" | "free-roam";
 type SelectionModule = "curated" | "wild" | "custom";
@@ -14,16 +15,18 @@ type SelectionModule = "curated" | "wild" | "custom";
 function SoloPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const uiLang = useUiLang();
 
-  const [language, setLanguage] = useState<WikiLanguage>("id");
+  const [wikiLanguage, setWikiLanguage] = useState<WikiLanguage>("id");
+  const language = uiLang;
 
   // Load language choice from localStorage if not provided in search parameters
   useEffect(() => {
     const param = searchParams.get("lang");
     if (param === "en" || param === "id") {
-      setLanguage(param);
+      setWikiLanguage(param);
     } else {
-      setLanguage(getSavedLanguage());
+      setWikiLanguage(getSavedLanguage());
     }
   }, [searchParams]);
 
@@ -63,14 +66,14 @@ function SoloPageContent() {
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await searchArticles(customStart, language);
+        const results = await searchArticles(customStart, wikiLanguage);
         setStartSuggestions(results);
       } catch {
         setStartSuggestions([]);
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [customStart, language]);
+  }, [customStart, wikiLanguage]);
 
   useEffect(() => {
     if (customEnd.trim().length < 2) {
@@ -79,14 +82,14 @@ function SoloPageContent() {
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await searchArticles(customEnd, language);
+        const results = await searchArticles(customEnd, wikiLanguage);
         setEndSuggestions(results);
       } catch {
         setEndSuggestions([]);
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [customEnd, language]);
+  }, [customEnd, wikiLanguage]);
 
   // Generate route from Lobby parameters
   async function handleGenerateChallenge() {
@@ -119,7 +122,7 @@ function SoloPageContent() {
       const endParam = activeModule === "custom" ? customEnd.trim() : "";
 
       const queryParams = new URLSearchParams({
-        lang: language,
+        lang: wikiLanguage,
         theme: themeParam,
         difficulty,
       });
@@ -163,13 +166,13 @@ function SoloPageContent() {
         setCountdown(count);
         playCountdownBeep(String(count) as "3" | "2" | "1");
       } else if (count === 0) {
-        setCountdown("GO! 🏁");
+        setCountdown("GO!");
         playCountdownBeep("GO");
       } else {
         clearInterval(timer);
         // Navigate to play page
         router.push(
-          `/solo/play?start=${encodeURIComponent(previewResult.startArticle)}&end=${encodeURIComponent(previewResult.endArticle)}&mode=${selectedMode}&lang=${language}&depth=${previewResult.estimatedDepth}`
+          `/solo/play?start=${encodeURIComponent(previewResult.startArticle)}&end=${encodeURIComponent(previewResult.endArticle)}&mode=${selectedMode}&lang=${wikiLanguage}&depth=${previewResult.estimatedDepth}`
         );
       }
     }, 700);
@@ -216,7 +219,7 @@ function SoloPageContent() {
               className="font-black text-charcoal-text uppercase tracking-tight"
               style={{ fontSize: "clamp(30px, 5vw, 38px)", lineHeight: 1.1 }}
             >
-              🏎️ {language === "en" ? "Solo Practice" : "Latihan Solo"}
+              {language === "en" ? "Solo Practice" : "Latihan Solo"}
             </h1>
           </div>
 
@@ -233,21 +236,15 @@ function SoloPageContent() {
           /* PREVIEW CHALLENGE CARD */
           <section
             className="relative overflow-hidden flex flex-col gap-6 bg-charcoal-deep text-warm-cream p-6 sm:p-8 border-3 border-charcoal-text shadow-[6px_6px_0px_#000] animate-scale-up"
-            style={{ borderRadius: "var(--radius-input)" }}
+            style={{ borderRadius: "var(--radius-input)", paddingTop: "24px" }}
           >
-            {/* Header Checkered Stripe */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
-              {Array.from({ length: 30 }).map((_, i) => (
-                <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-              ))}
-            </div>
 
             <div className="text-center mt-2">
               <span
                 className="bg-lime-accent text-charcoal-text text-xs font-black uppercase tracking-widest px-4 py-1.5 border border-charcoal-text shadow-[2px_2px_0px_#000]"
                 style={{ borderRadius: "var(--radius-button)" }}
               >
-                🏁 {language === "en" ? "Practice Route Ready" : "Rute Latihan Siap"}
+                {language === "en" ? "Practice Route Ready" : "Rute Latihan Siap"}
               </span>
             </div>
 
@@ -307,7 +304,7 @@ function SoloPageContent() {
                 className="chunky-press btn-primary flex-1 py-4 text-base font-black border-2 border-charcoal-text"
                 style={{ boxShadow: "4px 4px 0px #000" }}
               >
-                {language === "en" ? "START LAP 🏎️" : "MULAI LAP 🏎️"}
+                {language === "en" ? "START PRACTICE" : "MULAI LATIHAN"}
               </button>
               <button
                 type="button"
@@ -328,7 +325,7 @@ function SoloPageContent() {
             {/* 1. Module Selector: Curated / Wild / Custom */}
             <div className="flex flex-col gap-2">
               <label className="font-black text-charcoal-text text-sm uppercase tracking-tight">
-                🔧 {language === "en" ? "Choose Practice Preset" : "Pilih Preset Latihan"}
+                {language === "en" ? "Choose Practice Preset" : "Pilih Preset Latihan"}
               </label>
               <div
                 className="grid grid-cols-3 gap-1 bg-charcoal-deep border-2 border-charcoal-text p-1"
@@ -403,16 +400,16 @@ function SoloPageContent() {
                 {/* Difficulty selector */}
                 <div className="flex flex-col gap-2">
                   <span className="font-bold text-charcoal-text text-xs uppercase tracking-wider opacity-70">
-                    {language === "en" ? "Engine Mapping (Difficulty)" : "Mapping Mesin (Kesulitan)"}
+                    {language === "en" ? "Difficulty Level" : "Tingkat Kesulitan"}
                   </span>
                   <div className="grid grid-cols-3 gap-2">
                     {(["easy", "medium", "hard"] as const).map((level) => {
                       const active = difficulty === level;
                       const label = level === "easy" 
-                        ? (language === "en" ? "MAP 1 (Easy)" : "MAP 1 (Mudah)") 
+                        ? (language === "en" ? "Easy" : "Mudah") 
                         : level === "hard" 
-                          ? (language === "en" ? "MAP 3 (Hard)" : "MAP 3 (Sulit)") 
-                          : (language === "en" ? "MAP 2 (Med)" : "MAP 2 (Sedang)");
+                          ? (language === "en" ? "Hard" : "Sulit") 
+                          : (language === "en" ? "Medium" : "Sedang");
                       return (
                         <button
                           key={level}
@@ -445,16 +442,16 @@ function SoloPageContent() {
                 {/* Difficulty selector */}
                 <div className="flex flex-col gap-2">
                   <span className="font-bold text-charcoal-text text-xs uppercase tracking-wider opacity-70">
-                    {language === "en" ? "Engine Mapping (Difficulty)" : "Mapping Mesin (Kesulitan)"}
+                    {language === "en" ? "Difficulty Level" : "Tingkat Kesulitan"}
                   </span>
                   <div className="grid grid-cols-3 gap-2">
                     {(["easy", "medium", "hard"] as const).map((level) => {
                       const active = difficulty === level;
                       const label = level === "easy" 
-                        ? (language === "en" ? "MAP 1 (Easy)" : "MAP 1 (Mudah)") 
+                        ? (language === "en" ? "Easy" : "Mudah") 
                         : level === "hard" 
-                          ? (language === "en" ? "MAP 3 (Hard)" : "MAP 3 (Sulit)") 
-                          : (language === "en" ? "MAP 2 (Med)" : "MAP 2 (Sedang)");
+                          ? (language === "en" ? "Hard" : "Sulit") 
+                          : (language === "en" ? "Medium" : "Sedang");
                       return (
                         <button
                           key={level}
@@ -636,7 +633,7 @@ function SoloPageContent() {
                 aria-label={language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
               >
                 {LANGUAGE_OPTIONS.map((opt) => {
-                  const active = opt.value === language;
+                  const active = opt.value === wikiLanguage;
                   return (
                     <button
                       key={opt.value}
@@ -644,7 +641,7 @@ function SoloPageContent() {
                       role="radio"
                       aria-checked={active}
                       onClick={() => {
-                        setLanguage(opt.value);
+                        setWikiLanguage(opt.value);
                         saveLanguage(opt.value);
                         // Reset kustom jika ganti bahasa
                         setCustomStart("");
@@ -680,10 +677,10 @@ function SoloPageContent() {
                     className="border-charcoal-text border-t-transparent animate-spin w-5 h-5"
                     style={{ borderWidth: 3, borderRadius: "50%" }}
                   />
-                  <span>{language === "en" ? "CALCULATING LAP..." : "MENGKALKULASI LAP..."}</span>
+                  <span>{language === "en" ? "CALCULATING..." : "MENGKALKULASI..."}</span>
                 </div>
               ) : (
-                language === "en" ? "🏁 INITIALIZE PRACTICE CHALLENGE" : "🏁 INISIALISASI TANTANGAN LAP"
+                language === "en" ? "INITIALIZE PRACTICE CHALLENGE" : "INISIALISASI TANTANGAN"
               )}
             </button>
 

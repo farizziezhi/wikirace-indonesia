@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getSavedUiLanguage } from "@/lib/client-id";
 
 interface PlayerStats {
   username: string;
@@ -54,8 +55,8 @@ const TITLES: TitleItem[] = [
   },
   {
     id: "racer",
-    nameId: "Pembalap Kata",
-    nameEn: "Word Racer",
+    nameId: "Penjelajah Kata",
+    nameEn: "Word Explorer",
     descId: "Capai rating ELO minimal 1300.",
     descEn: "Reach ELO rating of 1300 or above.",
     isEligible: (stats) => (stats?.elo ?? 1200) >= 1300,
@@ -129,8 +130,8 @@ const ACHIEVEMENTS: AchievementItem[] = [
   },
   {
     id: "dedicated",
-    nameId: "Pembalap Setia",
-    nameEn: "Dedicated Racer",
+    nameId: "Pemain Setia",
+    nameEn: "Dedicated Player",
     descId: "Mainkan total 25 pertandingan ranked.",
     descEn: "Play 25 total ranked matches.",
     icon: "⚡",
@@ -138,8 +139,8 @@ const ACHIEVEMENTS: AchievementItem[] = [
   },
   {
     id: "elite",
-    nameId: "Pembalap Elit",
-    nameEn: "Elite Racer",
+    nameId: "Pemain Elit",
+    nameEn: "Elite Player",
     descId: "Capai rating ELO minimal 1400.",
     descEn: "Reach ELO rating of 1400 or above.",
     icon: "👑",
@@ -174,14 +175,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    // Deteksi bahasa browser
-    if (typeof window !== "undefined") {
-      const savedLang = window.localStorage.getItem("wikirace:lang");
-      if (savedLang === "en" || savedLang === "id") {
-        setUiLanguage(savedLang);
-      }
-    }
-
+    setUiLanguage(getSavedUiLanguage());
     void loadProfile();
     void checkSession();
   }, [username]);
@@ -337,13 +331,6 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     <main className="dot-bg flex min-h-screen w-full flex-col items-center px-4 pt-8 pb-32 sm:px-6 sm:pt-12 sm:pb-36">
       <div className="w-full max-w-[850px] flex flex-col gap-6">
         
-        {/* Checkered Racing Stripe Banner */}
-        <div className="h-5 w-full bg-charcoal-text border-3 border-charcoal-text shadow-[4px_4px_0px_#282c20] rounded-xl overflow-hidden flex">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-          ))}
-        </div>
-
         {/* Navigation Bar */}
         <div className="flex items-center justify-between">
           <Link
@@ -353,7 +340,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
             ← {uiLanguage === "en" ? "Back to Home" : "Kembali ke Beranda"}
           </Link>
           <span className="font-extrabold text-charcoal-text text-[11px] uppercase tracking-wider bg-pure-white border-2 border-charcoal-text px-3 py-1.5 shadow-[2px_2px_0px_#000] rounded-lg">
-            🏁 WIKIRACE ID PROFILE
+            WIKIRACE INDONESIA PROFILE
           </span>
         </div>
 
@@ -380,19 +367,12 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
           </div>
         ) : (
           <>
-            {/* ====== Profile Header Card (Driver's License / Paddock Pass) ====== */}
+            {/* ====== Profile Header Card ====== */}
             <section
               className="relative overflow-hidden flex flex-col sm:flex-row items-center gap-5 p-6 bg-charcoal-deep text-warm-cream border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
               style={{ borderRadius: "var(--radius-rounded)" }}
             >
-              {/* Header Checkered Accent Line */}
-              <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
-                {Array.from({ length: 30 }).map((_, i) => (
-                  <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-                ))}
-              </div>
-
-              {/* Avatar as a technical license photo */}
+              {/* Avatar */}
               <div
                 className="flex shrink-0 items-center justify-center font-black uppercase text-charcoal-text text-3xl border-3 border-charcoal-text shadow-[4px_4px_0px_#000] hover:scale-105 transition-transform duration-200 cursor-default"
                 style={{
@@ -405,7 +385,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                 {username.slice(0, 2).toUpperCase()}
               </div>
 
-              {/* Username & Title Cockpit Info */}
+              {/* Username & Title Info */}
               <div className="flex-1 text-center sm:text-left min-w-0 z-10">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-center sm:justify-start">
                   <h1 className="font-black text-3xl tracking-tight truncate text-lime-accent">
@@ -416,7 +396,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                       className="inline-block self-center font-black px-2.5 py-1 rounded text-[10px] uppercase border-2 shadow-[2px_2px_0px_rgba(0,0,0,0.2)]"
                       style={{ color: tierColor, backgroundColor: tierBg, borderColor: tierColor }}
                     >
-                      🏎️ {tierName}
+                      {tierName}
                     </span>
                     {stats ? (
                       stats.daily_streak && stats.daily_streak > 0 ? (
@@ -429,14 +409,14 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                               : "bg-[#FF8A00] text-charcoal-text border-charcoal-text"
                           }`}
                         >
-                          🔥 {stats.daily_streak} {uiLanguage === "en" ? "Day Streak" : "Hari Streak"}
+                          Streak: {stats.daily_streak} {uiLanguage === "en" ? "Days" : "Hari"}
                         </span>
                       ) : (
                         <span
                           className="inline-block self-center font-black px-2.5 py-1 rounded text-[10px] uppercase border-2 border-dashed border-warm-gray/20 text-warm-cream/30 bg-warm-cream/5 cursor-default"
                           title={uiLanguage === "en" ? "No active daily streak" : "Tidak ada streak harian aktif"}
                         >
-                          🔥 0 {uiLanguage === "en" ? "Streak" : "Streak"}
+                          Streak: 0
                         </span>
                       )
                     ) : null}
@@ -446,7 +426,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                 <div className="mt-2.5 flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   {stats?.equipped_title ? (
                     <span className="inline-flex items-center gap-1.5 bg-lime-accent text-charcoal-text font-black text-xs px-3 py-1 rounded border-2 border-charcoal-text shadow-[2px_2px_0px_rgba(0,0,0,0.15)] uppercase tracking-wide">
-                      🏆 {stats.equipped_title}
+                      {stats.equipped_title}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 bg-warm-cream/10 text-warm-cream/50 text-[10px] font-bold px-2.5 py-1 rounded border border-dashed border-warm-cream/20 uppercase tracking-wider">
@@ -454,35 +434,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                     </span>
                   )}
                   <span className="text-[10px] text-warm-cream/40 font-mono uppercase tracking-wider ml-1">
-                    • NODE STATUS: ACTIVE
+                    • STATUS: ACTIVE
                   </span>
-                </div>
-              </div>
-
-              {/* Large SVG ELO RPM Speedometer Gauge */}
-              <div className="flex flex-col items-center gap-1.5 bg-charcoal-text/60 p-3 rounded-xl border border-warm-gray/10 shrink-0 z-10 shadow-[3px_3px_0px_rgba(0,0,0,0.2)]">
-                <span className="text-[8px] uppercase font-mono font-black text-warm-cream/50 tracking-wider">ELO RPM GAUGE</span>
-                <div className="relative w-20 h-10 overflow-hidden flex items-end justify-center">
-                  <svg width="80" height="40" viewBox="0 0 80 40" aria-hidden="true" className="w-20 h-10">
-                    {/* Background Arc */}
-                    <path d="M 6 40 A 34 34 0 0 1 74 40" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="6" />
-                    {/* Filled Arc based on ELO */}
-                    <path 
-                      d="M 6 40 A 34 34 0 0 1 74 40" 
-                      fill="none" 
-                      stroke="var(--color-lime-accent)" 
-                      strokeWidth="6"
-                      strokeDasharray="107"
-                      strokeDashoffset={Math.max(0, 107 - (107 * Math.min(1.0, Math.max(0.0, (eloVal - 800) / 1000))) )}
-                      className="transition-all duration-1000 ease-out"
-                    />
-                  </svg>
-                  <div className="absolute bottom-0 flex flex-col items-center leading-none">
-                    <span className="text-lime-accent font-black font-mono text-xs">
-                      {eloVal}
-                    </span>
-                    <span className="text-[7px] font-mono text-warm-cream/40 uppercase mt-0.5">PTS</span>
-                  </div>
                 </div>
               </div>
             </section>
@@ -495,23 +448,11 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               </div>
 
               <div className="bg-charcoal-deep text-warm-cream border-3 border-charcoal-text p-4 rounded-xl shadow-[4px_4px_0px_#000] hover:-translate-y-1 hover:shadow-[5px_5px_0px_#000] transition-all duration-200 cursor-default">
-                <span className="text-[10px] font-mono font-black uppercase text-warm-cream/50 tracking-wider">WIN RATE RPM</span>
+                <span className="text-[10px] font-mono font-black uppercase text-warm-cream/50 tracking-wider">WIN RATE</span>
                 <p className="text-3xl font-black text-lime-accent mt-1">{winRate}%</p>
-                {/* Segmented Tachometer Progress Bar */}
-                <div className="flex gap-[2px] mt-2.5">
-                  {Array.from({ length: 10 }).map((_, i) => {
-                    const isActive = winRate >= (i + 1) * 10;
-                    return (
-                      <div
-                        key={i}
-                        className={`h-2.5 flex-1 rounded-sm border border-charcoal-text ${
-                          isActive 
-                            ? (i >= 8 ? "bg-burnt-orange animate-pulse" : "bg-lime-accent") 
-                            : "bg-charcoal-text"
-                        }`}
-                      />
-                    );
-                  })}
+                {/* Clean Progress Bar */}
+                <div className="w-full bg-charcoal-text h-2 px-[1px] py-[1px] border border-charcoal-text/30 rounded-sm mt-3 overflow-hidden">
+                  <div className="bg-lime-accent h-full rounded-sm" style={{ width: `${winRate}%` }} />
                 </div>
               </div>
 
@@ -534,11 +475,11 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               </div>
             </section>
 
-            {/* ====== ELO Progression Telemetry Chart ====== */}
+            {/* ====== ELO History Chart ====== */}
             <section className="bg-charcoal-deep text-warm-cream border-3 border-charcoal-text p-4 rounded-xl shadow-[4px_4px_0px_#000]">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-mono font-black uppercase text-warm-cream/50 tracking-wider">
-                  📈 {uiLanguage === "en" ? "ELO PROGRESSION TELEMETRY" : "TELEMETRI TREN ELO"}
+                  {uiLanguage === "en" ? "ELO HISTORY" : "RIWAYAT ELO"}
                 </span>
                 {matches.length > 0 && (
                   <span className="text-[10px] font-mono text-lime-accent uppercase">
@@ -551,7 +492,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               <div className="relative w-full h-[120px] bg-charcoal-text/30 rounded-lg border border-warm-gray/10 p-3 flex items-center justify-center overflow-hidden">
                 {eloHistoryPoints.length <= 1 ? (
                   <span className="text-xs text-warm-cream/40 font-mono italic text-center">
-                    {uiLanguage === "en" ? "NO TELEMETRY DATA YET (NEED > 1 RACES)" : "BELUM ADA DATA TELEMETRI (BUTUH > 1 BALAPAN)"}
+                    {uiLanguage === "en" ? "NO MATCH HISTORY YET (NEED > 1 GAMES)" : "BELUM ADA DATA RIWAYAT (BUTUH > 1 PERTANDINGAN)"}
                   </span>
                 ) : (
                   <svg width="100%" height="100%" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none" className="overflow-visible w-full h-full">
@@ -642,7 +583,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               style={{ borderRadius: "var(--radius-rounded)" }}
             >
               <h2 className="font-black text-xl text-charcoal-text uppercase tracking-wider border-b-3 border-charcoal-text pb-2 flex items-center justify-between">
-                <span>🎖️ {uiLanguage === "en" ? "Achievements" : "Prestasi & Pencapaian"}</span>
+                <span>{uiLanguage === "en" ? "Achievements" : "Prestasi & Pencapaian"}</span>
                 <span className="text-xs bg-lime-accent/20 border border-lime-accent/40 px-2 py-1 rounded text-charcoal-text/70 font-bold">
                   {ACHIEVEMENTS.filter(a => a.isUnlocked(stats)).length} / {ACHIEVEMENTS.length} {uiLanguage === "en" ? "Unlocked" : "Terbuka"}
                 </span>
@@ -672,7 +613,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               {/* Titles listing */}
               <div className="flex flex-col gap-2.5 mt-5">
                 <span className="text-xs font-black uppercase text-charcoal-text/60 border-b border-warm-gray/40 pb-1.5 mb-1 flex items-center gap-1.5">
-                  🏆 {uiLanguage === "en" ? "Equippable Player Titles" : "Gelar Pemain yang Dapat Dipasang"}
+                  {uiLanguage === "en" ? "Equippable Player Titles" : "Gelar Pemain yang Dapat Dipasang"}
                 </span>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -739,21 +680,21 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               </div>
             </section>
 
-            {/* ====== Match History Block (Race Logs Console) ====== */}
+            {/* ====== Match History Block ====== */}
             <section
               className="flex flex-col gap-4 p-6 bg-charcoal-deep text-warm-cream border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
               style={{ borderRadius: "var(--radius-rounded)" }}
             >
               <h2 className="font-black text-xl text-warm-cream uppercase tracking-wider border-b-3 border-charcoal-text pb-2 flex items-center justify-between">
-                <span className="text-lime-accent">📟 {uiLanguage === "en" ? "Race Logs Console" : "Log Telemetri Balapan"}</span>
+                <span className="text-lime-accent">{uiLanguage === "en" ? "Match History" : "Riwayat Pertandingan"}</span>
                 <span className="text-xs bg-charcoal-text px-2.5 py-1 rounded text-lime-accent/70 font-mono border border-charcoal-text">
-                  {matches.length} {uiLanguage === "en" ? "MATCHES DETECTED" : "PERTANDINGAN TEREKAM"}
+                  {matches.length} {uiLanguage === "en" ? "MATCHES PLAYED" : "PERTANDINGAN DIMAINKAN"}
                 </span>
               </h2>
 
               {matches.length === 0 ? (
                 <div className="p-12 text-center bg-charcoal-text/30 border-3 border-dashed border-charcoal-text rounded-2xl text-warm-cream/40 font-mono text-xs uppercase tracking-widest leading-relaxed">
-                  {uiLanguage === "en" ? "NO RECORDED TELEMETRY LOGS." : "BELUM ADA RIWAYAT TELEMETRI PERTANDINGAN."}
+                  {uiLanguage === "en" ? "NO RECORDED MATCH HISTORY." : "BELUM ADA RIWAYAT PERTANDINGAN."}
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
@@ -781,7 +722,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                   : "bg-burnt-orange text-warm-cream"
                               }`}
                             >
-                              {isWin ? (uiLanguage === "en" ? "CLASSIFIED" : "MENANG") : (uiLanguage === "en" ? "RETIRED" : "KALAH")}
+                              {isWin ? (uiLanguage === "en" ? "WON" : "MENANG") : (uiLanguage === "en" ? "LOST" : "KALAH")}
                             </span>
                             <span className="text-[10px] font-mono text-warm-cream/40">{dateStr}</span>
                           </div>

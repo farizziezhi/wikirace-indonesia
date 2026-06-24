@@ -167,18 +167,11 @@ export default function Results({
           className="relative overflow-hidden flex flex-col gap-4 bg-charcoal-deep text-warm-cream border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
           style={{ borderRadius: "var(--radius-input)" }}
         >
-          {/* Checkered Racing Stripe */}
-          <div className="h-4 w-full bg-charcoal-text border-b-2 border-charcoal-text overflow-hidden flex" aria-hidden="true">
-            {Array.from({ length: 40 }).map((_, i) => (
-              <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-3 px-6 pb-6 pt-2">
+          <div className="flex flex-col gap-3 px-6 py-6">
             <span
               className="font-black uppercase text-playdate-yellow/80 tracking-wider text-[11px]"
             >
-              🏁 {t.resultsRoom}{room.id}{room.isMatchmaking ? (language === "en" ? " • Ranked Matchmaking (ELO)" : " • Ranked Matchmaking (ELO)") : ""}
+              {t.resultsRoom}{room.id}{room.isMatchmaking ? (language === "en" ? " • Ranked Matchmaking (ELO)" : " • Ranked Matchmaking (ELO)") : ""}
             </span>
 
             {winner ? (
@@ -190,7 +183,6 @@ export default function Results({
                     lineHeight: "var(--leading-heading-lg)",
                   }}
                 >
-                  <span aria-hidden="true">🏆</span>
                   <span className="text-warm-cream">{winner.player.username}</span>
                   <span className="font-extrabold text-lime-accent text-lg sm:text-xl uppercase tracking-wider">
                     {t.wins}
@@ -447,10 +439,10 @@ export default function Results({
 }
 
 // ============================================================
-// ELO RPM Speedometer Bar
+// ELO Rating Segmented Bar
 // ============================================================
 
-function EloRpmBar({ elo }: { elo: number }) {
+function EloRatingBar({ elo }: { elo: number }) {
   // Map ELO range 800 to 1800 into 10 segments
   const minElo = 800;
   const maxElo = 1800;
@@ -470,11 +462,11 @@ function EloRpmBar({ elo }: { elo: number }) {
         let colorClass = "bg-charcoal-text/10 dark:bg-warm-cream/10";
         if (isActive) {
           if (idx < 4) {
-            colorClass = "bg-lime-soft"; // low ELO: green-ish
+            colorClass = "bg-lime-soft"; // low ELO
           } else if (idx < 8) {
-            colorClass = "bg-lime-accent"; // medium ELO: bright lime
+            colorClass = "bg-lime-accent"; // medium ELO
           } else {
-            colorClass = "bg-burnt-orange animate-pulse"; // high ELO: orange/redline RPM
+            colorClass = "bg-burnt-orange animate-pulse"; // high ELO
           }
         }
         return (
@@ -584,7 +576,7 @@ function Podium({
                       </span>
                     )}
                   </div>
-                  <EloRpmBar elo={row.player.elo} />
+                  <EloRatingBar elo={row.player.elo} />
                 </div>
               )}
             </div>

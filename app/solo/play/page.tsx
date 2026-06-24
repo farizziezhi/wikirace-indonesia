@@ -212,11 +212,11 @@ function SoloPlayContent() {
   // Generate Wordle-like share text
   function handleShare() {
     const minClicksText = estimatedDepth === -1 ? "?" : estimatedDepth;
-    const shareText = `🏎️ WikiRace ID — Solo Latihan (${language.toUpperCase()})
-🏁 Rute: ${startArticle} ➔ ${endArticle}
-⏱️ Waktu: ${formatTime(elapsedSeconds)} | 🧭 Klik: ${clicks} (Jarak minimum: ${minClicksText})
+    const shareText = `WikiRace Indonesia — Latihan Solo (${language.toUpperCase()})
+Rute: ${startArticle} ➔ ${endArticle}
+Waktu: ${formatTime(elapsedSeconds)} | Klik: ${clicks} (Jarak minimum: ${minClicksText})
 
-Jalur lintasan saya:
+Jalur penelusuran saya:
 ${route.join(" ➔ ")}
 
 Mainkan gratis di: https://wikiraceid.web.id`;
@@ -226,18 +226,18 @@ Mainkan gratis di: https://wikiraceid.web.id`;
     setTimeout(() => setCopied(false), 2500);
   }
 
-  // Calculate driver performance rating
-  function getDriverRating() {
+  // Calculate player performance rating
+  function getPerformanceRating() {
     if (estimatedDepth === -1) {
-      return language === "id" ? "🛠️ Penjelajah Kustom" : "🛠️ Custom Explorer";
+      return uiLanguage === "en" ? "Custom Explorer" : "Penjelajah Kustom";
     }
     if (clicks <= estimatedDepth) {
-      return language === "id" ? "⚡ Sempurna! Rute Terpendek" : "⚡ Perfect! Shortest Route";
+      return uiLanguage === "en" ? "Perfect! Shortest Route" : "Sempurna! Rute Terpendek";
     }
     if (clicks <= estimatedDepth + 2) {
-      return language === "id" ? "🏎️ Pembalap Pro" : "🏎️ Pro Racer";
+      return uiLanguage === "en" ? "Efficient Explorer" : "Penjelajah Efisien";
     }
-    return language === "id" ? "🧭 Penjelajah Tangguh" : "🧭 Steady Navigator";
+    return uiLanguage === "en" ? "Steady Explorer" : "Penjelajah Tangguh";
   }
 
   if (!startArticle || !endArticle) {
@@ -245,14 +245,14 @@ Mainkan gratis di: https://wikiraceid.web.id`;
       <main className="flex min-h-screen items-center justify-center bg-warm-cream px-6">
         <div className="text-center chunky p-6 bg-pure-white max-w-sm">
           <p className="text-charcoal-text font-bold" style={{ fontSize: "16px" }}>
-            Sesi latihan tidak valid. Mulai dari Lobby Solo.
+            {uiLanguage === "en" ? "Invalid practice session. Start from Solo Lobby." : "Sesi latihan tidak valid. Mulai dari Lobby Solo."}
           </p>
           <button
             type="button"
             onClick={() => router.push("/solo")}
             className="btn-primary mt-4 w-full"
           >
-            Kembali ke Lobby
+            {uiLanguage === "en" ? "Back to Lobby" : "Kembali ke Lobby"}
           </button>
         </div>
       </main>
@@ -264,7 +264,7 @@ Mainkan gratis di: https://wikiraceid.web.id`;
       {/* Dynamic Confetti Shower */}
       <Confetti active={finished} />
 
-      {/* RACING INSTRUMENT HUD PANEL (Dashboard style) */}
+      {/* INSTRUMENT HUD PANEL */}
       <header className="sticky top-0 z-30 bg-charcoal-text text-warm-cream shadow-lifted">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between border-b border-very-dark px-4 py-3 md:py-2.5 gap-3">
           {/* Left Block: Exit, Mode Badge */}
@@ -287,14 +287,13 @@ Mainkan gratis di: https://wikiraceid.web.id`;
             </span>
           </div>
 
-          {/* Center Block: Active Checkered Flag Target Indicator */}
+          {/* Center Block: Active Target Indicator */}
           <div className="flex items-center justify-center bg-very-dark px-3 py-1.5 rounded-lg border border-lime-soft/30 max-w-full md:max-w-md overflow-hidden flex-1 md:mx-6">
-            <span className="text-sm mr-2" aria-hidden>🏁</span>
             <span className="text-[11px] font-bold text-warm-cream/60 uppercase tracking-wide mr-1.5 shrink-0">Target:</span>
             <span className="font-extrabold text-lime-accent text-sm truncate">{endArticle}</span>
           </div>
 
-          {/* Right Block: Telemetry counters (Clicks & Time) */}
+          {/* Right Block: Counters (Clicks & Time) */}
           <div className="flex items-center justify-end gap-5 font-mono text-sm shrink-0">
             {/* Click Odometer */}
             <div className="flex items-center gap-2">
@@ -318,8 +317,7 @@ Mainkan gratis di: https://wikiraceid.web.id`;
         <details className="group border-t border-very-dark bg-very-dark/50">
           <summary className="flex items-center justify-between px-4 py-1.5 cursor-pointer text-xs font-bold text-warm-cream/60 hover:text-warm-cream select-none transition">
             <span className="flex items-center gap-1.5">
-              <span>🛣️</span>
-              <span>Jalur lintasan saat ini ({route.length} artikel)</span>
+              <span>Jalur penelusuran saat ini ({route.length} artikel)</span>
             </span>
             <span className="group-open:rotate-180 transition-transform duration-200">▼</span>
           </summary>
@@ -341,28 +339,22 @@ Mainkan gratis di: https://wikiraceid.web.id`;
           style={{ backdropFilter: "blur(10px)" }}
         >
           <div
-            className="relative overflow-hidden w-full max-w-[530px] bg-charcoal-deep p-6 sm:p-8 my-8 text-warm-cream border-3 border-charcoal-text shadow-[6px_6px_0px_#000] animate-scale-up"
+            className="relative overflow-hidden w-full max-w-[530px] bg-charcoal-deep p-6 sm:p-8 my-8 text-warm-cream border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
             style={{
               borderRadius: "var(--radius-input)",
+              paddingTop: "24px"
             }}
           >
-            {/* Checkered Racing Stripe */}
-            <div className="absolute top-0 left-0 right-0 h-2.5 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
-              {Array.from({ length: 30 }).map((_, i) => (
-                <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-              ))}
-            </div>
-
             <div className="text-center mb-6 mt-3">
               <span className="text-5xl" aria-hidden>🏆</span>
               <h2
                 className="mt-3 font-black text-lime-accent uppercase tracking-tight"
                 style={{ fontSize: "clamp(24px, 6vw, 36px)", lineHeight: 1.1 }}
               >
-                Balapan Selesai!
+                {uiLanguage === "en" ? "Practice Completed!" : "Latihan Selesai!"}
               </h2>
               <p className="text-burnt-orange font-black text-sm uppercase tracking-wider mt-1.5 animate-pulse">
-                {getDriverRating()}
+                {getPerformanceRating()}
               </p>
             </div>
 
@@ -401,7 +393,7 @@ Mainkan gratis di: https://wikiraceid.web.id`;
               </div>
             )}
 
-            {/* Statistics Telemetry Grid */}
+            {/* Statistics Grid */}
             <div className="grid grid-cols-3 gap-3 mb-6 font-mono">
               <div className="bg-charcoal-text p-3 text-center rounded-lg border border-lime-accent/15 flex flex-col justify-center shadow-[2px_2px_0px_#000]">
                 <span className="text-[9px] uppercase font-bold text-warm-cream/50">Clicks</span>
@@ -431,7 +423,7 @@ Mainkan gratis di: https://wikiraceid.web.id`;
             {/* Visual Flow Track Map */}
             <div className="border border-warm-cream/15 rounded-lg p-4 bg-charcoal-text mb-6 font-mono text-xs">
               <span className="block text-[10px] font-bold text-warm-cream/60 uppercase tracking-wide mb-2">
-                📡 PATH TELEMETRY ({route.length} NODES):
+                {uiLanguage === "en" ? "PATH HISTORY" : "RIWAYAT JALUR"} ({route.length} {uiLanguage === "en" ? "PAGES" : "HALAMAN"}):
               </span>
               <div className="max-h-36 overflow-y-auto text-xs scrollbar-thin">
                 <div className="flex flex-col gap-2">
@@ -461,7 +453,7 @@ Mainkan gratis di: https://wikiraceid.web.id`;
             {copied && (
               <div className="bg-lime-accent text-charcoal-text text-xs font-black text-center py-2.5 px-4 mb-4 rounded-md animate-fade-in flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#000]">
                 <span>✓</span>
-                <span>TELEMETRY STATS COPIED TO CLIPBOARD!</span>
+                <span>{uiLanguage === "en" ? "STATS COPIED TO CLIPBOARD!" : "STATISTIK DISALIN KE CLIPBOARD!"}</span>
               </div>
             )}
 
@@ -472,22 +464,21 @@ Mainkan gratis di: https://wikiraceid.web.id`;
                 onClick={handleShare}
                 className="chunky-press btn-primary flex-1 py-3 text-sm font-black flex items-center justify-center gap-2 border-2 border-charcoal-text shadow-[3px_3px_0px_#000]"
               >
-                <span>📤</span>
-                <span>SHARE STATS</span>
+                <span>SHARE</span>
               </button>
               <button
                 type="button"
                 onClick={handleRestart}
                 className="chunky-press btn-white py-3 text-sm font-black flex-1 border-2 border-charcoal-text shadow-[3px_3px_0px_#000]"
               >
-                PLAY AGAIN
+                {uiLanguage === "en" ? "PLAY AGAIN" : "MAIN LAGI"}
               </button>
               <button
                 type="button"
                 onClick={() => router.push("/")}
                 className="chunky-press btn-white py-3 text-sm font-black flex-1 border-2 border-charcoal-text shadow-[3px_3px_0px_#000]"
               >
-                HOME
+                {uiLanguage === "en" ? "HOME" : "BERANDA"}
               </button>
             </div>
           </div>
@@ -519,7 +510,7 @@ export default function SoloPlayPage() {
               style={{ borderWidth: 4, borderRadius: "50%" }}
             />
             <p className="text-charcoal-text font-bold" style={{ fontSize: "16px" }}>
-              Loading Balapan...
+              Loading...
             </p>
           </div>
         </main>

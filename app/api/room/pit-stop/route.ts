@@ -7,8 +7,8 @@ import type { Room } from "@/lib/types";
 
 /**
  * POST /api/room/pit-stop
- * Body: { roomId, clientId, tyreType }
- * Mengaktifkan pit stop dan ban compound terpilih untuk pemain.
+ * Body: { roomId, clientId, powerUpType, tyreType }
+ * Mengaktifkan power-up terpilih untuk pemain.
  */
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     roomId?: unknown;
     clientId?: unknown;
     tyreType?: unknown;
+    powerUpType?: unknown;
     playerToken?: unknown;
   };
   try {
@@ -29,35 +30,37 @@ export async function POST(request: NextRequest) {
     typeof body.roomId === "string" ? body.roomId.trim().toUpperCase() : "";
   const clientId =
     typeof body.clientId === "string" ? body.clientId.trim() : "";
-  const tyreType =
-    typeof body.tyreType === "string" ? body.tyreType.trim() : "";
+  
+  const rawPowerUp = body.powerUpType || body.tyreType;
+  const powerUpType =
+    typeof rawPowerUp === "string" ? rawPowerUp.trim() : "";
 
   if (!roomId) return errorResponse("roomId wajib diisi.");
   if (!clientId) return errorResponse("clientId wajib diisi.");
-  if (!tyreType || !["soft", "medium", "hard"].includes(tyreType)) {
-    return errorResponse("tyreType tidak valid (harus soft, medium, atau hard).");
+  if (!powerUpType || !["soft", "medium", "hard"].includes(powerUpType)) {
+    return errorResponse("powerUpType tidak valid (harus soft, medium, atau hard).");
   }
 
   const room = await getRoom(roomId);
   if (!room) return errorResponse("Room tidak ditemukan.", 404);
   
   if (room.status !== "playing") {
-    return errorResponse("Pit stop hanya bisa digunakan saat permainan berlangsung.", 409);
+    return errorResponse("Power-up hanya bisa digunakan saat permainan berlangsung.", 409);
   }
 
   if (room.gameMode !== "casual") {
-    return errorResponse("Pit stop hanya tersedia pada mode Casual.", 403);
+    return errorResponse("Power-up hanya tersedia pada mode Casual.", 403);
   }
 
-  let triggerPitAttack = false;
+  let triggerPowerUpAttack = false;
   let updatedRoom: Room;
   try {
     updatedRoom = await updateRoomAtomically(roomId, async (currentRoom) => {
       if (currentRoom.status !== "playing") {
-        throw new Error("VAL_ERR:Pit stop hanya bisa digunakan saat permainan berlangsung.");
+        throw new Error("VAL_ERR:Power-up hanya bisa digunakan saat permainan berlangsung.");
       }
       if (currentRoom.gameMode !== "casual") {
-        throw new Error("VAL_ERR:Pit stop hanya tersedia pada mode Casual.");
+        throw new Error("VAL_ERR:Power-up hanya tersedia pada mode Casual.");
       }
       const player = findPlayer(currentRoom, clientId);
       if (!player) {
@@ -76,19 +79,19 @@ export async function POST(request: NextRequest) {
       }
 
       if (player.pitStopUsed) {
-        throw new Error("VAL_ERR:Kamu sudah menggunakan Pit Stop pada ronde ini.");
+        throw new Error("VAL_ERR:Kamu sudah menggunakan Power-up pada ronde ini.");
       }
       if (player.suspendedUntil && Date.now() < player.suspendedUntil) {
-        throw new Error("VAL_ERR:Kamu sedang ditangguhkan, tidak bisa masuk Pit Stop.");
+        throw new Error("VAL_ERR:Kamu sedang ditangguhkan, tidak bisa menggunakan Power-up.");
       }
 
       player.pitStopUsed = true;
-      player.activePowerUp = tyreType as "soft" | "medium" | "hard";
+      player.activePowerUp = powerUpType as "soft" | "medium" | "hard";
       
-      if (tyreType === "soft" || tyreType === "medium") {
+      if (powerUpType === "soft" || powerUpType === "medium") {
         player.powerUpExpiresAt = Date.now() + 15000;
-      } else if (tyreType === "hard") {
-        triggerPitAttack = true;
+      } else if (powerUpType === "hard") {
+        triggerPowerUpAttack = true;
       }
 
       return currentRoom;
@@ -101,14 +104,14 @@ export async function POST(request: NextRequest) {
     if (errMsg.startsWith("AUTH_ERR:")) {
       return errorResponse(errMsg.replace("AUTH_ERR:", ""), 403);
     }
-    console.error("Gagal memproses pit-stop:", err);
+    console.error("Gagal memproses power-up:", err);
     return errorResponse("Terjadi kesalahan internal server.", 500);
   }
 
   const finalPlayer = findPlayer(updatedRoom, clientId);
 
-  if (triggerPitAttack && finalPlayer) {
-    await publishRoomEvent(roomId, "pit_attack", {
+  if (triggerPowerUpAttack && finalPlayer) {
+    await publishRoomEvent(roomId, "powerup_attack", {
       type: "debris",
       attackerId: clientId,
       attackerName: finalPlayer.username,
@@ -119,4 +122,3 @@ export async function POST(request: NextRequest) {
 
   return Response.json({ room: sanitizeRoom(updatedRoom) });
 }
-

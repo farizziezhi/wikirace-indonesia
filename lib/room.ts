@@ -321,16 +321,16 @@ const API_ERROR_TRANSLATIONS: Record<string, { id: string; en: string }> = {
     en: "Player has already finished.",
   },
   "Pilihan ban tidak valid.": {
-    id: "Pilihan ban tidak valid.",
-    en: "Invalid ban selection.",
+    id: "Pilihan power-up tidak valid.",
+    en: "Invalid power-up selection.",
   },
   "Pit stop hanya boleh digunakan 1 kali per balapan.": {
-    id: "Pit stop hanya boleh digunakan 1 kali per balapan.",
-    en: "Pit stop can only be used once per race.",
+    id: "Power-up hanya boleh digunakan 1 kali per permainan.",
+    en: "Power-up can only be used once per match.",
   },
   "Pilihan ban tidak boleh kosong.": {
-    id: "Pilihan ban tidak boleh kosong.",
-    en: "Tyre selection cannot be empty.",
+    id: "Pilihan power-up tidak boleh kosong.",
+    en: "Power-up selection cannot be empty.",
   },
   "Pemain belum mencapai garis finish.": {
     id: "Pemain belum mencapai garis finish.",

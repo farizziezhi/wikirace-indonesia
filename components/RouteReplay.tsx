@@ -227,10 +227,10 @@ export default function RouteReplay({
               className="font-black text-lime-accent uppercase tracking-wider"
               style={{ fontSize: "var(--text-heading)", lineHeight: 1 }}
             >
-              🏁 {t.compareTitle}
+              {t.compareTitle}
             </div>
             <p className="mt-1 text-warm-cream/70 text-xs font-semibold uppercase tracking-wider">
-              {language === "en" ? "Interactive Telemetry Comparison Deck" : "Dek Perbandingan Telemetri Interaktif"}
+              {language === "en" ? "Interactive Route Comparison" : "Perbandingan Rute Interaktif"}
             </p>
           </div>
           <button
@@ -245,7 +245,7 @@ export default function RouteReplay({
         {/* ====== Player Selection Deck ====== */}
         <div className="flex flex-wrap items-center gap-2 bg-charcoal-deep/40 p-2.5 rounded-xl border border-warm-cream/10">
           <span className="text-[11px] font-bold text-warm-cream/50 uppercase tracking-widest mr-1.5">
-            {language === "en" ? "Select Drivers:" : "Pilih Pembalap:"}
+            {language === "en" ? "Select Players:" : "Pilih Pemain:"}
           </span>
           {playableRows.map((row) => {
             const checked = selectedIds.includes(row.player.clientId);
@@ -459,29 +459,28 @@ function ReplayColumn({
           </span>
           <div className="min-w-0 flex-1">
             <div className="truncate font-black flex items-center gap-1.5 text-base">
-              {winnerId === player.clientId ? "🏆 " : ""}
+              {winnerId === player.clientId ? (language === "en" ? " (Winner) " : " (Pemenang) ") : ""}
               {player.username}
             </div>
             <div className="flex items-center gap-2 mt-0.5">
               {statusBadge}
               {player.elo !== undefined && (
-                <span className="font-mono font-extrabold text-[11px] text-charcoal-text/70 uppercase">
-                  🏎️ {player.elo} ELO
+                <span className="font-extrabold text-[11px] text-charcoal-text/70 uppercase">
+                  {player.elo} ELO
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Dynamic driving style banner - permanently visible for instant telemetry wow factor */}
+        {/* Dynamic navigation style banner */}
         <div className="mt-3 bg-charcoal-text text-warm-cream p-2 border border-charcoal-text rounded-lg flex items-center gap-2">
-          <span className="text-lg shrink-0 font-black animate-bounce">{analytics.style.split(" ")[0]}</span>
           <div className="min-w-0 flex-1">
-            <div className="font-mono font-black text-[10px] uppercase text-lime-accent tracking-wider">
+            <div className="font-black text-[10px] uppercase text-lime-accent tracking-wider">
               {t.drivingStyle}:
             </div>
             <div className="font-bold text-[11px] truncate text-warm-cream">
-              {analytics.style.split(" ").slice(1).join(" ")}
+              {analytics.style}
             </div>
           </div>
         </div>
@@ -595,18 +594,17 @@ function ReplayColumn({
               </p>
             </div>
 
-            {/* Primary Metrics Group */}
             <div className="grid grid-cols-2 gap-2.5">
               <div className="p-2.5 border border-charcoal-text/25 bg-charcoal-text/5 rounded-lg flex flex-col gap-1">
                 <span className="text-[10px] font-bold text-charcoal-text/55 uppercase tracking-wider">{t.decisionIndex}</span>
                 <span className="font-black text-sm text-charcoal-text">
-                  ⏱️ {analytics.avgReactionTime > 0 ? t.secPerClick.replace("{sec}", analytics.avgReactionTime.toFixed(1)) : "—"}
+                  {analytics.avgReactionTime > 0 ? t.secPerClick.replace("{sec}", analytics.avgReactionTime.toFixed(1)) : "—"}
                 </span>
               </div>
               <div className="p-2.5 border border-charcoal-text/25 bg-charcoal-text/5 rounded-lg flex flex-col gap-1">
                 <span className="text-[10px] font-bold text-charcoal-text/55 uppercase tracking-wider">{t.navEfficiency}</span>
                 <span className="font-black text-sm text-charcoal-text">
-                  🎯 {analytics.efficiency}%
+                  {analytics.efficiency}%
                 </span>
               </div>
             </div>
@@ -622,7 +620,7 @@ function ReplayColumn({
                   const maxCount = Math.max(...categories.map(c => c.count), 1);
                   const percentage = Math.round((cat.count / maxCount) * 100);
                   
-                  // F1 Telemetry bar coloring based on index
+                  // Bar coloring based on index
                   const barColor = idx === 0 
                     ? "bg-lime-accent border border-charcoal-text" 
                     : idx === 1 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sponsor & Pendukung | WikiRace Indonesia",
-  description: "Paddock konstruktor dan donatur WikiRace Indonesia. Dukung server, realtime DB, dan hosting game Wikipedia Game gratis ini.",
+  description: "Daftar sponsor dan donatur WikiRace Indonesia. Dukung server, realtime DB, dan hosting game Wikipedia Game gratis ini.",
   alternates: {
     canonical: "/donatur",
   },

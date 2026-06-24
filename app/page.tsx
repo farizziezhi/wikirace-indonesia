@@ -21,6 +21,7 @@ import AdContainer from "@/components/AdContainer";
 import OnlineCountWidget from "@/components/OnlineCountWidget";
 import AudioToggleWidget from "@/components/AudioToggleWidget";
 import LanguageToggle from "@/components/LanguageToggle";
+import { BookOpen } from "@phosphor-icons/react";
 
 const MAX_USERNAME_LENGTH = 20;
 
@@ -562,10 +563,9 @@ export default function HomePage() {
                 WikiRace Indonesia
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <LanguageToggle onChange={setUiLang} />
+            <div className="flex items-center gap-1.5">
               <AudioToggleWidget />
-              <OnlineCountWidget />
+              <LanguageToggle onChange={setUiLang} />
             </div>
           </div>
 
@@ -577,7 +577,7 @@ export default function HomePage() {
               letterSpacing: "-0.035em",
             }}
           >
-            Lompat dari{" "}
+            {uiLang === "en" ? "Jump from " : "Lompat dari "}
             <span
               className="inline-block bg-light-beige px-2"
               style={{
@@ -620,28 +620,28 @@ export default function HomePage() {
           >
             <div className="flex flex-col gap-1">
               <span className="font-extrabold text-[11px] uppercase tracking-wider text-charcoal-text/60 flex items-center gap-1.5">
-                💖 {uiLang === "en" ? "Top Donators" : "Donatur Teratas"}
+                {uiLang === "en" ? "Top Donators" : "Donatur Teratas"}
               </span>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 {/* Always show Dev */}
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-yellow-accent/70 text-charcoal-text px-2.5 py-1 border border-charcoal-text rounded-md">
-                  👑 farizziezhi (Dev)
+                  farizziezhi (Dev)
                 </span>
 
                 {topDonators.length === 0 ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-light-beige text-charcoal-text/80 px-2.5 py-1 border border-dashed border-warm-gray rounded-md">
-                    ☕ {uiLang === "en" ? "Be the First Donator!" : "Jadilah Donatur Pertama!"}
+                    {uiLang === "en" ? "Be the First Donator!" : "Jadilah Donatur Pertama!"}
                   </span>
                 ) : (
                   topDonators.slice(0, 3).map((donator, idx) => {
-                    const medals = ["🥇", "🥈", "🥉"];
+                    const medals = ["#1", "#2", "#3"];
                     const colors = ["bg-lime-accent/80", "bg-light-beige", "bg-warm-gray/25"];
                     return (
                       <span
                         key={donator.id}
                         className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 border border-charcoal-text rounded-md ${colors[idx] || "bg-light-beige"}`}
                       >
-                        {medals[idx] || "☕"} {donator.name}
+                        {medals[idx] || ""} {donator.name}
                       </span>
                     );
                   })
@@ -722,12 +722,7 @@ export default function HomePage() {
                 className="relative overflow-hidden p-5 bg-charcoal-deep border-3 border-charcoal-text text-warm-cream shadow-[5px_5px_0px_#000] flex flex-col gap-4"
                 style={{ borderRadius: "var(--radius-input)" }}
               >
-                {/* Header Checkered Line */}
-                <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
-                  {Array.from({ length: 30 }).map((_, i) => (
-                    <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-                  ))}
-                </div>
+
 
                 <div className="flex items-start justify-between gap-3 mt-1.5">
                   <div className="flex items-center gap-3.5">
@@ -745,7 +740,7 @@ export default function HomePage() {
                       {user.username.slice(0, 2).toUpperCase()}
                     </span>
                     <div className="flex flex-col">
-                      <span className="text-[9px] uppercase font-mono font-black text-warm-cream/50 tracking-wider">Driver/Pembalap</span>
+                      <span className="text-[9px] uppercase font-mono font-black text-warm-cream/50 tracking-wider">Player</span>
                       <Link
                         href={`/profile/${user.username}`}
                         className="font-black text-warm-cream text-base hover:underline hover:text-lime-accent transition-colors cursor-pointer"
@@ -755,7 +750,7 @@ export default function HomePage() {
                       
                       <div className="text-[10px] text-warm-cream/70 font-mono mt-0.5 flex items-center gap-2">
                         <span className="text-lime-accent font-black">
-                          🏆 {user.stats?.elo ?? 1200} ELO
+                          {user.stats?.elo ?? 1200} ELO
                         </span>
                         <span>•</span>
                         <span>{user.stats?.wins ?? 0} {uiLang === "en" ? "Wins" : "Win"}</span>
@@ -763,35 +758,13 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* SVG ELO RPM Speedometer */}
-                  <div className="flex flex-col items-center gap-1 bg-charcoal-text/50 p-2 rounded-lg border border-warm-gray/10">
-                    <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">RPM Gauge</span>
-                    <div className="relative w-12 h-6 overflow-hidden flex items-end justify-center">
-                      <svg width="48" height="24" viewBox="0 0 48 24" aria-hidden="true">
-                        {/* Background Arc */}
-                        <path d="M 4 24 A 20 20 0 0 1 44 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
-                        {/* Filled Arc based on ELO */}
-                        <path 
-                          d="M 4 24 A 20 20 0 0 1 44 24" 
-                          fill="none" 
-                          stroke="var(--color-lime-accent)" 
-                          strokeWidth="4"
-                          strokeDasharray="63"
-                          strokeDashoffset={Math.max(0, 63 - (63 * Math.min(1.0, Math.max(0.0, ((user.stats?.elo ?? 1200) - 800) / 1000))) )}
-                        />
-                      </svg>
-                      <span className="absolute bottom-0 text-[10px] font-black font-mono text-lime-accent">
-                        {Math.min(9, Math.max(1, Math.round(((user.stats?.elo ?? 1200) / 1800) * 10)))}
-                      </span>
-                    </div>
-                  </div>
+
                 </div>
 
-                {/* Footer of Driver Card */}
+                {/* Footer */}
                 <div className="flex items-center justify-between border-t border-warm-cream/10 pt-3.5 mt-0.5">
-                  {/* Tier Badge */}
                   <div className="flex flex-col">
-                    <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">License Status</span>
+                    <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">Rank</span>
                     <span className="text-[10px] font-black uppercase text-lime-accent tracking-widest bg-lime-accent/15 px-2 py-0.5 rounded border border-lime-accent/20 mt-0.5">
                       {(user.stats?.elo ?? 1200) < 1100 ? (uiLang === "en" ? "NOVICE" : "PEMULA") : (user.stats?.elo ?? 1200) < 1300 ? (uiLang === "en" ? "EXPLORER" : "PENJELAJAH") : (uiLang === "en" ? "SPEEDRUNNER" : "LEGENDA")}
                     </span>
@@ -821,7 +794,7 @@ export default function HomePage() {
                 style={{ borderRadius: "var(--radius-input)" }}
               >
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">Unregistered Node</span>
+                  <span className="text-[8px] uppercase font-mono font-black text-warm-cream/45 tracking-wider">Guest</span>
                   <div className="text-xs font-bold text-warm-cream/80 max-w-[280px] leading-relaxed">
                     {uiLang === "en" ? "Log in or Sign up to save ELO score & enter the Leaderboard." : "Masuk atau Daftar untuk menyimpan skor ELO & masuk Papan Peringkat."}
                   </div>
@@ -867,12 +840,12 @@ export default function HomePage() {
                   boxShadow: "4px 4px 0px #000",
                 }}
               >
-                {/* Checkered side accent */}
-                <div className="absolute top-0 right-0 h-full w-1.5 bg-gradient-to-b from-lime-accent to-lime-deep opacity-80" />
+                {/* Side accent */}
+                <div className="absolute top-0 right-0 h-full w-1 bg-lime-accent opacity-60" />
 
                 <div className="flex items-center justify-between">
                   <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    🔥 {uiLang === "en" ? "Daily Challenge" : "Tantangan Harian"}
+                    {uiLang === "en" ? "Daily Challenge" : "Tantangan Harian"}
                   </span>
                   
                   <div className="flex items-center gap-3">
@@ -882,7 +855,7 @@ export default function HomePage() {
                           ? "text-lime-accent animate-pulse" 
                           : "text-warm-cream/70"
                       }`}>
-                        🔥 {dailyInfo?.streak ?? 0} {uiLang === "en" ? "Day Streak" : "Hari Streak"}
+                        {dailyInfo?.streak ?? 0} {uiLang === "en" ? "Day Streak" : "Hari Streak"}
                       </span>
                     ) : (
                       <span className="text-[10px] text-warm-cream/40 font-bold uppercase tracking-wider">
@@ -901,7 +874,7 @@ export default function HomePage() {
                       }}
                       title={uiLang === "en" ? "Minimize" : "Perkecil"}
                     >
-                      ➖
+                      −
                     </button>
                   </div>
                 </div>
@@ -968,7 +941,7 @@ export default function HomePage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-accent opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-accent"></span>
               </span>
-              <span>🔥 {uiLang === "en" ? "Daily Challenge" : "Tantangan Harian"}</span>
+              <span>{uiLang === "en" ? "Daily Challenge" : "Tantangan Harian"}</span>
               {user && dailyInfo?.streak > 0 && (
                 <span className="bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded">
                   {dailyInfo.streak}
@@ -982,8 +955,8 @@ export default function HomePage() {
             {invitedTo ? (
               <div className="flex flex-col gap-4">
                 <div className="bg-lime-accent/20 border border-lime-accent p-3.5 text-xs text-charcoal-text" style={{ borderRadius: "var(--radius-input)" }}>
-                  <span className="font-extrabold block mb-1 text-[13px]">{uiLang === "en" ? "📬 Room Invitation: " : "📬 Undangan Room: "}{invitedTo}</span>
-                  {uiLang === "en" ? "Enter your name below to join the race immediately." : "Masukkan nama Anda di bawah untuk langsung bergabung ke balapan."}
+                  <span className="font-extrabold block mb-1 text-[13px]">{uiLang === "en" ? "Room Invitation: " : "Undangan Room: "}{invitedTo}</span>
+                  {uiLang === "en" ? "Enter your name below to join immediately." : "Masukkan nama Anda di bawah untuk langsung bergabung."}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -1038,7 +1011,7 @@ export default function HomePage() {
                       color: activeTab === "play" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                     }}
                   >
-                    {uiLang === "en" ? "🎮 Play" : "🎮 Bermain"}
+                    {uiLang === "en" ? "Play" : "Bermain"}
                   </button>
                   <button
                     type="button"
@@ -1050,7 +1023,7 @@ export default function HomePage() {
                       color: activeTab === "leaderboard" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                     }}
                   >
-                    {uiLang === "en" ? "🏆 Leaderboard" : "🏆 Papan Skor"}
+                    {uiLang === "en" ? "Leaderboard" : "Papan Skor"}
                   </button>
                 </div>
 
@@ -1079,7 +1052,7 @@ export default function HomePage() {
                       />
                       {!user && (
                         <div className="flex justify-between items-center text-[11px] text-charcoal-text/50">
-                          <span>{uiLang === "en" ? "💡 Tip: Log in to save ELO" : "💡 Tip: Login untuk simpan ELO"}</span>
+                          <span>{uiLang === "en" ? "Tip: Log in to save ELO" : "Tip: Login untuk simpan ELO"}</span>
                           <span>{username.length}/{MAX_USERNAME_LENGTH}</span>
                         </div>
                       )}
@@ -1093,9 +1066,10 @@ export default function HomePage() {
                         </span>
                         <Link
                           href="/guide"
-                          className="font-mono font-black text-[10px] uppercase text-burnt-orange hover:text-lime-accent hover:underline flex items-center gap-1 cursor-pointer"
+                          className="font-bold text-xs uppercase text-burnt-orange hover:text-lime-accent hover:underline flex items-center gap-1.5 cursor-pointer transition-colors"
                         >
-                          📖 {uiLang === "en" ? "Game Guide" : "Pedoman Bermain"}
+                          <BookOpen size={14} weight="bold" />
+                          <span>{uiLang === "en" ? "Game Guide" : "Pedoman Bermain"}</span>
                         </Link>
                       </div>
                       <div
@@ -1156,7 +1130,7 @@ export default function HomePage() {
                           color: playMode === "ranked" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                         }}
                       >
-                        ⚡ Ranked
+                         Ranked
                       </button>
                       <button
                         type="button"
@@ -1168,7 +1142,7 @@ export default function HomePage() {
                           color: playMode === "mabar" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                         }}
                       >
-                        {uiLang === "en" ? "👥 Party" : "👥 Mabar"}
+                        {uiLang === "en" ? "Party" : "Mabar"}
                       </button>
                       <button
                         type="button"
@@ -1180,7 +1154,7 @@ export default function HomePage() {
                           color: playMode === "solo" ? "var(--color-warm-cream)" : "var(--color-charcoal-text)",
                         }}
                       >
-                        {uiLang === "en" ? "🏎️ Solo" : "🏎️ Solo"}
+                        {uiLang === "en" ? "Solo" : "Solo"}
                       </button>
                     </div>
 
@@ -1201,8 +1175,8 @@ export default function HomePage() {
                           }}
                         >
                           {mode === "matchmaking"
-                            ? (uiLang === "en" ? "⚡ Finding Opponent..." : "⚡ Mencari Lawan...")
-                            : (uiLang === "en" ? "⚡ Find Opponent (Ranked)" : "⚡ Cari Lawan (Ranked)")}
+                            ? (uiLang === "en" ? "Finding Opponent..." : "Mencari Lawan...")
+                            : (uiLang === "en" ? "Find Opponent (Ranked)" : "Cari Lawan (Ranked)")}
                         </button>
                         <p className="text-[11px] text-charcoal-text/60 text-center leading-relaxed">
                           {uiLang === "en"
@@ -1285,7 +1259,7 @@ export default function HomePage() {
                           className="btn-secondary w-full"
                           style={{ padding: "12px 18px", fontSize: "15px" }}
                         >
-                          {uiLang === "en" ? "🏎️ Start Solo Practice" : "🏎️ Mulai Latihan Solo"}
+                          {uiLang === "en" ? "Start Solo Practice" : "Mulai Latihan Solo"}
                         </button>
                         <p className="text-[11px] text-charcoal-text/60 text-center leading-relaxed">
                           {uiLang === "en"
@@ -1304,10 +1278,10 @@ export default function HomePage() {
                       <div className="flex items-center gap-2">
                         <span style={{ fontSize: 16 }}>🏆</span>
                         <h3 className="font-black text-charcoal-text uppercase tracking-tight" style={{ fontSize: "14px" }}>
-                          {uiLang === "en" ? "Global Driver Standings" : "Klasemen Global Pembalap"}
+                          {uiLang === "en" ? "Leaderboard" : "Papan Peringkat"}
                         </h3>
                       </div>
-                      <span className="text-[10px] font-mono font-black text-charcoal-text/50 uppercase">Session ELO</span>
+                      <span className="text-[10px] font-mono font-black text-charcoal-text/50 uppercase">ELO</span>
                     </div>
 
                     {leaderboardLoading ? (
@@ -1421,7 +1395,7 @@ export default function HomePage() {
           <div className={uiLang === "id" ? "flex flex-col gap-6" : "hidden"}>
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
-                📖 Tentang WikiRace Indonesia
+                Tentang WikiRace Indonesia
               </h2>
               <p className="text-sm sm:text-base text-charcoal-text/85 leading-relaxed font-medium">
                 WikiRace Indonesia (dikenal juga sebagai <strong>Wikipedia Game</strong> atau <strong>Wiki Speedrun</strong>) adalah sebuah permainan edukatif gratis di mana Anda berlomba menelusuri artikel Wikipedia dari satu artikel awal menuju artikel target yang telah ditentukan secepat mungkin, hanya dengan mengklik link biru di dalam artikel tersebut. Game ini melatih kecepatan navigasi, pemahaman logika, dan wawasan umum.
@@ -1432,7 +1406,7 @@ export default function HomePage() {
             
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
-                🏁 Panduan & Cara Bermain Balapan Wikipedia
+                Panduan & Cara Bermain WikiRace
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-light-beige/40 p-4 border border-charcoal-text/30 rounded-xl" style={{ borderRadius: "var(--radius-input)" }}>
@@ -1463,7 +1437,7 @@ export default function HomePage() {
 
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
-                ❓ Pertanyaan Umum (FAQ)
+                Pertanyaan Umum (FAQ)
               </h2>
               <div className="flex flex-col gap-4">
                 <div>
@@ -1475,7 +1449,7 @@ export default function HomePage() {
                 <div>
                   <h4 className="font-black text-sm text-charcoal-text">Apakah mendukung rute Wikipedia Bahasa Inggris?</h4>
                   <p className="text-xs sm:text-sm text-charcoal-text/75 mt-1">
-                    Tentu saja! Anda cukup mengganti pilihan <strong>Bahasa Wikipedia</strong> ke bendera 🇺🇸 (English) di form bermain untuk bertanding menggunakan database Wikipedia versi global.
+                    Tentu saja! Anda cukup mengganti pilihan <strong>Bahasa Wikipedia</strong> ke English di form bermain untuk bertanding menggunakan database Wikipedia versi global.
                   </p>
                 </div>
                 <div>
@@ -1492,7 +1466,7 @@ export default function HomePage() {
           <div className={uiLang === "en" ? "flex flex-col gap-6" : "hidden"}>
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
-                📖 About WikiRace Indonesia
+                About WikiRace Indonesia
               </h2>
               <p className="text-sm sm:text-base text-charcoal-text/85 leading-relaxed font-medium">
                 WikiRace Indonesia (widely known as the <strong>Wikipedia Game</strong> or <strong>Wiki Speedrun</strong>) is a free online educational game where players race to navigate through Wikipedia articles from a random start page to a designated target page. The catch? You can only click the blue hyperlinks inside the articles. It tests your speed, logic, and general knowledge.
@@ -1503,7 +1477,7 @@ export default function HomePage() {
             
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
-                🏁 Wikipedia Game Guide & How to Play
+                Wikipedia Game Guide & How to Play
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-light-beige/40 p-4 border border-charcoal-text/30 rounded-xl" style={{ borderRadius: "var(--radius-input)" }}>
@@ -1534,7 +1508,7 @@ export default function HomePage() {
 
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
-                ❓ Frequently Asked Questions (FAQ)
+                Frequently Asked Questions (FAQ)
               </h2>
               <div className="flex flex-col gap-4">
                 <div>
@@ -1546,7 +1520,7 @@ export default function HomePage() {
                 <div>
                   <h4 className="font-black text-sm text-charcoal-text">Does it support English Wikipedia routes?</h4>
                   <p className="text-xs sm:text-sm text-charcoal-text/75 mt-1">
-                    Yes! You can toggle the <strong>Wikipedia Language</strong> to the US flag 🇺🇸 (English) on the main lobby form to play with the global English Wikipedia database.
+                    Yes! You can toggle the <strong>Wikipedia Language</strong> to English on the main lobby form to play with the global English Wikipedia database.
                   </p>
                 </div>
                 <div>
@@ -1574,13 +1548,13 @@ export default function HomePage() {
               boxShadow: "var(--shadow-raised)",
             }}
           >
-            {uiLang === "en" ? "☕ Support Server (Saweria)" : "☕ Dukung Server (Saweria)"}
+            {uiLang === "en" ? "Support Server (Saweria)" : "Dukung Server (Saweria)"}
           </a>
           <p
             className="text-center text-charcoal-text/70"
             style={{ fontSize: "13px" }}
           >
-            {uiLang === "en" ? "Made with ☕ by " : "Dibuat dengan ☕ oleh "}{" "}
+            {uiLang === "en" ? "Made by " : "Dibuat oleh "}{" "}
             <a
             href="https://www.muhfarizzi.tech"
               target="_blank"
@@ -1597,7 +1571,7 @@ export default function HomePage() {
           >
             {uiLang === "en" ? "Last Updated: June 2026" : "Pembaruan Terakhir: Juni 2026"}
           </p>
-          <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-1">
+          <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-3">
             <Link href="/guide" className="hover:text-charcoal-text hover:underline transition">
               {uiLang === "en" ? "Game Guide" : "Pedoman Bermain"}
             </Link>
@@ -1620,16 +1594,11 @@ export default function HomePage() {
             className="relative overflow-hidden w-full max-w-[390px] bg-charcoal-deep text-warm-cream p-6 flex flex-col gap-5 border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
             style={{ borderRadius: "var(--radius-input)" }}
           >
-            {/* Checkered Racing Stripe */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-              ))}
-            </div>
+
 
             <div className="flex justify-between items-center border-b border-warm-cream/15 pb-2.5 mt-2">
-              <h3 className="font-mono font-black text-xl uppercase text-lime-accent">
-                🏁 {authType === "login" ? "Masuk Paddock" : "Daftar Driver"}
+              <h3 className="font-black text-xl uppercase text-lime-accent">
+                {authType === "login" ? (uiLang === "en" ? "Log In" : "Masuk") : (uiLang === "en" ? "Sign Up" : "Daftar Akun")}
               </h3>
               <button
                 onClick={() => setShowAuthModal(false)}
@@ -1649,7 +1618,7 @@ export default function HomePage() {
               </div>
             )}
 
-            <form onSubmit={handleAuthSubmit} className="flex flex-col gap-4 font-mono text-xs">
+            <form onSubmit={handleAuthSubmit} className="flex flex-col gap-4 text-xs">
               <div className="flex flex-col gap-1.5">
                 <label className="font-black text-warm-cream/80 uppercase">Username</label>
                 <input
@@ -1681,7 +1650,7 @@ export default function HomePage() {
                 disabled={authLoading}
                 className="chunky-press btn-primary w-full mt-2 cursor-pointer font-black text-sm uppercase border-2 border-charcoal-text py-3 shadow-[3px_3px_0px_#000]"
               >
-                {authLoading ? "PROSES..." : authType === "login" ? "🏁 MASUK BALAPAN" : "🏁 DAFTAR DRIVER"}
+                {authLoading ? "PROSES..." : authType === "login" ? "MASUK" : "DAFTAR"}
               </button>
             </form>
 

@@ -39,8 +39,8 @@ export default function ChatPanel({
   const [prevIsExpanded, setPrevIsExpanded] = useState(isExpanded);
 
   const quickMessages = language === "en" 
-    ? ["Box Box Box! 🛠️", "Green Light! 🏁", "No Power! ⚠️", "Push Push! ⚡", "Spinning Out! 🔄", "Plan B! 📋"]
-    : ["Box Box Box! 🛠️", "Lampu Hijau! 🏁", "Hilang Tenaga! ⚠️", "Ayo Cepat! ⚡", "Melintir! 🔄", "Rencana B! 📋"];
+    ? ["Need Help! 🛠️", "Ready! 👍", "Stuck! ⚠️", "Almost there! ⚡", "Lost! 🔄", "Change strategy! 📋"]
+    : ["Butuh bantuan! 🛠️", "Siap! 👍", "Macet! ⚠️", "Hampir sampai! ⚡", "Tersesat! 🔄", "Ganti strategi! 📋"];
 
   // Clear unread count when panel becomes expanded (in render phase).
   if (isExpanded !== prevIsExpanded) {
@@ -307,7 +307,7 @@ export default function ChatPanel({
             disabled={sendCooldown}
             className="shrink-0 bg-pure-white hover:bg-parchment text-charcoal-text border border-warm-gray font-mono font-bold text-[10px] uppercase px-2.5 py-1 rounded shadow-[1px_1px_0px_#000] disabled:opacity-40 transition-all cursor-pointer"
           >
-            📻 {msg}
+            {msg}
           </button>
         ))}
       </div>

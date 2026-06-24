@@ -237,7 +237,7 @@ export function speakRadioMessage(text: string, lang: "id" | "en"): void {
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = lang === "en" ? "en-US" : "id-ID";
     
-    // Cockpit radio style: slightly faster and flat tone
+    // Game radio style: slightly faster and flat tone
     utterance.rate = 1.05;
     utterance.pitch = 0.95;
 
@@ -249,7 +249,7 @@ export function speakRadioMessage(text: string, lang: "id" | "en"): void {
       utterance.voice = matchingVoice;
     }
 
-    // Play pit radio static beep before speaking
+    // Play radio static beep before speaking
     playPitRadioClick();
 
     // Speak after click sound plays out slightly
@@ -278,8 +278,8 @@ export function playPitStopSound(): void {
 
   const now = ctx.currentTime;
   
-  // F1 Impact Wrench / Wheel Gun sound simulation:
-  // 4 rapid high-speed impact bursts ("Zzzt! Zzzt! Zzzt! Zzzt!")
+  // Power-up activation sound simulation:
+  // 4 rapid high-speed energetic bursts ("Zzzt! Zzzt! Zzzt! Zzzt!")
   for (let i = 0; i < 4; i++) {
     const burstStart = now + i * 0.8;
     const osc = ctx.createOscillator();

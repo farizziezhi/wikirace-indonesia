@@ -140,12 +140,12 @@ export async function POST(request: NextRequest) {
       }
 
       // --- CUSTOM RULES: Ban List Check ---
-      const hasMediumTyre =
+      const hasBypassPowerUp =
         player.activePowerUp === "medium" &&
         player.powerUpExpiresAt &&
         Date.now() < player.powerUpExpiresAt;
       if (
-        !hasMediumTyre &&
+        !hasBypassPowerUp &&
         currentRoom.customRules?.bannedArticles &&
         currentRoom.customRules.bannedArticles.some(
           (ban) =>

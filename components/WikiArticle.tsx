@@ -114,7 +114,7 @@ function WikiArticle({
     return () => window.clearTimeout(timer);
   }, [bannedWarningTitle]);
 
-  // Listen for link hover events when Soft Tyres are active
+  // Listen for link hover events when Link Preview power-up is active
   useEffect(() => {
     const node = containerRef.current;
     if (!node || activePowerUp !== "soft") {
@@ -441,9 +441,9 @@ function WikiArticle({
           }}
         >
           {hoverSummary.loading ? (
-            <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-charcoal-text/60 animate-pulse">
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-charcoal-text/60 animate-pulse">
               <span className="inline-block w-2.5 h-2.5 border-2 border-charcoal-text border-t-transparent animate-spin rounded-full" />
-              <span>Telemetry Preview...</span>
+              <span>Loading preview...</span>
             </div>
           ) : (
             <div className="leading-relaxed">

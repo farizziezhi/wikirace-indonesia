@@ -517,10 +517,10 @@ export default function Game({
   );
   const clicksCount = me ? Math.max(0, me.route.length - 1) : 0;
 
-  // ------- Pit Stop & Power-Ups States -------
+  // ------- Power-Ups States -------
   const [pitActive, setPitActive] = useState(false);
   const [pitTimeLeft, setPitTimeLeft] = useState(4.0);
-  const [selectedTyre, setSelectedTyre] = useState<"soft" | "medium" | "hard" | null>(null);
+  const [selectedPowerUp, setSelectedPowerUp] = useState<"soft" | "medium" | "hard" | null>(null);
 
   const [localActivePowerUp, setLocalActivePowerUp] = useState<"soft" | "medium" | "hard" | null>(null);
   const [powerUpTimeLeft, setPowerUpTimeLeft] = useState(0);
@@ -562,7 +562,7 @@ export default function Game({
           setPitActive(false);
 
           // Submit the choice
-          const finalTyre = selectedTyre || "medium";
+          const finalPowerUp = selectedPowerUp || "medium";
           void fetch("/api/room/pit-stop", {
             method: "POST",
             headers: {
@@ -572,14 +572,14 @@ export default function Game({
             body: JSON.stringify({
               roomId: room.id,
               clientId: currentClientId,
-              tyreType: finalTyre,
+              powerUpType: finalPowerUp,
             }),
           }).then((res) => {
             if (res.ok) {
               playPowerUpEquippedSound();
             }
           }).catch((err) => {
-            console.error("Gagal mengirim pit stop:", err);
+            console.error("Gagal mengirim power-up:", err);
           });
         }
         return next;
@@ -587,7 +587,7 @@ export default function Game({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [pitActive, selectedTyre, room.id, currentClientId]);
+  }, [pitActive, selectedPowerUp, room.id, currentClientId]);
 
   // ------- Cheat prevention: disable search shortcuts (Ctrl+F, Cmd+F, F3, etc) -------
   const [suspensionNotice, setSuspensionNotice] = useState<{
@@ -640,7 +640,7 @@ export default function Game({
   const handlePitStopClick = useCallback(() => {
     if (pitActive || me?.pitStopUsed || hasSurrendered || (suspensionTimeLeft > 0)) return;
 
-    setSelectedTyre(null);
+    setSelectedPowerUp(null);
     setPitTimeLeft(4.0);
     setPitActive(true);
     playPitStopSound();
@@ -767,7 +767,7 @@ export default function Game({
       }
     }
 
-    function handlePitAttack(message: Ably.Message) {
+    function handlePowerUpAttack(message: Ably.Message) {
       const data = message.data as {
         type: string;
         attackerId: string;
@@ -783,12 +783,12 @@ export default function Game({
 
     void ablyChannel.subscribe("game_cancelled", handleGameCancelled);
     void ablyChannel.subscribe("player_suspended", handlePlayerSuspended);
-    void ablyChannel.subscribe("pit_attack", handlePitAttack);
+    void ablyChannel.subscribe("powerup_attack", handlePowerUpAttack);
 
     return () => {
       ablyChannel.unsubscribe("game_cancelled", handleGameCancelled);
       ablyChannel.unsubscribe("player_suspended", handlePlayerSuspended);
-      ablyChannel.unsubscribe("pit_attack", handlePitAttack);
+      ablyChannel.unsubscribe("powerup_attack", handlePowerUpAttack);
     };
   }, [ablyChannel, router, currentClientId]);
 
@@ -1134,11 +1134,10 @@ export default function Game({
               }}
             >
               <div className="flex items-center gap-1.5">
-                <span className="animate-pulse">{localActivePowerUp === "soft" ? "🔴" : "🟡"}</span>
                 <span>
                   {localActivePowerUp === "soft"
-                    ? (uiLang === "en" ? "SOFT TYRES ACTIVE: LINK PREVIEWS ENABLED" : "BAN SOFT AKTIF: PREVIEW LINK AKTIF")
-                    : (uiLang === "en" ? "MEDIUM TYRES ACTIVE: BAN BYPASS ENABLED" : "BAN MEDIUM AKTIF: ABREVIASI BAN AKTIF")}
+                    ? (uiLang === "en" ? "LINK PREVIEW ACTIVE: HOVER LINKS TO PREVIEW" : "PRATINJAU LINK AKTIF: ARAHKAN KURSOR KE LINK")
+                    : (uiLang === "en" ? "BAN BYPASS ACTIVE: ALL LINKS UNLOCKED" : "ABAIKAN BLOKIR AKTIF: SEMUA LINK BISA DIKLIK")}
                 </span>
               </div>
               <div className="tabular-nums opacity-95">
@@ -1217,12 +1216,7 @@ export default function Game({
       {pitActive && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-text/95 p-4 sm:p-6 text-warm-cream">
           <div className="relative w-full max-w-[640px] bg-charcoal-deep border-4 border-lime-accent p-6 text-center flex flex-col gap-6" style={{ borderRadius: "var(--radius-input)", boxShadow: "var(--shadow-floating)" }}>
-            {/* Checkered Border Detail */}
-            <div className="absolute top-0 left-0 right-0 h-3 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
-              {Array.from({ length: 40 }).map((_, i) => (
-                <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-              ))}
-            </div>
+
 
             <div className="mt-2 flex flex-col items-center gap-1">
               <h2 className="font-mono font-black text-2xl text-lime-accent uppercase tracking-wider animate-pulse">
@@ -1243,123 +1237,123 @@ export default function Game({
               </span>
             </div>
 
-            {/* Tyre Card Selector Grid */}
+            {/* Power-Up Card Selector Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-              {/* Soft Tyres Card */}
+              {/* Soft Power-up Card */}
               <button
-                key="soft-tyre"
+                key="soft-powerup"
                 type="button"
                 onClick={() => {
-                  setSelectedTyre("soft");
+                  setSelectedPowerUp("soft");
                 }}
                 className={`relative text-left p-3.5 flex flex-col gap-2 transition select-none border ${
-                  selectedTyre === "soft"
+                  selectedPowerUp === "soft"
                     ? "bg-burnt-orange text-warm-cream border-lime-accent scale-[1.03] shadow-none translate-y-[2px]"
                     : "bg-charcoal-text border-warm-cream/20 text-warm-cream hover:border-warm-cream/40 hover:scale-[1.01]"
                 }`}
                 style={{
                   borderRadius: "var(--radius-button)",
-                  borderWidth: selectedTyre === "soft" ? "3px" : "1px",
+                  borderWidth: selectedPowerUp === "soft" ? "3px" : "1px",
                 }}
               >
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
-                  <span>{translations[uiLang].softTyresTitle}</span>
-                  {selectedTyre === "soft" && (
+                  <span>{translations[uiLang].linkPreviewTitle}</span>
+                  {selectedPowerUp === "soft" && (
                     <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
                       🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
-                  {translations[uiLang].softTyresDesc}
+                  {translations[uiLang].linkPreviewDesc}
                 </p>
               </button>
 
-              {/* Medium Tyres Card */}
+              {/* Medium Power-up Card */}
               <button
-                key="medium-tyre"
+                key="medium-powerup"
                 type="button"
                 onClick={() => {
-                  setSelectedTyre("medium");
+                  setSelectedPowerUp("medium");
                 }}
                 className={`relative text-left p-3.5 flex flex-col gap-2 transition select-none border ${
-                  selectedTyre === "medium"
+                  selectedPowerUp === "medium"
                     ? "bg-playdate-yellow text-charcoal-text border-lime-accent scale-[1.03] shadow-none translate-y-[2px]"
                     : "bg-charcoal-text border-warm-cream/20 text-warm-cream hover:border-warm-cream/40 hover:scale-[1.01]"
                 }`}
                 style={{
                   borderRadius: "var(--radius-button)",
-                  borderWidth: selectedTyre === "medium" ? "3px" : "1px",
+                  borderWidth: selectedPowerUp === "medium" ? "3px" : "1px",
                 }}
               >
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
-                  <span>{translations[uiLang].mediumTyresTitle}</span>
-                  {selectedTyre === "medium" && (
+                  <span>{translations[uiLang].bypassBanTitle}</span>
+                  {selectedPowerUp === "medium" && (
                     <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
                       🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
-                  {translations[uiLang].mediumTyresDesc}
+                  {translations[uiLang].bypassBanDesc}
                 </p>
               </button>
 
-              {/* Hard Tyres Card */}
+              {/* Hard Power-up Card */}
               <button
-                key="hard-tyre"
+                key="hard-powerup"
                 type="button"
                 onClick={() => {
-                  setSelectedTyre("hard");
+                  setSelectedPowerUp("hard");
                 }}
                 className={`relative text-left p-3.5 flex flex-col gap-2 transition select-none border ${
-                  selectedTyre === "hard"
+                  selectedPowerUp === "hard"
                     ? "bg-pure-white text-charcoal-text border-lime-accent scale-[1.03] shadow-none translate-y-[2px]"
                     : "bg-charcoal-text border-warm-cream/20 text-warm-cream hover:border-warm-cream/40 hover:scale-[1.01]"
                 }`}
                 style={{
                   borderRadius: "var(--radius-button)",
-                  borderWidth: selectedTyre === "hard" ? "3px" : "1px",
+                  borderWidth: selectedPowerUp === "hard" ? "3px" : "1px",
                 }}
               >
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
-                  <span>{translations[uiLang].hardTyresTitle}</span>
-                  {selectedTyre === "hard" && (
+                  <span>{translations[uiLang].obstructTitle}</span>
+                  {selectedPowerUp === "hard" && (
                     <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
                       🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] leading-relaxed opacity-85 font-semibold mt-1">
-                  {translations[uiLang].hardTyresDesc}
+                  {translations[uiLang].obstructDesc}
                 </p>
               </button>
             </div>
 
-            {/* Glowing Telemetry Strategy Console Bar */}
+            {/* Strategy Console Bar */}
             <div className="border-t border-warm-cream/10 pt-4">
               <div
                 className={`font-mono text-sm uppercase tracking-wider font-extrabold p-3.5 flex justify-between items-center transition-all duration-300 border ${
-                  selectedTyre === "soft"
-                    ? "bg-burnt-orange text-warm-cream border-pure-white shadow-[0_0_15px_rgba(255,107,0,0.4)]"
-                    : selectedTyre === "medium"
-                      ? "bg-playdate-yellow text-charcoal-text border-pure-white shadow-[0_0_15px_rgba(255,226,89,0.4)]"
-                      : selectedTyre === "hard"
-                        ? "bg-pure-white text-charcoal-text border-pure-white shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+                  selectedPowerUp === "soft"
+                    ? "bg-burnt-orange text-warm-cream border-pure-white shadow-[2px_2px_0px_#000]"
+                    : selectedPowerUp === "medium"
+                      ? "bg-playdate-yellow text-charcoal-text border-pure-white shadow-[2px_2px_0px_#000]"
+                      : selectedPowerUp === "hard"
+                        ? "bg-pure-white text-charcoal-text border-pure-white shadow-[2px_2px_0px_#000]"
                         : "bg-charcoal-text text-burnt-orange border-burnt-orange animate-pulse"
                 }`}
                 style={{ borderRadius: "var(--radius-button)" }}
               >
                 <div className="flex items-center gap-2">
-                  <span>⚡ {uiLang === "en" ? "STRATEGY:" : "STRATEGI:"}</span>
+                  <span>{uiLang === "en" ? "POWER-UP:" : "POWER-UP:"}</span>
                   <span className="font-black underline decoration-2">
-                    {selectedTyre 
-                      ? (selectedTyre === "soft" ? "🔴 SOFT COMPOUND" : selectedTyre === "medium" ? "🟡 MEDIUM COMPOUND" : "⚪ HARD COMPOUND")
-                      : (uiLang === "en" ? "SELECT A TYRE!" : "PILIH BAN SEKARANG!")}
+                    {selectedPowerUp 
+                      ? (selectedPowerUp === "soft" ? "LINK PREVIEW" : selectedPowerUp === "medium" ? "BYPASS BAN" : "OBSTRUCT")
+                      : (uiLang === "en" ? "SELECT POWER-UP!" : "PILIH POWER-UP!")}
                   </span>
                 </div>
                 <span className="text-xs opacity-90 font-bold">
-                  {uiLang === "en" ? "AUTO-FIT AT " : "AUTO-FIT PADA "}
+                  {uiLang === "en" ? "AUTO-ACTIVATE AT " : "OTOMATIS AKTIF PADA "}
                   <span className="font-black tabular-nums">{pitTimeLeft.toFixed(1)}s</span>
                 </span>
               </div>

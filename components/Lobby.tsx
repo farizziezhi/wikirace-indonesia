@@ -640,16 +640,9 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 color: "var(--color-warm-cream)",
               }}
             >
-              {/* Header Checkered Accent Line */}
-              <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
-                {Array.from({ length: 30 }).map((_, i) => (
-                  <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-                ))}
-              </div>
-
               <div className="flex flex-col items-center gap-2.5 px-6 py-5 w-full mt-1.5">
                 <h1 className="font-black tracking-tight text-lime-accent uppercase" style={{ fontSize: "22px", lineHeight: 1.1 }}>
-                  🏎️ Ranked Match Cockpit
+                  {uiLanguage === "en" ? "Ranked Lobby" : "Lobi Ranked"}
                 </h1>
 
                 <div className="flex items-center gap-6 border-t border-b border-warm-gray/10 py-2.5 px-6 my-0.5 w-full justify-center font-mono">
@@ -776,7 +769,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
             >
               <div className="flex items-center justify-between border-b border-warm-cream/10 pb-3">
                 <h2 className="font-black text-lg uppercase tracking-wider text-lime-accent">
-                  🏎️ Driver Standings
+                  {uiLanguage === "en" ? "Player Standings" : "Klasemen Pemain"}
                 </h2>
                 <span className={`font-mono font-black text-xs uppercase ${allReady ? "text-lime-accent" : "text-burnt-orange"}`}>
                   {readyCount}/{numPlayers} READY
@@ -936,17 +929,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
           className="relative overflow-hidden flex flex-col items-center gap-3 bg-charcoal-deep text-warm-cream px-6 py-8 text-center border-3 border-charcoal-text shadow-[6px_6px_0px_#000]"
           style={{ borderRadius: "var(--radius-rounded)" }}
         >
-          {/* Header Checkered Line */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-charcoal-text overflow-hidden flex" aria-hidden="true">
-            {Array.from({ length: 30 }).map((_, i) => (
-              <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? "bg-pure-white" : "bg-charcoal-text"}`} />
-            ))}
-          </div>
-
           <span
-            className="font-mono font-black uppercase text-lime-accent text-xs tracking-widest mt-1.5"
+            className="font-black uppercase text-lime-accent text-xs tracking-widest mt-1.5"
           >
-            🏁 {t.roomCodeShare} • PADDOCK ENTRY
+            {t.roomCodeShare}
           </span>
           <div
             className="font-black font-mono tabular-nums text-lime-accent bg-charcoal-text/50 px-8 py-3 rounded-2xl border-2 border-charcoal-text shadow-[inset_0px_2px_8px_rgba(0,0,0,0.5)] my-2"
@@ -1043,9 +1029,8 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                   lineHeight: "1.5",
                 }}
               >
-                💡{" "}
-                <span className="font-black text-lime-accent uppercase font-mono tracking-wider block sm:inline mr-1">
-                  {uiLanguage === "en" ? "COCKPIT SETUP:" : "CARA MENGATUR BALAPAN:"}
+                <span className="font-black text-lime-accent uppercase tracking-wider block sm:inline mr-1">
+                  {uiLanguage === "en" ? "LOBBY SETUP:" : "PENGATURAN ROOM:"}
                 </span>{" "}
                 {uiLanguage === "en" ? (
                   <>
@@ -1981,8 +1966,8 @@ function ArticlePreview({
   }
   return (
     <div className="flex flex-col gap-2 border-t border-warm-gray/30 pt-4 mt-2">
-      <span className="text-[10px] font-mono font-black text-charcoal-text/50 uppercase tracking-widest">
-        {t.preview} • TELEMETRY ROUTE
+      <span className="text-[10px] font-black text-charcoal-text/50 uppercase tracking-widest">
+        {t.preview} • {uiLanguage === "en" ? "GAME ROUTE" : "RUTE PERMAINAN"}
       </span>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-charcoal-deep p-4 rounded-xl border-2 border-charcoal-text shadow-[3px_3px_0px_#000] text-warm-cream">
         {/* Start */}
