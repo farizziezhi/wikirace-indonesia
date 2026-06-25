@@ -16,6 +16,7 @@ import {
   getMatchmakingPoolSize,
   getValkeyClient,
   checkRateLimit,
+  resolveWikipediaRedirect,
 } from "@/lib/redis";
 import {
   createPlayer,
@@ -303,6 +304,14 @@ export async function POST(request: NextRequest) {
       const existing = await getRoom(roomId);
       if (!existing) break;
       roomId = generateRoomId();
+    }
+
+    // Resolve redirects for start and end articles (if set)
+    if (startArticle) {
+      startArticle = await resolveWikipediaRedirect(startArticle, language);
+    }
+    if (endArticle) {
+      endArticle = await resolveWikipediaRedirect(endArticle, language);
     }
 
     const hostPlayer = createPlayer(clientId, username, true);

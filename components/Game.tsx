@@ -895,6 +895,15 @@ export default function Game({
     [hasSurrendered, normalizedStartTime, myArticle, room.id, currentClientId, clockOffset],
   );
 
+  const handleRedirectResolved = useCallback(
+    (resolvedTitle: string) => {
+      if (resolvedTitle === myArticle) return;
+      setMyArticle(resolvedTitle);
+      void handleNavigate(resolvedTitle);
+    },
+    [myArticle, handleNavigate],
+  );
+
   // ------- Action: surrender (two-step confirm & auto-timeout) -------
   const surrenderingRef = useRef(false);
   const [confirmingSurrender, setConfirmingSurrender] = useState(false);
@@ -1214,6 +1223,7 @@ export default function Game({
               uiLanguage={uiLang}
               activePowerUp={localActivePowerUp}
               bannedArticles={room.customRules?.bannedArticles}
+              onRedirectResolved={handleRedirectResolved}
             />
           </div>
         </div>

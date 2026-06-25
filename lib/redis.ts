@@ -540,3 +540,70 @@ export async function resetBotStreak(username: string): Promise<void> {
     console.error("Gagal resetBotStreak:", err);
   }
 }
+
+/**
+ * Melakukan resolve redirect Wikipedia secara server-side menggunakan API Wikipedia.
+ * Hasil di-cache di Valkey/Upstash selama 24 jam untuk kecepatan respon.
+ */
+export async function resolveWikipediaRedirect(
+  title: string,
+  lang: "id" | "en" = "id",
+): Promise<string> {
+  const trimmed = title.trim();
+  if (!trimmed) return title;
+
+  const cacheKey = `wiki:redirect:${lang}:${trimmed.toLowerCase().replace(/_/g, " ")}`;
+
+  try {
+    // 1. Cek cache
+    const upstash = getUpstashClient();
+    if (upstash) {
+      const cached = await upstash.get<string>(cacheKey);
+      if (cached) return cached;
+    } else {
+      const valkey = getValkeyClient();
+      const cached = await valkey.get(cacheKey);
+      if (cached) return cached;
+    }
+
+    // 2. Query Wikipedia API
+    const baseUrl = lang === "en" ? "https://en.wikipedia.org" : "https://id.wikipedia.org";
+    const url = new URL(`${baseUrl}/w/api.php`);
+    url.searchParams.set("action", "query");
+    url.searchParams.set("titles", trimmed);
+    url.searchParams.set("redirects", "1");
+    url.searchParams.set("format", "json");
+    url.searchParams.set("origin", "*");
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        "User-Agent": "WikiRaceID/1.0 (https://wikiraceid.web.id; support@wikiraceid.web.id) NextJS/16",
+      },
+      signal: AbortSignal.timeout(2000),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const pages = data.query?.pages;
+      if (pages) {
+        const pageId = Object.keys(pages)[0];
+        const resolvedTitle = pages[pageId]?.title;
+        if (resolvedTitle) {
+          // Simpan ke cache 24 jam (86400 detik)
+          const TTL = 86400;
+          if (upstash) {
+            await upstash.set(cacheKey, resolvedTitle, { ex: TTL });
+          } else {
+            const valkey = getValkeyClient();
+            await valkey.set(cacheKey, resolvedTitle, "EX", TTL);
+          }
+          return resolvedTitle;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Gagal resolve Wikipedia redirect:", err);
+  }
+
+  return title;
+}

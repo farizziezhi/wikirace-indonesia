@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getRoom, updateRoomAtomically } from "@/lib/redis";
+import { getRoom, updateRoomAtomically, resolveWikipediaRedirect } from "@/lib/redis";
 import { errorResponse, MAX_ARTICLE_TITLE_LENGTH, sanitizeRoom } from "@/lib/room";
 import { getChallengePackById } from "@/lib/challenges";
 import { fetchRandomArticle } from "@/lib/wikipedia";
@@ -59,7 +59,13 @@ export async function POST(request: NextRequest) {
   let endArticle = "";
   let targetLanguage: WikiLanguage = "id";
 
-  if (random) {
+  if (packId) {
+    const pack = getChallengePackById(packId);
+    if (!pack) return errorResponse("Pack tidak ditemukan.");
+    startArticle = await resolveWikipediaRedirect(pack.startArticle, pack.lang as WikiLanguage);
+    endArticle = await resolveWikipediaRedirect(pack.endArticle, pack.lang as WikiLanguage);
+    targetLanguage = pack.lang as WikiLanguage;
+  } else if (random) {
     const targetLang =
       body.language === "en" || body.language === "id"
         ? (body.language as WikiLanguage)
@@ -69,8 +75,28 @@ export async function POST(request: NextRequest) {
     if (!s || !e || s === e) {
       return errorResponse("Gagal generate artikel random. Coba lagi.");
     }
-    startArticle = s;
-    endArticle = e;
+    startArticle = await resolveWikipediaRedirect(s, targetLang);
+    endArticle = await resolveWikipediaRedirect(e, targetLang);
+    targetLanguage = targetLang;
+  } else {
+    const targetLang =
+      body.language === "en" || body.language === "id"
+        ? (body.language as WikiLanguage)
+        : (room.language ?? "id");
+    if (typeof body.startArticle === "string") {
+      const s = body.startArticle.trim();
+      if (s.length > MAX_ARTICLE_TITLE_LENGTH) {
+        return errorResponse("Judul artikel awal terlalu panjang.");
+      }
+      startArticle = await resolveWikipediaRedirect(s, targetLang);
+    }
+    if (typeof body.endArticle === "string") {
+      const e = body.endArticle.trim();
+      if (e.length > MAX_ARTICLE_TITLE_LENGTH) {
+        return errorResponse("Judul artikel tujuan terlalu panjang.");
+      }
+      endArticle = await resolveWikipediaRedirect(e, targetLang);
+    }
     targetLanguage = targetLang;
   }
 
@@ -116,27 +142,19 @@ export async function POST(request: NextRequest) {
       if (packId) {
         const pack = getChallengePackById(packId);
         if (!pack) throw new Error("VAL_ERR:Pack tidak ditemukan.");
-        currentRoom.startArticle = pack.startArticle;
-        currentRoom.endArticle = pack.endArticle;
+        currentRoom.startArticle = startArticle;
+        currentRoom.endArticle = endArticle;
         currentRoom.language = pack.lang as WikiLanguage;
       } else if (random) {
         currentRoom.startArticle = startArticle;
         currentRoom.endArticle = endArticle;
         currentRoom.language = targetLanguage;
       } else {
-        if (typeof body.startArticle === "string") {
-          const s = body.startArticle.trim();
-          if (s.length > MAX_ARTICLE_TITLE_LENGTH) {
-            throw new Error("VAL_ERR:Judul artikel awal terlalu panjang.");
-          }
-          currentRoom.startArticle = s;
+        if (startArticle) {
+          currentRoom.startArticle = startArticle;
         }
-        if (typeof body.endArticle === "string") {
-          const e = body.endArticle.trim();
-          if (e.length > MAX_ARTICLE_TITLE_LENGTH) {
-            throw new Error("VAL_ERR:Judul artikel tujuan terlalu panjang.");
-          }
-          currentRoom.endArticle = e;
+        if (endArticle) {
+          currentRoom.endArticle = endArticle;
         }
         if (currentRoom.startArticle && currentRoom.endArticle && currentRoom.startArticle === currentRoom.endArticle) {
           throw new Error("VAL_ERR:Artikel awal dan tujuan tidak boleh sama.");

@@ -10,6 +10,7 @@ import {
   getBotStreak,
   incrementBotStreak,
   resetBotStreak,
+  resolveWikipediaRedirect,
 } from "@/lib/redis";
 import {
   createRouteStep,
@@ -71,6 +72,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Resolve Wikipedia redirect to canonical title (done before transaction to prevent blocking database connection)
+  const resolvedArticle = await resolveWikipediaRedirect(article, room.language ?? "id");
+
   // Pre-fetch bot streaks untuk pemain manusia jika ini Ranked Matchmaking
   const botStreaks: Record<string, number> = {};
   if (room.isMatchmaking) {
@@ -131,6 +135,18 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // --- DUPLICATE CLICK PROTECTION ---
+      if (player.currentArticle === resolvedArticle) {
+        // Just return currentRoom, no click recorded, but check victory condition
+        if (resolvedArticle === currentRoom.endArticle) {
+          player.status = "finished";
+          player.finishedAt = Date.now();
+          currentRoom.status = "finished";
+          isWon = true;
+        }
+        return currentRoom;
+      }
+
       // --- CUSTOM RULES: Click Limit Check ---
       const currentClicks = player.route.length - 1;
       if (currentRoom.customRules?.clickLimit && currentRoom.customRules.clickLimit > 0) {
@@ -150,26 +166,26 @@ export async function POST(request: NextRequest) {
         currentRoom.customRules.bannedArticles.some(
           (ban) =>
             ban.toLowerCase().replace(/_/g, " ") ===
-            article.toLowerCase().replace(/_/g, " "),
+            resolvedArticle.toLowerCase().replace(/_/g, " "),
         )
       ) {
-        throw new Error(`VAL_ERR:Artikel "${article}" dilarang di room ini!`);
+        throw new Error(`VAL_ERR:Artikel "${resolvedArticle}" dilarang di room ini!`);
       }
 
-      const step = createRouteStep(article, currentRoom.startTime!);
+      const step = createRouteStep(resolvedArticle, currentRoom.startTime!);
       player.route.push(step);
-      player.currentArticle = article;
+      player.currentArticle = resolvedArticle;
 
       // --- CUSTOM RULES: Post-move Click Expiry Check ---
       const clicksAfter = player.route.length - 1;
       if (currentRoom.customRules?.clickLimit && currentRoom.customRules.clickLimit > 0) {
-        if (clicksAfter >= currentRoom.customRules.clickLimit && article !== currentRoom.endArticle) {
+        if (clicksAfter >= currentRoom.customRules.clickLimit && resolvedArticle !== currentRoom.endArticle) {
           player.status = "surrendered";
         }
       }
 
       // Jika pemain mencapai artikel akhir -> MENANG!
-      if (article === currentRoom.endArticle) {
+      if (resolvedArticle === currentRoom.endArticle) {
         player.status = "finished";
         player.finishedAt = Date.now();
         currentRoom.status = "finished";

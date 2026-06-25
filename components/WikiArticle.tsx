@@ -23,6 +23,8 @@ interface WikiArticleProps {
   uiLanguage: "id" | "en";
   bannedArticles?: string[];
   activePowerUp?: "soft" | "medium" | "hard" | null;
+  /** Dipanggil jika artikel yang di-fetch merupakan redirect dan menghasilkan judul canonical baru. */
+  onRedirectResolved?: (resolvedTitle: string) => void;
 }
 
 /**
@@ -42,6 +44,7 @@ function WikiArticle({
   uiLanguage,
   bannedArticles = [],
   activePowerUp = null,
+  onRedirectResolved,
 }: WikiArticleProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayedArticle, setDisplayedArticle] = useState(currentArticle);
@@ -77,13 +80,17 @@ function WikiArticle({
           // Sanitasi HTML dari Wikipedia untuk mencegah XSS.
           // DOMPurify mempertahankan <a>, <img>, <table>, dll.
           // tapi menghapus <script>, <iframe>, <object>, dan event handlers on*.
-          const cleanHtml = DOMPurify.sanitize(result, {
+          const cleanHtml = DOMPurify.sanitize(result.html, {
             FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "textarea", "button"],
             FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus", "onblur", "onsubmit", "onchange"],
           });
-          setDisplayedArticle(currentArticle);
+          setDisplayedArticle(result.title);
           setHtml(cleanHtml);
           setLoading(false);
+
+          if (result.title !== currentArticle && onRedirectResolved) {
+            onRedirectResolved(result.title);
+          }
         })
         .catch(() => {
           if (cancelled) return;
@@ -96,7 +103,7 @@ function WikiArticle({
       cancelled = true;
       window.clearTimeout(id);
     };
-  }, [currentArticle, language, t]);
+  }, [currentArticle, language, t, onRedirectResolved]);
 
   // Scroll ke atas page setiap kali konten artikel benar-benar diganti.
   useEffect(() => {

@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 import { getChallengePackById } from "@/lib/challenges";
 import { fetchRandomArticle } from "@/lib/wikipedia";
-import { getRoom, setRoom, checkRateLimit } from "@/lib/redis";
+import { getRoom, setRoom, checkRateLimit, resolveWikipediaRedirect } from "@/lib/redis";
 import {
   createPlayer,
   errorResponse,
@@ -83,6 +83,14 @@ export async function POST(request: NextRequest) {
     }
     startArticle = s;
     endArticle = e;
+  }
+
+  // Resolve Wikipedia redirects for start and end articles (if set)
+  if (startArticle) {
+    startArticle = await resolveWikipediaRedirect(startArticle, language);
+  }
+  if (endArticle) {
+    endArticle = await resolveWikipediaRedirect(endArticle, language);
   }
 
   // Cari roomId yang belum dipakai. Tabrakan amat jarang

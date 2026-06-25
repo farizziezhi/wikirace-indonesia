@@ -84,17 +84,17 @@ const NON_ARTICLE_PREFIXES = [
  * Max 30 entries. Map iterates in insertion order → delete oldest = delete first.
  */
 const ARTICLE_CACHE_MAX = 30;
-const articleCache = new Map<string, Promise<string | null>>();
+const articleCache = new Map<string, Promise<{ html: string; title: string } | null>>();
 
 /**
- * Ambil HTML konten artikel Wikipedia untuk judul tertentu.
+ * Ambil HTML konten artikel Wikipedia dan judul asli (canonical) untuk judul tertentu.
  * Return null kalau artikel tidak ada / fetch gagal.
  * Hasil di-cache secara client-side supaya navigasi ulang instan.
  */
 export async function fetchArticleHtml(
   title: string,
   lang: WikiLanguage = DEFAULT_LANGUAGE,
-): Promise<string | null> {
+): Promise<{ html: string; title: string } | null> {
   const key = `${lang}:${title}`;
   const cached = articleCache.get(key);
   if (cached) return cached;
@@ -123,7 +123,7 @@ export async function fetchArticleHtml(
 async function fetchArticleHtmlRaw(
   title: string,
   lang: WikiLanguage,
-): Promise<string | null> {
+): Promise<{ html: string; title: string } | null> {
   const cfg = getLangConfig(lang);
   const url = new URL(`${cfg.baseUrl}/w/api.php`);
   url.searchParams.set("action", "parse");
@@ -142,12 +142,15 @@ async function fetchArticleHtmlRaw(
   if (!res.ok) return null;
 
   const data: {
-    parse?: { text?: string };
+    parse?: { text?: string; title?: string };
     error?: { info?: string };
   } = await res.json();
 
-  if (data.error || !data.parse?.text) return null;
-  return data.parse.text;
+  if (data.error || !data.parse?.text || !data.parse?.title) return null;
+  return {
+    html: data.parse.text,
+    title: data.parse.title,
+  };
 }
 
 /**

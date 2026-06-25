@@ -199,6 +199,33 @@ function SoloPlayContent() {
     }
   }
 
+  // Handle Wikipedia redirects (e.g. from redirect page to target page)
+  function handleRedirectResolved(resolvedTitle: string) {
+    if (finished) return;
+
+    // Avoid double loops
+    if (resolvedTitle === currentArticle) return;
+
+    setCurrentArticle(resolvedTitle);
+    
+    // Update the last step in the route to the resolved title
+    setRoute((prev) => {
+      const copy = [...prev];
+      if (copy.length > 0) {
+        copy[copy.length - 1] = resolvedTitle;
+      }
+      return copy;
+    });
+
+    // Check if player reached the target article
+    if (resolvedTitle.toLowerCase() === endArticle.toLowerCase()) {
+      setFinished(true);
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+      }
+    }
+  }
+
   function handleRestart() {
     router.push(`/solo?lang=${language}`);
   }
@@ -517,6 +544,7 @@ ${playFreeTitle} https://wikiraceid.web.id`;
           language={language}
           onNavigate={handleNavigate}
           uiLanguage={uiLanguage}
+          onRedirectResolved={handleRedirectResolved}
         />
       </div>
     </main>
