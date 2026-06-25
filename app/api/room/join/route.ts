@@ -8,6 +8,7 @@ import {
   getRoom,
   removeMatchmakingRoom,
   setRoom,
+  checkRateLimit,
 } from "@/lib/redis";
 import {
   createPlayer,
@@ -26,6 +27,14 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
+
+  // Rate limit: Maksimal 10 join room per menit per IP
+  const { allowed } = await checkRateLimit(ip, "room_join", 10, 60);
+  if (!allowed) {
+    return errorResponse("Terlalu banyak permintaan bergabung room. Silakan coba lagi nanti.", 429);
+  }
+
   let body: {
     roomId?: unknown;
     username?: unknown;

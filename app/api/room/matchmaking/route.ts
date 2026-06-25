@@ -15,6 +15,7 @@ import {
   pushMatchmakingPath,
   getMatchmakingPoolSize,
   getValkeyClient,
+  checkRateLimit,
 } from "@/lib/redis";
 import {
   createPlayer,
@@ -112,6 +113,14 @@ async function generateRandomWalkPath(
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
+
+  // Rate limit: Maksimal 5 matchmaking request per menit per IP
+  const { allowed } = await checkRateLimit(ip, "matchmaking", 5, 60);
+  if (!allowed) {
+    return errorResponse("Terlalu banyak permintaan matchmaking. Silakan coba lagi nanti.", 429);
+  }
+
   // 1. Verifikasi Sesi (Wajib Login untuk Ranked)
   const username = await getSessionUsername();
   if (!username) {

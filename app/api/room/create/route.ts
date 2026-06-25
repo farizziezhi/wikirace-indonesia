@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 import { getChallengePackById } from "@/lib/challenges";
 import { fetchRandomArticle } from "@/lib/wikipedia";
-import { getRoom, setRoom } from "@/lib/redis";
+import { getRoom, setRoom, checkRateLimit } from "@/lib/redis";
 import {
   createPlayer,
   errorResponse,
@@ -27,6 +27,14 @@ import type { Room, WikiLanguage } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
+
+  // Rate limit: Maksimal 3 room per 5 menit per IP
+  const { allowed } = await checkRateLimit(ip, "room_create", 3, 300);
+  if (!allowed) {
+    return errorResponse("Terlalu banyak membuat room. Silakan coba lagi nanti.", 429);
+  }
+
   let body: {
     username?: unknown;
     clientId?: unknown;
