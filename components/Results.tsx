@@ -9,6 +9,7 @@ import type { Player, Room, RouteStep } from "@/lib/types";
 import { translations } from "@/lib/translations";
 import { getPlayerToken } from "@/lib/client-id";
 import { useUiLang } from "@/lib/use-ui-lang";
+import { Trophy } from "@phosphor-icons/react";
 
 import RouteReplay from "./RouteReplay";
 import AdContainer from "./AdContainer";
@@ -248,15 +249,18 @@ export default function Results({
         >
           <div className="flex items-center justify-between border-b-2 border-charcoal-text/10 pb-2.5">
             <h2
-              className="font-black text-charcoal-text uppercase tracking-tight"
+              className="font-black text-charcoal-text uppercase tracking-tight flex items-center gap-1.5"
               style={{
                 fontSize: "var(--text-heading)",
                 lineHeight: "var(--leading-heading)",
               }}
             >
-              🏁 {t.standings}
+              <Trophy size={20} weight="bold" />
+              <span>{t.standings}</span>
             </h2>
-            <span className="text-xs uppercase font-mono font-black text-charcoal-text/50">Classification</span>
+            <span className="text-xs uppercase font-mono font-black text-charcoal-text/50">
+              {language === "en" ? "Standings" : "Klasemen"}
+            </span>
           </div>
 
           <ol className="flex flex-col gap-3">

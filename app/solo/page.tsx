@@ -8,6 +8,7 @@ import { SOLO_THEMES, SoloTheme, CURATED_ARTICLES } from "@/lib/solo-curated";
 import { getSavedLanguage, saveLanguage } from "@/lib/client-id";
 import { playCountdownBeep, unlockRaceAudio } from "@/lib/race-audio";
 import { useUiLang } from "@/lib/use-ui-lang";
+import { Globe, Palette, Flask, GameController, BookOpen, Gear, Timer, Compass, Translate } from "@phosphor-icons/react";
 
 type SoloMode = "time-attack" | "free-roam";
 type SelectionModule = "curated" | "wild" | "custom";
@@ -292,7 +293,7 @@ function SoloPageContent() {
               <div className="text-center sm:text-right">
                 <span className="text-warm-cream/60 text-xs block font-mono uppercase tracking-wider">{language === "en" ? "Mapped Mode & Lang:" : "Mode & Bahasa Mapping:"}</span>
                 <span className="font-black text-playdate-yellow text-xs uppercase font-mono">
-                  ⏱️ {selectedMode === "time-attack" ? "Time Attack" : "Free Roam"} ({language.toUpperCase()})
+                  {selectedMode === "time-attack" ? "Time Attack" : "Free Roam"} ({language.toUpperCase()})
                 </span>
               </div>
             </div>
@@ -387,7 +388,11 @@ function SoloPageContent() {
                             color: "var(--color-charcoal-text)"
                           }}
                         >
-                          <span className="text-2xl mb-1" aria-hidden="true">{themeItem.emoji}</span>
+                          {themeItem.value === "history-geo" && <Globe size={24} weight="bold" className="mb-1" />}
+                          {themeItem.value === "pop-culture" && <Palette size={24} weight="bold" className="mb-1" />}
+                          {themeItem.value === "science-tech" && <Flask size={24} weight="bold" className="mb-1" />}
+                          {themeItem.value === "sports-games" && <GameController size={24} weight="bold" className="mb-1" />}
+                          {themeItem.value === "general" && <BookOpen size={24} weight="bold" className="mb-1" />}
                           <span className="font-black text-xs uppercase tracking-tight">
                             {language === "id" ? themeItem.labelId : themeItem.labelEn}
                           </span>
@@ -567,8 +572,9 @@ function SoloPageContent() {
 
             {/* 2. Choose Game Mode */}
             <div className="flex flex-col gap-3 border-t-2 pt-4 border-charcoal-text/10">
-              <label className="font-black text-charcoal-text text-sm uppercase tracking-tight">
-                ⚙️ {language === "en" ? "Select Game Mode" : "Pilih Mode Permainan"}
+              <label className="font-black text-charcoal-text text-sm uppercase tracking-tight flex items-center gap-1.5">
+                <Gear size={16} weight="bold" />
+                <span>{language === "en" ? "Select Game Mode" : "Pilih Mode Permainan"}</span>
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -583,7 +589,7 @@ function SoloPageContent() {
                     color: "var(--color-charcoal-text)"
                   }}
                 >
-                  <span className="text-2xl mt-0.5" aria-hidden="true">⏱️</span>
+                  <Timer size={28} weight="bold" className="mt-0.5 text-charcoal-text shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-black text-sm uppercase tracking-tight">Time Attack</span>
                     <span className="text-charcoal-text/85 text-[11px] font-bold mt-1 leading-snug">
@@ -605,7 +611,7 @@ function SoloPageContent() {
                     color: "var(--color-charcoal-text)"
                   }}
                 >
-                  <span className="text-2xl mt-0.5" aria-hidden="true">🧭</span>
+                  <Compass size={28} weight="bold" className="mt-0.5 text-charcoal-text shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-black text-sm uppercase tracking-tight">Free Roam</span>
                     <span className="text-charcoal-text/85 text-[11px] font-bold mt-1 leading-snug">
@@ -620,8 +626,9 @@ function SoloPageContent() {
 
             {/* 3. Language picker */}
             <div className="flex flex-col gap-2">
-              <label className="font-black text-charcoal-text text-sm uppercase tracking-tight">
-                🌐 {language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}
+              <label className="font-black text-charcoal-text text-sm uppercase tracking-tight flex items-center gap-1.5">
+                <Translate size={16} weight="bold" />
+                <span>{language === "en" ? "Wikipedia Language" : "Bahasa Wikipedia"}</span>
               </label>
               <div
                 className="grid grid-cols-2 gap-2 bg-charcoal-deep border-2 border-charcoal-text p-1"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-
+import { CaretDoubleLeft, CaretLeft, Play, Pause, CaretRight, CaretDoubleRight, Lightning, ArrowCounterClockwise } from "@phosphor-icons/react";
 import { computeResultBadges, type AchievementBadge } from "@/lib/achievements";
 import { avatarColor, initials } from "@/lib/avatar";
 import type { RouteStep } from "@/lib/types";
@@ -121,8 +121,8 @@ export function getDrivingStyle(route: RouteStep[], playerStatus: string, langua
     }
   } else {
     desc = language === "en"
-      ? "Did not complete the race track."
-      : "Tidak berhasil menyelesaikan sirkuit balap.";
+      ? "Did not reach the destination."
+      : "Tidak berhasil mencapai tujuan.";
   }
 
   return {
@@ -311,22 +311,23 @@ export default function RouteReplay({
               </span>
             </div>
 
-            {/* F1 Playback buttons */}
-            <div className="flex items-center gap-1.5">
+            {/* Playback buttons */}
+            <div className="flex items-center gap-1.5 text-warm-cream">
               <button
                 type="button"
                 onClick={() => { setPlaying(false); setCurrentStepIndex(0); }}
-                className="chunky-press bg-charcoal-text border border-warm-cream/15 hover:border-warm-cream/40 p-2.5 rounded-lg font-black text-sm uppercase"
+                className="chunky-press bg-charcoal-text border border-warm-cream/15 hover:border-warm-cream/40 p-2.5 rounded-lg font-black text-sm uppercase flex items-center justify-center"
                 title="First Step"
               >
-                ⏮️
+                <CaretDoubleLeft size={14} weight="bold" />
               </button>
               <button
                 type="button"
                 onClick={() => { setPlaying(false); setCurrentStepIndex((prev) => Math.max(0, prev - 1)); }}
-                className="chunky-press bg-charcoal-text border border-warm-cream/15 hover:border-warm-cream/40 px-3.5 py-2.5 rounded-lg font-black text-sm uppercase flex items-center gap-1"
+                className="chunky-press bg-charcoal-text border border-warm-cream/15 hover:border-warm-cream/40 px-3.5 py-2.5 rounded-lg font-black text-sm uppercase flex items-center gap-1.5 justify-center"
               >
-                ◀ {t.prevStepBtn}
+                <CaretLeft size={14} weight="bold" />
+                <span>{t.prevStepBtn}</span>
               </button>
 
               <button
@@ -336,23 +337,34 @@ export default function RouteReplay({
                   playing ? "bg-playdate-yellow" : "bg-lime-accent"
                 }`}
               >
-                {playing ? "⏸ Pause" : "▶ Play"}
+                {playing ? (
+                  <span className="flex items-center gap-1.5 justify-center">
+                    <Pause size={14} weight="bold" />
+                    <span>Pause</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 justify-center">
+                    <Play size={14} weight="fill" />
+                    <span>Play</span>
+                  </span>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => { setPlaying(false); setCurrentStepIndex((prev) => Math.min(maxSteps, prev + 1)); }}
-                className="chunky-press bg-charcoal-text border border-warm-cream/15 hover:border-warm-cream/40 px-3.5 py-2.5 rounded-lg font-black text-sm uppercase flex items-center gap-1"
+                className="chunky-press bg-charcoal-text border border-warm-cream/15 hover:border-warm-cream/40 px-3.5 py-2.5 rounded-lg font-black text-sm uppercase flex items-center gap-1.5 justify-center"
               >
-                {t.nextStepBtn} ▶
+                <span>{t.nextStepBtn}</span>
+                <CaretRight size={14} weight="bold" />
               </button>
               <button
                 type="button"
                 onClick={() => { setPlaying(false); setCurrentStepIndex(maxSteps); }}
-                className="chunky-press bg-charcoal-text border border-warm-cream/15 hover:border-warm-cream/40 p-2.5 rounded-lg font-black text-sm uppercase"
+                className="chunky-press bg-charcoal-text border border-warm-cream/15 hover:border-warm-cream/40 p-2.5 rounded-lg font-black text-sm uppercase flex items-center justify-center"
                 title="Last Step"
               >
-                ⏭️
+                <CaretDoubleRight size={14} weight="bold" />
               </button>
             </div>
 
@@ -361,16 +373,18 @@ export default function RouteReplay({
               <button
                 type="button"
                 onClick={cycleSpeed}
-                className="chunky-press bg-charcoal-text border border-warm-cream/15 text-warm-cream font-mono font-black text-xs uppercase px-4 py-2.5 rounded-lg"
+                className="chunky-press bg-charcoal-text border border-warm-cream/15 text-warm-cream font-mono font-black text-xs uppercase px-4 py-2.5 rounded-lg flex items-center gap-1.5 justify-center"
               >
-                🏎️ {speed}x Speed
+                <Lightning size={12} weight="fill" />
+                <span>{speed}x Speed</span>
               </button>
               <button
                 type="button"
                 onClick={resetReplay}
-                className="chunky-press bg-warm-cream text-charcoal-text border border-charcoal-text font-mono font-black text-xs uppercase px-4 py-2.5 rounded-lg"
+                className="chunky-press bg-warm-cream text-charcoal-text border border-charcoal-text font-mono font-black text-xs uppercase px-4 py-2.5 rounded-lg flex items-center gap-1.5 justify-center"
               >
-                🔄 Reset
+                <ArrowCounterClockwise size={12} weight="bold" />
+                <span>Reset</span>
               </button>
             </div>
           </div>
@@ -422,14 +436,14 @@ function ReplayColumn({
     if (player.status === "finished") {
       return (
         <span className="bg-lime-accent text-charcoal-text border border-charcoal-text font-mono font-black text-[10px] px-2 py-0.5 rounded shadow-[1.5px_1.5px_0px_#000]">
-          🏁 FINISH
+          🎯 FINISH
         </span>
       );
     }
     if (player.status === "surrendered") {
       return (
         <span className="bg-burnt-orange text-warm-cream border border-charcoal-text font-mono font-black text-[10px] px-2 py-0.5 rounded shadow-[1.5px_1.5px_0px_#000]">
-          ❌ DNF
+          {language === "en" ? "❌ GAVE UP" : "❌ MENYERAH"}
         </span>
       );
     }
@@ -559,7 +573,7 @@ function ReplayColumn({
                 {player.status === "finished" ? (
                   <>
                     <span className="text-lime-accent font-black text-sm uppercase bg-charcoal-text border border-charcoal-text px-2 py-0.5 rounded shadow-[2px_2px_0px_#000] tracking-wider animate-pulse">
-                      🏁 Sirkuit Selesai
+                      {language === "en" ? "🎯 Route Completed" : "🎯 Rute Selesai"}
                     </span>
                     <p className="text-[11px] font-extrabold text-charcoal-text/75 mt-1">
                       {t.finishedIn
@@ -570,7 +584,7 @@ function ReplayColumn({
                 ) : player.status === "surrendered" ? (
                   <>
                     <span className="text-warm-cream font-black text-sm uppercase bg-burnt-orange border border-charcoal-text px-2 py-0.5 rounded shadow-[2px_2px_0px_#000] tracking-wider">
-                      ❌ DNF (Gagal/Menyerah)
+                      {language === "en" ? "❌ GAVE UP" : "❌ MENYERAH"}
                     </span>
                     <p className="text-[11px] font-extrabold text-charcoal-text/75 mt-1 leading-relaxed">
                       {language === "en" ? "Stopped clicking after" : "Berhenti mengetuk setelah"}{" "}

@@ -19,6 +19,7 @@ import {
 import { playCountdownBeep, playCheatAlarm, playPitStopSound, playPowerUpEquippedSound, playOilSplatSound } from "@/lib/race-audio";
 import type { Room } from "@/lib/types";
 import { getPlayerToken } from "@/lib/client-id";
+import { Lightning, Check, ArrowCounterClockwise } from "@phosphor-icons/react";
 
 import WikiArticle from "./WikiArticle";
 import AdContainer from "./AdContainer";
@@ -391,9 +392,12 @@ const GameHeader = memo(
                   padding: "8px 12px",
                   fontSize: "13px",
                 }}
-                title={uiLang === "en" ? "Enter the pit lane to select strategy" : "Masuk ke pit lane untuk memilih strategi"}
+                title={uiLang === "en" ? "Activate power-up to gain a tactical advantage" : "Aktifkan power-up untuk mendapatkan keuntungan taktis"}
               >
-                {uiLang === "en" ? "🔧 PIT STOP" : "🔧 MASUK PIT"}
+                <span className="flex items-center gap-1.5 justify-center">
+                  <Lightning size={14} weight="fill" />
+                  <span>{uiLang === "en" ? "USE POWER-UP" : "GUNAKAN POWER-UP"}</span>
+                </span>
               </button>
             )}
 
@@ -411,7 +415,10 @@ const GameHeader = memo(
                 }}
                 title={uiLang === "en" ? "Return to starting article (penalty suspension)" : "Kembali ke awal artikel (denda suspension)"}
               >
-                {uiLang === "en" ? "Back to Start 🔁" : "Kembali ke Awal 🔁"}
+                <span className="flex items-center gap-1.5 justify-center">
+                  <ArrowCounterClockwise size={14} weight="bold" />
+                  <span>{uiLang === "en" ? "Back to Start" : "Kembali ke Awal"}</span>
+                </span>
               </button>
             )}
 
@@ -1259,8 +1266,9 @@ export default function Game({
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
                   <span>{translations[uiLang].linkPreviewTitle}</span>
                   {selectedPowerUp === "soft" && (
-                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
-                      🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
+                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse flex items-center gap-1">
+                      <Check size={10} weight="bold" />
+                      <span>{uiLang === "en" ? "CHOSEN" : "TERPILIH"}</span>
                     </span>
                   )}
                 </div>
@@ -1289,8 +1297,9 @@ export default function Game({
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
                   <span>{translations[uiLang].bypassBanTitle}</span>
                   {selectedPowerUp === "medium" && (
-                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
-                      🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
+                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse flex items-center gap-1">
+                      <Check size={10} weight="bold" />
+                      <span>{uiLang === "en" ? "CHOSEN" : "TERPILIH"}</span>
                     </span>
                   )}
                 </div>
@@ -1319,8 +1328,9 @@ export default function Game({
                 <div className="font-mono font-black text-xs sm:text-[13px] flex items-center justify-between w-full gap-1">
                   <span>{translations[uiLang].obstructTitle}</span>
                   {selectedPowerUp === "hard" && (
-                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse">
-                      🎯 {uiLang === "en" ? "CHOSEN" : "TERPILIH"}
+                    <span className="shrink-0 bg-lime-accent text-charcoal-text font-black text-[9px] px-1.5 py-0.5 rounded border border-charcoal-text shadow-[2px_2px_0px_#000] uppercase tracking-wider animate-pulse flex items-center gap-1">
+                      <Check size={10} weight="bold" />
+                      <span>{uiLang === "en" ? "CHOSEN" : "TERPILIH"}</span>
                     </span>
                   )}
                 </div>

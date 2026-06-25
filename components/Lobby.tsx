@@ -13,6 +13,7 @@ import AudioToggleWidget from "./AudioToggleWidget";
 import { translations } from "@/lib/translations";
 import { getPlayerToken } from "@/lib/client-id";
 import { useUiLang } from "@/lib/use-ui-lang";
+import { Sword, Target, Book, Gear } from "@phosphor-icons/react";
 
 interface LobbyProps {
   room: Room;
@@ -703,7 +704,10 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                       Lobby
                     </span>
                     <span className="chunky-sm bg-lime-accent px-2 py-0.5 font-extrabold text-charcoal-text" style={{ borderRadius: "var(--radius-button)", fontSize: "12px" }}>
-                      ⚔️ Ranked Matchmaking
+                      <span className="flex items-center gap-1">
+                        <Sword size={12} weight="bold" />
+                        <span>Ranked Matchmaking</span>
+                      </span>
                     </span>
                   </div>
                   <LanguagePill language={language} uiLanguage={uiLanguage} />
@@ -713,8 +717,9 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
                 <div className="flex flex-col gap-4 p-5 bg-charcoal-deep border-3 border-charcoal-text text-warm-cream shadow-[5px_5px_0px_#000] rounded-xl relative overflow-hidden">
                   {/* Visual Header */}
                   <div className="flex items-center justify-between border-b border-warm-cream/10 pb-3">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-lime-accent flex items-center gap-1.5">
-                      🏁 {uiLanguage === "en" ? "Battle Track" : "Lintasan Pertempuran"}
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-lime-accent flex items-center gap-1">
+                      <Target size={12} weight="bold" />
+                      <span>{uiLanguage === "en" ? "Selected Articles" : "Artikel Terpilih"}</span>
                     </span>
                     <span className="text-[11px] font-semibold text-warm-cream/40">
                       {uiLanguage === "en" ? "Reach the target in fewest clicks" : "Capai target dengan klik sesedikit mungkin"}
@@ -982,12 +987,14 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
           style={{ borderRadius: "var(--radius-rounded)" }}
         >
           <div className="flex items-baseline justify-between gap-2 border-b-3 border-charcoal-text pb-2.5">
-            <h2 className="font-black text-xl text-charcoal-text uppercase tracking-wider">
-              🏁 {t.gameTopic}
+            <h2 className="font-black text-xl text-charcoal-text uppercase tracking-wider flex items-center gap-1.5">
+              <Book size={20} weight="bold" />
+              <span>{t.gameTopic}</span>
             </h2>
             {isHost && (
-              <span className="font-mono font-black uppercase text-[10px] bg-charcoal-text text-lime-accent px-2 py-0.5 rounded border border-charcoal-text">
-                🛠️ {t.hostSettings}
+              <span className="font-mono font-black uppercase text-[10px] bg-charcoal-text text-lime-accent px-2 py-0.5 rounded border border-charcoal-text flex items-center gap-1">
+                <Gear size={10} weight="bold" />
+                <span>{t.hostSettings}</span>
               </span>
             )}
           </div>
