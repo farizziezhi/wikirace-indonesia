@@ -443,11 +443,11 @@ function WikiArticle({
           {hoverSummary.loading ? (
             <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-charcoal-text/60 animate-pulse">
               <span className="inline-block w-2.5 h-2.5 border-2 border-charcoal-text border-t-transparent animate-spin rounded-full" />
-              <span>Loading preview...</span>
+              <span>{uiLanguage === "en" ? "Loading preview..." : "Memuat pratinjau..."}</span>
             </div>
           ) : (
             <div className="leading-relaxed">
-              {hoverSummary.text || "No preview description available."}
+              {hoverSummary.text || (uiLanguage === "en" ? "No preview description available." : "Pratinjau tidak tersedia.")}
             </div>
           )}
         </div>

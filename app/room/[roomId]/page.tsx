@@ -9,8 +9,9 @@ import EmojiReactions from "@/components/EmojiReactions";
 import Game from "@/components/Game";
 import Lobby from "@/components/Lobby";
 import Results from "@/components/Results";
-import { getOrCreateClientId, getSavedUsername, getSavedLanguage, savePlayerToken, getPlayerToken } from "@/lib/client-id";
+import { getOrCreateClientId, getSavedUsername, getSavedLanguage, savePlayerToken, getPlayerToken, getSavedUiLanguage } from "@/lib/client-id";
 import { unlockRaceAudio, playVictoryChime } from "@/lib/race-audio";
+import { useUiLang } from "@/lib/use-ui-lang";
 import type { Player, Room, RouteStep } from "@/lib/types";
 import AdContainer from "@/components/AdContainer";
 
@@ -35,19 +36,18 @@ export default function RoomPage({ params }: RoomPageProps) {
     clientId: string;
     username: string;
   } | null>(null);
-  const [language, setLanguage] = useState<"id" | "en">("id");
+  const uiLanguage = useUiLang();
 
   useEffect(() => {
     const id = window.setTimeout(() => {
       const clientId = getOrCreateClientId();
       const username = getSavedUsername();
-      const lang = getSavedLanguage();
-      setLanguage(lang);
+      const uiLang = getSavedUiLanguage();
       if (!clientId || !username) {
         try {
           window.sessionStorage.setItem(
             "wikirace:toast",
-            lang === "en" ? "Please enter your name before joining the room." : "Masukkan nama dulu sebelum gabung room.",
+            uiLang === "en" ? "Please enter your name before joining the room." : "Masukkan nama dulu sebelum gabung room.",
           );
         } catch {
           // ignore
@@ -141,12 +141,13 @@ export default function RoomPage({ params }: RoomPageProps) {
           .json()
           .catch(() => ({}));
 
+        const uiLang = getSavedUiLanguage();
         if (!res.ok || !data.room) {
           if (cancelled) return;
           try {
             window.sessionStorage.setItem(
               "wikirace:toast",
-              data.error ?? "Tidak bisa bergabung ke room.",
+              data.error ?? (uiLang === "en" ? "Failed to join room." : "Tidak bisa bergabung ke room."),
             );
           } catch {
             // ignore
@@ -172,7 +173,8 @@ export default function RoomPage({ params }: RoomPageProps) {
         }
       } catch {
         if (!cancelled) {
-          setFatalError("Tidak bisa terhubung ke server. Periksa koneksi.");
+          const uiLang = getSavedUiLanguage();
+          setFatalError(uiLang === "en" ? "Cannot connect to the server. Check your connection." : "Tidak bisa terhubung ke server. Periksa koneksi.");
         }
         return;
       }
@@ -392,10 +394,11 @@ export default function RoomPage({ params }: RoomPageProps) {
 
     function handleGameCancelled(message: Ably.Message) {
       const data = (message.data as { reason?: string }) ?? {};
+      const uiLang = getSavedUiLanguage();
       const text =
         data.reason === "host_left"
-          ? "Host keluar, game dibatalkan."
-          : "Game dibatalkan.";
+          ? (uiLang === "en" ? "Host left, game cancelled." : "Host keluar, game dibatalkan.")
+          : (uiLang === "en" ? "Game cancelled." : "Game dibatalkan.");
       try {
         window.sessionStorage.setItem("wikirace:toast", text);
       } catch {
@@ -514,7 +517,7 @@ export default function RoomPage({ params }: RoomPageProps) {
 
   if (fatalError) {
     const translatedError = fatalError === "Tidak bisa terhubung ke server. Periksa koneksi."
-      ? (language === "en" ? "Cannot connect to the server. Check your connection." : "Tidak bisa terhubung ke server. Periksa koneksi.")
+      ? (uiLanguage === "en" ? "Cannot connect to the server. Check your connection." : "Tidak bisa terhubung ke server. Periksa koneksi.")
       : fatalError;
     return (
       <main className="dot-bg flex min-h-screen w-full flex-col items-center justify-center bg-warm-cream px-6 py-12">
@@ -530,7 +533,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           <div className="flex flex-col items-center text-center gap-4">
             <span className="text-4xl animate-pulse">⚠️</span>
             <span className="font-mono font-black text-xs text-burnt-orange uppercase tracking-widest">
-              {language === "en" ? "CONNECTION ERROR" : "KONEKSI GAGAL"}
+              {uiLanguage === "en" ? "CONNECTION ERROR" : "KONEKSI GAGAL"}
             </span>
             <p className="font-bold text-sm leading-relaxed text-warm-cream/80">
               {translatedError}
@@ -540,7 +543,7 @@ export default function RoomPage({ params }: RoomPageProps) {
               onClick={() => router.replace("/")}
               className="chunky-press w-full bg-burnt-orange text-warm-cream font-mono font-black text-xs uppercase py-3 border-2 border-charcoal-text shadow-[3px_3px_0px_#000] rounded-xl hover:bg-[#d65a00]"
             >
-              ← {language === "en" ? "Abort & Exit" : "Batalkan & Kembali"}
+              ← {uiLanguage === "en" ? "Abort & Exit" : "Batalkan & Kembali"}
             </button>
           </div>
         </div>
@@ -570,10 +573,10 @@ export default function RoomPage({ params }: RoomPageProps) {
               }}
             />
             <span className="font-mono font-black text-xs text-lime-accent uppercase tracking-widest animate-pulse">
-              {language === "en" ? "CONNECTING..." : "MENGHUBUNGKAN..."}
+              {uiLanguage === "en" ? "CONNECTING..." : "MENGHUBUNGKAN..."}
             </span>
             <p className="text-xs text-warm-cream/50 uppercase font-mono font-semibold">
-              {language === "en"
+              {uiLanguage === "en"
                 ? "Connecting to server..."
                 : "Menghubungkan ke server..."}
             </p>

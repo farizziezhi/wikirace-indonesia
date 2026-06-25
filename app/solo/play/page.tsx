@@ -135,7 +135,7 @@ function SoloPlayContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        let errText = data.error ?? "Gagal menyimpan tantangan harian.";
+        let errText = data.error ?? (uiLanguage === "en" ? "Failed to save daily challenge." : "Gagal menyimpan tantangan harian.");
         if (res.status === 401) {
           errText = uiLanguage === "en"
             ? "Please log in on the homepage to record your Daily Streak."
@@ -212,14 +212,24 @@ function SoloPlayContent() {
   // Generate Wordle-like share text
   function handleShare() {
     const minClicksText = estimatedDepth === -1 ? "?" : estimatedDepth;
-    const shareText = `WikiRace Indonesia — Latihan Solo (${language.toUpperCase()})
-Rute: ${startArticle} ➔ ${endArticle}
-Waktu: ${formatTime(elapsedSeconds)} | Klik: ${clicks} (Jarak minimum: ${minClicksText})
+    const titleText = uiLanguage === "en"
+      ? `WikiRace Indonesia — Solo Practice (${language.toUpperCase()})`
+      : `WikiRace Indonesia — Latihan Solo (${language.toUpperCase()})`;
+    const routeTitle = uiLanguage === "en" ? "Route" : "Rute";
+    const timeTitle = uiLanguage === "en" ? "Time" : "Waktu";
+    const clicksTitle = uiLanguage === "en" ? "Clicks" : "Klik";
+    const minDistanceTitle = uiLanguage === "en" ? "Minimum path" : "Jarak minimum";
+    const searchPathTitle = uiLanguage === "en" ? "My search path:" : "Jalur penelusuran saya:";
+    const playFreeTitle = uiLanguage === "en" ? "Play for free at:" : "Mainkan gratis di:";
 
-Jalur penelusuran saya:
+    const shareText = `${titleText}
+${routeTitle}: ${startArticle} ➔ ${endArticle}
+${timeTitle}: ${formatTime(elapsedSeconds)} | ${clicksTitle}: ${clicks} (${minDistanceTitle}: ${minClicksText})
+
+${searchPathTitle}
 ${route.join(" ➔ ")}
 
-Mainkan gratis di: https://wikiraceid.web.id`;
+${playFreeTitle} https://wikiraceid.web.id`;
 
     void navigator.clipboard.writeText(shareText);
     setCopied(true);
@@ -275,7 +285,7 @@ Mainkan gratis di: https://wikiraceid.web.id`;
               className="text-warm-cream/80 hover:text-lime-accent font-bold transition flex items-center gap-1.5"
               style={{ fontSize: "13px" }}
             >
-              ← Keluar
+              {uiLanguage === "en" ? "← Exit" : "← Keluar"}
             </button>
             <div className="h-4 w-px bg-very-dark" />
             <AudioToggleWidget dark />
@@ -317,7 +327,11 @@ Mainkan gratis di: https://wikiraceid.web.id`;
         <details className="group border-t border-very-dark bg-very-dark/50">
           <summary className="flex items-center justify-between px-4 py-1.5 cursor-pointer text-xs font-bold text-warm-cream/60 hover:text-warm-cream select-none transition">
             <span className="flex items-center gap-1.5">
-              <span>Jalur penelusuran saat ini ({route.length} artikel)</span>
+              <span>
+                {uiLanguage === "en"
+                  ? `Current search path (${route.length} ${route.length === 1 ? "article" : "articles"})`
+                  : `Jalur penelusuran saat ini (${route.length} artikel)`}
+              </span>
             </span>
             <span className="group-open:rotate-180 transition-transform duration-200">▼</span>
           </summary>
@@ -396,7 +410,9 @@ Mainkan gratis di: https://wikiraceid.web.id`;
             {/* Statistics Grid */}
             <div className="grid grid-cols-3 gap-3 mb-6 font-mono">
               <div className="bg-charcoal-text p-3 text-center rounded-lg border border-lime-accent/15 flex flex-col justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-[9px] uppercase font-bold text-warm-cream/50">Clicks</span>
+                <span className="text-[9px] uppercase font-bold text-warm-cream/50">
+                  {uiLanguage === "en" ? "Clicks" : "Klik"}
+                </span>
                 <span className="text-2xl font-black text-lime-accent mt-0.5 tabular-nums">{clicks}</span>
                 <span className="text-[9px] text-warm-cream/40 mt-0.5">
                   Min: {estimatedDepth === -1 ? "?" : estimatedDepth}
@@ -404,19 +420,27 @@ Mainkan gratis di: https://wikiraceid.web.id`;
               </div>
 
               <div className="bg-charcoal-text p-3 text-center rounded-lg border border-lime-accent/15 flex flex-col justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-[9px] uppercase font-bold text-warm-cream/50">Time</span>
+                <span className="text-[9px] uppercase font-bold text-warm-cream/50">
+                  {uiLanguage === "en" ? "Time" : "Waktu"}
+                </span>
                 <span className="text-2xl font-black text-lime-accent mt-0.5 tabular-nums">
                   {formatTime(elapsedSeconds)}
                 </span>
-                <span className="text-[9px] text-warm-cream/40 mt-0.5">elapsed</span>
+                <span className="text-[9px] text-warm-cream/40 mt-0.5">
+                  {uiLanguage === "en" ? "elapsed" : "berjalan"}
+                </span>
               </div>
 
               <div className="bg-charcoal-text p-3 text-center rounded-lg border border-lime-accent/15 flex flex-col justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-[9px] uppercase font-bold text-warm-cream/50">Pace</span>
+                <span className="text-[9px] uppercase font-bold text-warm-cream/50">
+                  {uiLanguage === "en" ? "Pace" : "Kecepatan"}
+                </span>
                 <span className="text-2xl font-black text-lime-accent mt-0.5 tabular-nums">
                   {(elapsedSeconds / Math.max(clicks, 1)).toFixed(1)}s
                 </span>
-                <span className="text-[9px] text-warm-cream/40 mt-0.5">per click</span>
+                <span className="text-[9px] text-warm-cream/40 mt-0.5">
+                  {uiLanguage === "en" ? "per click" : "per klik"}
+                </span>
               </div>
             </div>
 
@@ -464,7 +488,7 @@ Mainkan gratis di: https://wikiraceid.web.id`;
                 onClick={handleShare}
                 className="chunky-press btn-primary flex-1 py-3 text-sm font-black flex items-center justify-center gap-2 border-2 border-charcoal-text shadow-[3px_3px_0px_#000]"
               >
-                <span>SHARE</span>
+                <span>{uiLanguage === "en" ? "SHARE" : "BAGIKAN"}</span>
               </button>
               <button
                 type="button"
@@ -500,6 +524,7 @@ Mainkan gratis di: https://wikiraceid.web.id`;
 }
 
 export default function SoloPlayPage() {
+  const uiLanguage = useUiLang();
   return (
     <Suspense
       fallback={
@@ -510,7 +535,7 @@ export default function SoloPlayPage() {
               style={{ borderWidth: 4, borderRadius: "50%" }}
             />
             <p className="text-charcoal-text font-bold" style={{ fontSize: "16px" }}>
-              Loading...
+              {uiLanguage === "en" ? "Loading..." : "Memuat..."}
             </p>
           </div>
         </main>

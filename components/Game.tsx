@@ -746,8 +746,8 @@ export default function Game({
       const data = (message.data as GameCancelledData) ?? {};
       const reason =
         data.reason === "host_left"
-          ? "Host keluar, game dibatalkan."
-          : "Game dibatalkan.";
+          ? (uiLang === "en" ? "Host left, game cancelled." : "Host keluar, game dibatalkan.")
+          : (uiLang === "en" ? "Game cancelled." : "Game dibatalkan.");
       try {
         window.sessionStorage.setItem("wikirace:toast", reason);
       } catch {
