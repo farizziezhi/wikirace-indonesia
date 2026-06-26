@@ -143,6 +143,30 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // A3: Multi-Tab Matchmaking Prevention
+    // Periksa apakah username ini sudah terdaftar di lobi matchmaking aktif untuk bahasa "id" maupun "en"
+    const activeLobbiesId = await getMatchmakingRooms("id");
+    const activeLobbiesEn = await getMatchmakingRooms("en");
+    const allLobbyIds = [...new Set([...activeLobbiesId, ...activeLobbiesEn])];
+
+    for (const rid of allLobbyIds) {
+      const activeRoom = await getRoom(rid);
+      if (activeRoom && activeRoom.status === "lobby" && activeRoom.isMatchmaking) {
+        const playerWithSameUsername = activeRoom.players.find(
+          (p) => p.username.toLowerCase() === username.toLowerCase()
+        );
+        if (playerWithSameUsername) {
+          // Jika clientId sama, berarti refresh/reconnect (diizinkan dan di-route ke room tersebut)
+          if (playerWithSameUsername.clientId === clientId) {
+            return Response.json({ roomId: activeRoom.id, room: activeRoom });
+          } else {
+            // Jika clientId berbeda, tolak karena bermain dari tab/browser lain
+            return errorResponse("Anda sudah berada dalam antrean atau lobi Ranked di tab/perangkat lain.", 400);
+          }
+        }
+      }
+    }
+
     // 2. Ambil ELO pemain saat ini
     const userStats = await getPlayerStats(username);
     const userElo = userStats.elo;

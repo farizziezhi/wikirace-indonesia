@@ -9,6 +9,7 @@ import {
   removeMatchmakingRoom,
   setRoom,
   checkRateLimit,
+  deleteRoom,
 } from "@/lib/redis";
 import {
   createPlayer,
@@ -68,6 +69,18 @@ export async function POST(request: NextRequest) {
 
   const room = await getRoom(roomId);
   if (!room) return errorResponse("Room tidak ditemukan.", 404);
+
+  // A2: Lobby Inactivity Auto-Close (AFK Room Cleanup)
+  // Jika room kasual masih di lobi dan umurnya sudah lebih dari 1 jam, hapus dari Redis dan tolak akses.
+  if (
+    room.status === "lobby" &&
+    !room.isMatchmaking &&
+    room.createdAt &&
+    Date.now() - room.createdAt > 3600000
+  ) {
+    await deleteRoom(roomId);
+    return errorResponse("Lobi room ini telah kedaluwarsa karena tidak kunjung dimulai dalam 1 jam.", 410);
+  }
 
   // Jika room bertipe matchmaking, validasi bahwa user harus sudah login
   const sessionUsername = await getSessionUsername();

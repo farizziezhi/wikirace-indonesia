@@ -364,7 +364,14 @@ export function errorResponse(message: string, status = 400): Response {
       // Synchronous lazy dynamic require to prevent bundling next/headers on the client
       const { headers } = require("next/headers");
       const headersList = headers();
-      const acceptLanguage = headersList.get("accept-language") || "";
+      let acceptLanguage = "";
+      if (
+        headersList &&
+        typeof headersList.then !== "function" &&
+        typeof headersList.get === "function"
+      ) {
+        acceptLanguage = headersList.get("accept-language") || "";
+      }
       if (acceptLanguage.toLowerCase().startsWith("en")) {
         lang = "en";
       }
