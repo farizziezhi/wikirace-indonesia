@@ -11,6 +11,7 @@ export function useUiLang(): "id" | "en" {
   const [uiLang, setUiLang] = useState<"id" | "en">("en");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUiLang(getSavedUiLanguage());
 
     const handler = (e: Event) => {

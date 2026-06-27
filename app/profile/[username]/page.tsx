@@ -174,19 +174,6 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   const [titleLoading, setTitleLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  useEffect(() => {
-    setUiLanguage(getSavedUiLanguage());
-    void loadProfile();
-    void checkSession();
-  }, [username]);
-
-  // Toast auto-dismiss
-  useEffect(() => {
-    if (!toast) return;
-    const tId = setTimeout(() => setToast(null), 3000);
-    return () => clearTimeout(tId);
-  }, [toast]);
-
   async function checkSession() {
     try {
       const res = await fetch("/api/auth");
@@ -217,6 +204,19 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
       setProfileLoading(false);
     }
   }
+
+  useEffect(() => {
+    setUiLanguage(getSavedUiLanguage());
+    void loadProfile();
+    void checkSession();
+  }, [username]);
+
+  // Toast auto-dismiss
+  useEffect(() => {
+    if (!toast) return;
+    const tId = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(tId);
+  }, [toast]);
 
   async function handleEquipTitle(titleName: string) {
     setTitleLoading(titleName);

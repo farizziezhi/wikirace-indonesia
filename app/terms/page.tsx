@@ -179,10 +179,10 @@ export default function TermsPage() {
                   5. Batasan Tanggung Jawab / Limitation of Liability
                 </h2>
                 <p className="mb-2">
-                  Layanan ini disediakan "apa adanya" (as-is) tanpa jaminan apa pun. Kami tidak menjamin ketersediaan server 100% tanpa gangguan atau bebas dari bug teknis Wikipedia yang berada di luar kendali kami.
+                  Layanan ini disediakan &quot;apa adanya&quot; (as-is) tanpa jaminan apa pun. Kami tidak menjamin ketersediaan server 100% tanpa gangguan atau bebas dari bug teknis Wikipedia yang berada di luar kendali kami.
                 </p>
                 <p className="italic text-warm-cream/70">
-                  This service is provided "as is" without warranties of any kind. We do not guarantee 100% uninterrupted server availability or freedom from Wikipedia technical bugs that are beyond our control.
+                  This service is provided &quot;as is&quot; without warranties of any kind. We do not guarantee 100% uninterrupted server availability or freedom from Wikipedia technical bugs that are beyond our control.
                 </p>
               </div>
             </div>

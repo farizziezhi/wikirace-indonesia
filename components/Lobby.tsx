@@ -164,6 +164,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
   // Efek hitung mundur 30 detik bersiap & kick unready
   useEffect(() => {
     if (!room.isMatchmaking || !room.matchFoundAt || room.players.length < 2 || room.status !== "lobby") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReadyCountdown(null);
       return;
     }

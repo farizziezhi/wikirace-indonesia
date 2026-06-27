@@ -114,18 +114,6 @@ function SoloPlayContent() {
 
   const isDaily = searchParams.get("daily") === "true";
 
-  useEffect(() => {
-    if (finished && isDaily) {
-      void triggerDailyCompletion();
-    }
-  }, [finished, isDaily]);
-
-  useEffect(() => {
-    if (finished) {
-      playVictoryChime();
-    }
-  }, [finished]);
-
   async function triggerDailyCompletion() {
     setDailyLoading(true);
     setDailyError(null);
@@ -163,6 +151,18 @@ function SoloPlayContent() {
       setDailyLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (finished && isDaily) {
+      void triggerDailyCompletion();
+    }
+  }, [finished, isDaily]);
+
+  useEffect(() => {
+    if (finished) {
+      playVictoryChime();
+    }
+  }, [finished]);
 
   const timerRef = useRef<number | null>(null);
 

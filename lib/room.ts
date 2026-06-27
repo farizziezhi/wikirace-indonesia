@@ -362,6 +362,7 @@ export function errorResponse(message: string, status = 400): Response {
   if (typeof window === "undefined") {
     try {
       // Synchronous lazy dynamic require to prevent bundling next/headers on the client
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { headers } = require("next/headers");
       const headersList = headers();
       let acceptLanguage = "";
