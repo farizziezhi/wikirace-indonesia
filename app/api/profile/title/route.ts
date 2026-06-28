@@ -1,20 +1,21 @@
 import { type NextRequest } from "next/server";
 import { getSessionUsername } from "@/lib/auth-server";
 import { updatePlayerTitle, getPlayerStats } from "@/lib/redis";
+import { errorResponse } from "@/lib/room";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   const username = await getSessionUsername();
   if (!username) {
-    return Response.json({ error: "Anda harus masuk terlebih dahulu." }, { status: 401 });
+    return errorResponse("Anda harus masuk terlebih dahulu.", 401);
   }
 
   let body: { title?: unknown };
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: "Body harus JSON valid." }, { status: 400 });
+    return errorResponse("Body harus JSON valid.", 400);
   }
 
   const title = typeof body.title === "string" ? body.title : "";
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isEligible) {
-      return Response.json({ error: "Anda belum memenuhi syarat untuk gelar ini." }, { status: 403 });
+      return errorResponse("Anda belum memenuhi syarat untuk gelar ini.", 403);
     }
   }
 
@@ -60,6 +61,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ success: true, title });
   } catch (err) {
     console.error("Gagal mengganti gelar:", err);
-    return Response.json({ error: "Gagal menyimpan gelar baru." }, { status: 500 });
+    return errorResponse("Gagal menyimpan gelar baru.", 500);
   }
 }

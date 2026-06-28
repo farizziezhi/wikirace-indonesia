@@ -11,6 +11,7 @@ import {
 } from "@/lib/auth-server";
 import { getPlayerStats, checkRateLimit } from "@/lib/redis";
 import { ensureDbInitialized, turso } from "@/lib/turso";
+import { errorResponse } from "@/lib/room";
 
 export const dynamic = "force-dynamic";
 
@@ -38,45 +39,33 @@ export async function POST(request: NextRequest) {
     // Rate limit pendaftaran: 5 kali per 10 menit per IP
     const rateLimitIp = await checkRateLimit(ip, "register_ip", 5, 600);
     if (!rateLimitIp.allowed) {
-      return Response.json(
-        { error: "Terlalu banyak percobaan registrasi. Coba lagi dalam 10 menit." },
-        { status: 429 },
-      );
+      return errorResponse("Terlalu banyak percobaan registrasi. Coba lagi dalam 10 menit.", 429);
     }
 
     let body: { username?: unknown; password?: unknown };
     try {
       body = await request.json();
     } catch {
-      return Response.json({ error: "Body harus JSON valid." }, { status: 400 });
+      return errorResponse("Body harus JSON valid.", 400);
     }
 
     const username = typeof body.username === "string" ? body.username.trim() : "";
     const password = typeof body.password === "string" ? body.password : "";
 
     if (!username) {
-      return Response.json({ error: "Username tidak boleh kosong." }, { status: 400 });
+      return errorResponse("Username tidak boleh kosong.", 400);
     }
     if (username.length > 20) {
-      return Response.json({ error: "Username maksimal 20 karakter." }, { status: 400 });
+      return errorResponse("Username maksimal 20 karakter.", 400);
     }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      return Response.json(
-        { error: "Username hanya boleh berisi huruf, angka, dan underscore." },
-        { status: 400 },
-      );
+      return errorResponse("Username hanya boleh berisi huruf, angka, dan underscore.", 400);
     }
     if (password.length < 8) {
-      return Response.json(
-        { error: "Password minimal harus 8 karakter." },
-        { status: 400 },
-      );
+      return errorResponse("Password minimal harus 8 karakter.", 400);
     }
     if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
-      return Response.json(
-        { error: "Password harus mengandung minimal satu huruf dan satu angka." },
-        { status: 400 },
-      );
+      return errorResponse("Password harus mengandung minimal satu huruf dan satu angka.", 400);
     }
 
     // Cek apakah username sudah ada
@@ -86,7 +75,7 @@ export async function POST(request: NextRequest) {
         args: { username },
       });
       if (existing.rows.length > 0) {
-        return Response.json({ error: "Username sudah terdaftar." }, { status: 409 });
+        return errorResponse("Username sudah terdaftar.", 409);
       }
 
       // Hash password dan daftarkan user baru
@@ -114,7 +103,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: true, username, stats });
     } catch (err) {
       console.error("Registrasi gagal:", err);
-      return Response.json({ error: "Terjadi kesalahan server." }, { status: 500 });
+      return errorResponse("Terjadi kesalahan server.", 500);
     }
   }
 
@@ -122,36 +111,27 @@ export async function POST(request: NextRequest) {
     // Rate limit login by IP: 10 kali per 1 menit
     const rateLimitIp = await checkRateLimit(ip, "login_ip", 10, 60);
     if (!rateLimitIp.allowed) {
-      return Response.json(
-        { error: "Terlalu banyak percobaan login dari IP ini. Coba lagi dalam 1 menit." },
-        { status: 429 },
-      );
+      return errorResponse("Terlalu banyak percobaan login dari IP ini. Coba lagi dalam 1 menit.", 429);
     }
 
     let body: { username?: unknown; password?: unknown };
     try {
       body = await request.json();
     } catch {
-      return Response.json({ error: "Body harus JSON valid." }, { status: 400 });
+      return errorResponse("Body harus JSON valid.", 400);
     }
 
     const username = typeof body.username === "string" ? body.username.trim() : "";
     const password = typeof body.password === "string" ? body.password : "";
 
     if (!username || !password) {
-      return Response.json(
-        { error: "Username dan password wajib diisi." },
-        { status: 400 },
-      );
+      return errorResponse("Username dan password wajib diisi.", 400);
     }
 
     // Rate limit login by Username: 5 kali per 1 menit untuk mencegah targeted brute force
     const rateLimitUser = await checkRateLimit(username, "login_user", 5, 60);
     if (!rateLimitUser.allowed) {
-      return Response.json(
-        { error: "Terlalu banyak percobaan login untuk akun ini. Coba lagi dalam 1 menit." },
-        { status: 429 },
-      );
+      return errorResponse("Terlalu banyak percobaan login untuk akun ini. Coba lagi dalam 1 menit.", 429);
     }
 
     try {
@@ -162,10 +142,7 @@ export async function POST(request: NextRequest) {
 
       const userRow = res.rows[0];
       if (!userRow) {
-        return Response.json(
-          { error: "Username atau password salah." },
-          { status: 401 },
-        );
+        return errorResponse("Username atau password salah.", 401);
       }
 
       const hash = String(userRow.password_hash);
@@ -173,10 +150,7 @@ export async function POST(request: NextRequest) {
 
       const isValid = verifyPassword(password, hash, salt);
       if (!isValid) {
-        return Response.json(
-          { error: "Username atau password salah." },
-          { status: 401 },
-        );
+        return errorResponse("Username atau password salah.", 401);
       }
 
       // Bikin sesi baru
@@ -194,7 +168,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: true, username, stats });
     } catch (err) {
       console.error("Login gagal:", err);
-      return Response.json({ error: "Terjadi kesalahan server." }, { status: 500 });
+      return errorResponse("Terjadi kesalahan server.", 500);
     }
   }
 
@@ -216,5 +190,5 @@ export async function POST(request: NextRequest) {
     return Response.json({ success: true });
   }
 
-  return Response.json({ error: "Aksi tidak didukung." }, { status: 400 });
+  return errorResponse("Aksi tidak didukung.", 400);
 }

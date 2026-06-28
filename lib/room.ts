@@ -347,6 +347,94 @@ const API_ERROR_TRANSLATIONS: Record<string, { id: string; en: string }> = {
   "Akses ditolak: Proteksi CSRF memblokir request ini.": {
     id: "Akses ditolak: Proteksi CSRF memblokir request ini.",
     en: "Access denied: CSRF protection blocked this request.",
+  },
+  "Username tidak boleh kosong.": {
+    id: "Username tidak boleh kosong.",
+    en: "Username cannot be empty.",
+  },
+  "Username maksimal 20 karakter.": {
+    id: "Username maksimal 20 karakter.",
+    en: "Username must be at most 20 characters.",
+  },
+  "Username sudah terdaftar.": {
+    id: "Username sudah terdaftar.",
+    en: "Username is already registered.",
+  },
+  "Username hanya boleh berisi huruf, angka, dan underscore.": {
+    id: "Username hanya boleh berisi huruf, angka, dan underscore.",
+    en: "Username can only contain letters, numbers, and underscores.",
+  },
+  "Password minimal 8 karakter.": {
+    id: "Password minimal 8 karakter.",
+    en: "Password must be at least 8 characters.",
+  },
+  "Terlalu banyak percobaan registrasi. Coba lagi dalam 10 menit.": {
+    id: "Terlalu banyak percobaan registrasi. Coba lagi dalam 10 menit.",
+    en: "Too many registration attempts. Try again in 10 minutes.",
+  },
+  "Terlalu banyak percobaan login. Coba lagi dalam 5 menit.": {
+    id: "Terlalu banyak percobaan login. Coba lagi dalam 5 menit.",
+    en: "Too many login attempts. Try again in 5 minutes.",
+  },
+  "Username atau password salah.": {
+    id: "Username atau password salah.",
+    en: "Invalid username or password.",
+  },
+  "Terjadi kesalahan server.": {
+    id: "Terjadi kesalahan server.",
+    en: "An internal server error occurred.",
+  },
+  "Aksi tidak didukung.": {
+    id: "Aksi tidak didukung.",
+    en: "Action not supported.",
+  },
+  "Anda harus masuk terlebih dahulu.": {
+    id: "Anda harus masuk terlebih dahulu.",
+    en: "You must log in first.",
+  },
+  "Anda belum memenuhi syarat untuk gelar ini.": {
+    id: "Anda belum memenuhi syarat untuk gelar ini.",
+    en: "You do not qualify for this title yet.",
+  },
+  "Gagal menyimpan gelar baru.": {
+    id: "Gagal menyimpan gelar baru.",
+    en: "Failed to save new title.",
+  },
+  "Anda harus login untuk mencatat tantangan harian.": {
+    id: "Anda harus login untuk mencatat tantangan harian.",
+    en: "You must be logged in to record the daily challenge.",
+  },
+  "Terjadi kesalahan server saat menyimpan tantangan harian.": {
+    id: "Terjadi kesalahan server saat menyimpan tantangan harian.",
+    en: "An internal server error occurred while saving the daily challenge.",
+  },
+  "Gagal memuat data profil.": {
+    id: "Gagal memuat data profil.",
+    en: "Failed to load profile data.",
+  },
+  "Gagal memuat papan peringkat.": {
+    id: "Gagal memuat papan peringkat.",
+    en: "Failed to load leaderboard.",
+  },
+  "Password minimal harus 8 karakter.": {
+    id: "Password minimal harus 8 karakter.",
+    en: "Password must be at least 8 characters.",
+  },
+  "Password harus mengandung minimal satu huruf dan satu angka.": {
+    id: "Password harus mengandung minimal satu huruf dan satu angka.",
+    en: "Password must contain at least one letter and one number.",
+  },
+  "Terlalu banyak percobaan login dari IP ini. Coba lagi dalam 1 menit.": {
+    id: "Terlalu banyak percobaan login dari IP ini. Coba lagi dalam 1 menit.",
+    en: "Too many login attempts from this IP. Try again in 1 minute.",
+  },
+  "Username dan password wajib diisi.": {
+    id: "Username dan password wajib diisi.",
+    en: "Username and password are required.",
+  },
+  "Terlalu banyak percobaan login untuk akun ini. Coba lagi dalam 1 menit.": {
+    id: "Terlalu banyak percobaan login untuk akun ini. Coba lagi dalam 1 menit.",
+    en: "Too many login attempts for this account. Try again in 1 minute.",
   }
 };
 
