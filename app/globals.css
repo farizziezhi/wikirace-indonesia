@@ -865,3 +865,73 @@ body {
   display: block;
   clear: both;
 }
+
+/* --- Mobile styling matching Wikipedia Mobile (.m.wikipedia.org) style --- */
+@media (max-width: 640px) {
+  .wiki-article {
+    font-size: 15px; /* sedikit lebih rapat untuk layar HP */
+  }
+
+  /* Clear floats agar teks tidak terjepit */
+  .wiki-article .infobox,
+  .wiki-article .thumb,
+  .wiki-article div.floatright,
+  .wiki-article div.floatleft,
+  .wiki-article figure {
+    float: none !important;
+    clear: both !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0.8em 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* Centering images inside thumbs and figures */
+  .wiki-article .thumbinner,
+  .wiki-article .mw-parser-output figure {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 8px !important;
+  }
+
+  .wiki-article .thumbimage,
+  .wiki-article img {
+    display: block !important;
+    margin: 0 auto 6px !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Scrollable tables so they don't break the layout */
+  .wiki-article table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border-collapse: collapse !important;
+  }
+
+  /* Clean up infobox display on mobile */
+  .wiki-article .infobox {
+    display: table !important; /* Biar tetap berformat tabel tapi lebar 100% */
+    border-spacing: 0 !important;
+    font-size: 85% !important;
+  }
+
+  .wiki-article .infobox th,
+  .wiki-article .infobox td {
+    padding: 0.4em !important;
+  }
+
+  /* Notice boxes / ambox full width */
+  .wiki-article .ambox,
+  .wiki-article .mbox-small,
+  .wiki-article .messagebox {
+    width: 100% !important;
+    box-sizing: border-box;
+    margin: 0.5em 0 !important;
+    padding: 0.5em !important;
+  }
+}
+
