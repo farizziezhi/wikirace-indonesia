@@ -183,12 +183,20 @@ export async function getPlayerStats(username: string): Promise<PlayerStats> {
   });
 
   if (res.rows.length === 0) {
-    // Buat data baru jika pengguna belum memiliki catatan statistik
-    await turso.execute({
-      sql: `INSERT INTO player_stats (username, elo, games_played, wins, losses, equipped_title, daily_streak, last_daily_challenge_completed_at)
-            VALUES (:username, 1200, 0, 0, 0, '', 0, '')`,
+    // Cek apakah pengguna terdaftar di tabel users
+    const userCheck = await turso.execute({
+      sql: "SELECT 1 FROM users WHERE username = :username",
       args: { username },
     });
+
+    if (userCheck.rows.length > 0) {
+      // Buat data baru jika pengguna terdaftar tetapi belum memiliki catatan statistik
+      await turso.execute({
+        sql: `INSERT INTO player_stats (username, elo, games_played, wins, losses, equipped_title, daily_streak, last_daily_challenge_completed_at)
+              VALUES (:username, 1200, 0, 0, 0, '', 0, '')`,
+        args: { username },
+      });
+    }
     return { username, elo: 1200, games_played: 0, wins: 0, losses: 0, equipped_title: "", daily_streak: 0, last_daily_challenge_completed_at: "" };
   }
 
@@ -329,7 +337,12 @@ export async function getGlobalLeaderboard(
 ): Promise<LeaderboardEntry[]> {
   await ensureDbInitialized();
   const res = await turso.execute({
-    sql: "SELECT username, elo, games_played, wins FROM player_stats ORDER BY elo DESC LIMIT :limit",
+    sql: `SELECT p.username, p.elo, p.games_played, p.wins 
+          FROM player_stats p
+          INNER JOIN users u ON p.username = u.username
+          WHERE p.games_played > 0
+          ORDER BY p.elo DESC 
+          LIMIT :limit`,
     args: { limit },
   });
 
