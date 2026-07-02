@@ -9,19 +9,31 @@ import {
   ArrowRight,
 } from "@phosphor-icons/react/dist/ssr";
 
-export default function BlogPage() {
-  const articles = getAllArticles();
-  const categories = getCategories();
+export default function BlogPage({
+  searchParams,
+}: {
+  searchParams: { lang?: string };
+}) {
+  const isEn = searchParams.lang === "en";
+  const activeLang = isEn ? "en" : "id";
+  
+  const allArticles = getAllArticles();
+  const articles = allArticles.filter((a) => (a.language || "id") === activeLang);
+  
+  // Get categories only for the current language articles to avoid empty tags
+  const categories = [...new Set(articles.map((a) => a.category))];
+
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id";
 
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Blog WikiRace Indonesia",
-    description:
-      "Tips, strategi, trivia, dan panduan lengkap seputar WikiRace dan Wikipedia.",
-    url: `${siteUrl}/blog`,
+    name: isEn ? "WikiRace Indonesia Blog (EN)" : "Blog WikiRace Indonesia",
+    description: isEn
+      ? "Tips, strategies, trivia, and complete guides about WikiRace and Wikipedia."
+      : "Tips, strategi, trivia, dan panduan lengkap seputar WikiRace dan Wikipedia.",
+    url: `${siteUrl}/blog${isEn ? "?lang=en" : ""}`,
     mainEntity: {
       "@type": "ItemList",
       itemListElement: articles.map((article, i) => ({
@@ -35,9 +47,15 @@ export default function BlogPage() {
 
   const categoryColors: Record<string, string> = {
     Panduan: "bg-lime-accent text-charcoal-text",
+    Guide: "bg-lime-accent text-charcoal-text",
     Strategi: "bg-playdate-yellow text-charcoal-text",
+    Strategy: "bg-playdate-yellow text-charcoal-text",
     "Trivia & Edukasi": "bg-burnt-orange text-warm-cream",
+    "Trivia & Education": "bg-burnt-orange text-warm-cream",
     Edukasi: "bg-sky-400 text-charcoal-text",
+    Education: "bg-sky-400 text-charcoal-text",
+    Komunitas: "bg-pink-400 text-warm-cream",
+    Community: "bg-pink-400 text-warm-cream",
   };
 
   return (
@@ -50,14 +68,38 @@ export default function BlogPage() {
         />
 
         {/* Back Button */}
-        <header className="mb-6">
+        <header className="mb-6 flex justify-between items-center">
           <Link
             href="/"
-            className="flex items-center gap-2 text-charcoal-text/75 hover:text-charcoal-text font-bold transition text-xs bg-light-beige border border-warm-gray/60 px-4 py-2 rounded-full self-start shadow-[2px_2px_0px_#000] z-10 w-fit hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000] active:translate-y-0 active:shadow-[1px_1px_0px_#000]"
+            className="flex items-center gap-2 text-charcoal-text/75 hover:text-charcoal-text font-bold transition text-xs bg-light-beige border border-warm-gray/60 px-4 py-2 rounded-full shadow-[2px_2px_0px_#000] z-10 hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000] active:translate-y-0 active:shadow-[1px_1px_0px_#000]"
           >
             <House size={14} />
-            <span>Kembali ke Beranda</span>
+            <span>{isEn ? "Back to Home" : "Kembali ke Beranda"}</span>
           </Link>
+
+          {/* Language Toggle */}
+          <div className="flex bg-light-beige border border-warm-gray/60 rounded-full p-1 shadow-[2px_2px_0px_#000]">
+            <Link
+              href="/blog"
+              className={`px-3 py-1 rounded-full text-xs font-bold transition ${
+                !isEn
+                  ? "bg-charcoal-text text-warm-cream"
+                  : "text-charcoal-text/60 hover:text-charcoal-text"
+              }`}
+            >
+              ID
+            </Link>
+            <Link
+              href="/blog?lang=en"
+              className={`px-3 py-1 rounded-full text-xs font-bold transition ${
+                isEn
+                  ? "bg-charcoal-text text-warm-cream"
+                  : "text-charcoal-text/60 hover:text-charcoal-text"
+              }`}
+            >
+              EN
+            </Link>
+          </div>
         </header>
 
         {/* Header */}
@@ -77,7 +119,7 @@ export default function BlogPage() {
                 Blog
               </h1>
               <p className="text-xs text-charcoal-text/50 font-mono uppercase tracking-wider mt-0.5">
-                Tips, strategi &amp; trivia WikiRace
+                {isEn ? "Tips, strategies & trivia" : "Tips, strategi & trivia WikiRace"}
               </p>
             </div>
           </div>
@@ -122,11 +164,14 @@ export default function BlogPage() {
                   </span>
                   <span className="flex items-center gap-1 text-[10px] text-warm-cream/40 font-mono">
                     <Calendar size={10} />
-                    {new Date(article.publishedAt).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    {new Date(article.publishedAt).toLocaleDateString(
+                      isEn ? "en-US" : "id-ID",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
                   </span>
                   <span className="flex items-center gap-1 text-[10px] text-warm-cream/40 font-mono">
                     <Clock size={10} />
@@ -146,7 +191,7 @@ export default function BlogPage() {
 
                 {/* Read More */}
                 <div className="flex items-center gap-1.5 text-xs font-black text-lime-accent/70 group-hover:text-lime-accent transition uppercase tracking-wider mt-1">
-                  Baca Selengkapnya
+                  {isEn ? "Read More" : "Baca Selengkapnya"}
                   <ArrowRight
                     size={12}
                     weight="bold"
@@ -161,14 +206,14 @@ export default function BlogPage() {
         {/* CTA */}
         <div className="mt-10 text-center">
           <p className="text-sm text-charcoal-text/60 mb-3 font-bold">
-            Sudah baca semuanya? Saatnya praktek!
+            {isEn ? "Done reading? Time to practice!" : "Sudah baca semuanya? Saatnya praktek!"}
           </p>
           <Link
             href="/"
             className="chunky-press btn-primary py-3 px-6 text-sm font-extrabold border-2 border-charcoal-text inline-flex items-center gap-2"
             style={{ borderRadius: "var(--radius-button)" }}
           >
-            🎮 Main WikiRace Sekarang
+            🎮 {isEn ? "Play WikiRace Now" : "Main WikiRace Sekarang"}
           </Link>
         </div>
       </div>

@@ -10,6 +10,7 @@ export interface BlogArticle {
   publishedAt: string;
   updatedAt: string;
   readingTime: string;
+  language?: "id" | "en";
 }
 
 /**
@@ -27,6 +28,7 @@ const articles: BlogArticle[] = [
     publishedAt: "2026-07-02",
     updatedAt: "2026-07-02",
     readingTime: "5 menit",
+    language: "id",
     content: `
 <p>Pernah dengar istilah "WikiRace"? Kalau belum, kamu baru saja menemukan salah satu permainan paling sederhana sekaligus paling adiktif yang lahir dari internet: balapan berpindah antar-artikel Wikipedia.</p>
 
@@ -71,6 +73,7 @@ const articles: BlogArticle[] = [
     publishedAt: "2026-07-02",
     updatedAt: "2026-07-02",
     readingTime: "6 menit",
+    language: "id",
     content: `
 <p>Kalau kamu sudah beberapa kali main WikiRace dan merasa masih sering nyasar atau kelamaan menyelesaikan ronde, tenang — ini bukan soal keberuntungan semata. Ada pola pikir dan strategi tertentu yang dipakai pemain berpengalaman untuk konsisten menang cepat. Berikut lima di antaranya.</p>
 
@@ -111,6 +114,7 @@ const articles: BlogArticle[] = [
     publishedAt: "2026-07-02",
     updatedAt: "2026-07-02",
     readingTime: "5 menit",
+    language: "id",
     content: `
 <p>Setiap permainan besar biasanya punya cerita asal-usul yang sederhana, dan WikiRace tidak terkecuali. Yuk kita telusuri bagaimana permainan yang cuma bermodalkan dua tab browser ini bisa berkembang jadi genre tersendiri.</p>
 
@@ -145,6 +149,7 @@ const articles: BlogArticle[] = [
     publishedAt: "2026-07-02",
     updatedAt: "2026-07-02",
     readingTime: "4 menit",
+    language: "id",
     content: `
 <p>Sebelum kamu balapan antar-artikel di WikiRace Indonesia, ada baiknya kenalan dulu sedikit lebih dalam dengan "arena" tempat kamu bermain: Wikipedia itu sendiri. Berikut beberapa fakta menarik yang mungkin belum kamu ketahui.</p>
 
@@ -179,6 +184,7 @@ const articles: BlogArticle[] = [
     publishedAt: "2026-07-02",
     updatedAt: "2026-07-02",
     readingTime: "4 menit",
+    language: "id",
     content: `
 <p>Sekilas, WikiRace mungkin terlihat cuma permainan iseng untuk mengisi waktu luang. Tapi kalau ditelusuri lebih dalam, ada beberapa manfaat nyata yang bisa kamu dapat dari kebiasaan bermain WikiRace secara rutin.</p>
 
@@ -212,12 +218,23 @@ import { artikelTrivia } from "./articles-trivia";
 import { artikelKomunitas } from "./articles-komunitas";
 import { artikelUmum } from "./articles-umum";
 
+import { artikelMainEn } from "./articles-main-en";
+import { artikelStrategiEn } from "./articles-strategi-en";
+import { artikelTriviaEn } from "./articles-trivia-en";
+import { artikelKomunitasEn } from "./articles-komunitas-en";
+import { artikelUmumEn } from "./articles-umum-en";
+
 const allArticlesData: BlogArticle[] = [
   ...articles,
   ...artikelStrategi,
   ...artikelTrivia,
   ...artikelKomunitas,
   ...artikelUmum,
+  ...artikelMainEn,
+  ...artikelStrategiEn,
+  ...artikelTriviaEn,
+  ...artikelKomunitasEn,
+  ...artikelUmumEn,
 ];
 
 /** Ambil semua artikel, diurutkan berdasarkan tanggal publish terbaru. */
