@@ -1571,17 +1571,34 @@ export default function HomePage() {
           >
             {uiLang === "en" ? "Last Updated: June 2026" : "Pembaruan Terakhir: Juni 2026"}
           </p>
-          <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-3">
+          <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-3 flex-wrap">
             <Link href="/guide" className="hover:text-charcoal-text hover:underline transition">
               {uiLang === "en" ? "Game Guide" : "Pedoman Bermain"}
             </Link>
             <span className="opacity-40" aria-hidden="true">•</span>
+            <Link href="/blog" className="hover:text-charcoal-text hover:underline transition">
+              Blog
+            </Link>
+            <span className="opacity-40" aria-hidden="true">•</span>
+            <Link href="/about" className="hover:text-charcoal-text hover:underline transition">
+              {uiLang === "en" ? "About Us" : "Tentang Kami"}
+            </Link>
+            <span className="opacity-40" aria-hidden="true">•</span>
+            <Link href="/contact" className="hover:text-charcoal-text hover:underline transition">
+              {uiLang === "en" ? "Contact" : "Hubungi Kami"}
+            </Link>
+          </div>
+          <div className="flex items-center justify-center gap-4 text-xs font-bold text-charcoal-text/60 mt-1.5 flex-wrap">
             <Link href="/privacy" className="hover:text-charcoal-text hover:underline transition">
               {uiLang === "en" ? "Privacy Policy" : "Kebijakan Privasi"}
             </Link>
             <span className="opacity-40" aria-hidden="true">•</span>
             <Link href="/terms" className="hover:text-charcoal-text hover:underline transition">
               {uiLang === "en" ? "Terms & Conditions" : "Syarat & Ketentuan"}
+            </Link>
+            <span className="opacity-40" aria-hidden="true">•</span>
+            <Link href="/disclaimer" className="hover:text-charcoal-text hover:underline transition">
+              Disclaimer
             </Link>
           </div>
         </div>

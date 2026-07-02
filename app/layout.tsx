@@ -77,6 +77,17 @@ export default function RootLayout({
         "inLanguage": ["id", "en"],
       },
       {
+        "@type": "Organization",
+        "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id"}/#organization`,
+        "name": "WikiRace Indonesia",
+        "url": process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id",
+        "description": "Platform balapan Wikipedia online berbahasa Indonesia — kompetitif, edukatif, dan gratis.",
+        "foundingDate": "2024",
+        "sameAs": [
+          "https://github.com/farizziezhi/wikirace-indonesia"
+        ],
+      },
+      {
         "@type": "SoftwareApplication",
         "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id"}/#webapp`,
         "name": "WikiRace Indonesia",

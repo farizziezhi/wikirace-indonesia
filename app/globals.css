@@ -425,8 +425,83 @@ body {
 }
 
 /* ============================================================ */
+/* Styling artikel Blog — konten di halaman /blog/[slug]        */
+/* ============================================================ */
+
+.blog-article h2 {
+  font-size: 1.35em;
+  font-weight: 900;
+  color: #a3e635; /* lime-accent */
+  margin: 1.5em 0 0.5em;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.blog-article h3 {
+  font-size: 1.1em;
+  font-weight: 800;
+  color: #ffc700; /* playdate-yellow */
+  margin: 1.2em 0 0.4em;
+}
+
+.blog-article p {
+  margin: 0.6em 0;
+}
+
+.blog-article strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
+}
+
+.blog-article em {
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.blog-article a {
+  color: #a3e635;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.blog-article a:hover {
+  color: #ffc700;
+}
+
+.blog-article ul,
+.blog-article ol {
+  margin: 0.8em 0;
+  padding-left: 1.5em;
+}
+
+.blog-article ul {
+  list-style-type: disc;
+}
+
+.blog-article ol {
+  list-style-type: decimal;
+}
+
+.blog-article li {
+  margin: 0.4em 0;
+  line-height: 1.6;
+}
+
+.blog-article blockquote {
+  border-left: 4px solid #a3e635;
+  padding: 0.5em 1em;
+  margin: 1em 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-style: italic;
+}
+
+/* ============================================================ */
 /* Styling artikel Wikipedia — meniru Vector skin               */
 /* ============================================================ */
+
 
 .wiki-article {
   color: #202122;
