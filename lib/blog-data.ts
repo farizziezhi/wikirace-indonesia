@@ -30,37 +30,56 @@ const articles: BlogArticle[] = [
     readingTime: "5 menit",
     language: "id",
     content: `
-<p>Pernah dengar istilah "WikiRace"? Kalau belum, kamu baru saja menemukan salah satu permainan paling sederhana sekaligus paling adiktif yang lahir dari internet: balapan berpindah antar-artikel Wikipedia.</p>
+<p>Pernahkah kamu membayangkan bahwa ensiklopedia digital terbesar di dunia, Wikipedia, bukan sekadar tempat mencari tugas sekolah atau riset sejarah, melainkan sebuah sirkuit balapan raksasa? Selamat datang di dunia <strong>WikiRace</strong>, salah satu fenomena permainan internet paling sederhana namun paling adiktif yang pernah diciptakan.</p>
 
-<h2>Definisi Singkat</h2>
-<p>WikiRace adalah permainan di mana pemain diberikan dua artikel Wikipedia — satu sebagai <strong>titik awal</strong> dan satu sebagai <strong>titik tujuan</strong>. Aturannya sederhana: kamu hanya boleh berpindah halaman dengan mengklik tautan biru yang ada di dalam teks artikel, tanpa menggunakan fitur pencarian atau mengetik URL langsung. Pemenangnya adalah yang berhasil mencapai artikel tujuan paling cepat, atau dengan jumlah klik paling sedikit.</p>
-<p>Kedengarannya sepele? Coba saja. Butuh berapa langkah untuk sampai dari artikel "Kucing" ke artikel "Perang Dunia II"? Di situlah letak serunya — otak kita dipaksa berpikir cepat, mengenali pola, dan menebak koneksi tersembunyi antar-topik yang kelihatannya tidak berhubungan sama sekali.</p>
+<p>Bagi banyak orang, internet adalah tempat untuk bersantai. Namun bagi para pemain WikiRace, Wikipedia adalah medan pertempuran kecerdasan, kecepatan membaca, dan ketangkasan berlogika. Mari kita bedah apa sebenarnya game balapan Wikipedia ini, mengapa ia bisa membuat ribuan orang ketagihan, dan bagaimana kamu bisa mulai memainkannya sekarang juga.</p>
 
-<h2>Dari Mana Asalnya WikiRace?</h2>
-<p>Permainan ini awalnya muncul secara organik di kalangan mahasiswa dan pengguna internet yang iseng mengeksplorasi Wikipedia di sela waktu senggang, jauh sebelum ada platform khusus untuk memainkannya. Karena sifatnya yang sederhana — cukup membuka dua tab Wikipedia — permainan ini menyebar dari mulut ke mulut, forum, hingga akhirnya menjadi genre permainan browser tersendiri dengan berbagai platform khusus di seluruh dunia.</p>
-
-<h2>Kenapa WikiRace Menarik?</h2>
-<p>Ada beberapa alasan kenapa permainan sesederhana ini bisa membuat orang ketagihan:</p>
-<p><strong>1. Menguji pengetahuan umum secara natural</strong></p>
-<p>Tidak ada soal pilihan ganda atau pertanyaan trivia langsung. Pengetahuanmu diuji lewat cara yang lebih organik — seberapa baik kamu mengenali hubungan antar-topik.</p>
-<p><strong>2. Melatih kecepatan berpikir</strong></p>
-<p>Setiap detik berharga. Kamu harus cepat memindai artikel, mengenali tautan mana yang paling potensial membawamu lebih dekat ke tujuan, dan mengambil keputusan dalam hitungan detik.</p>
-<p><strong>3. Selalu berbeda setiap kali main</strong></p>
-<p>Dengan jutaan artikel Wikipedia yang bisa jadi titik awal atau tujuan, kombinasi permainan nyaris tidak terbatas. Tidak akan ada dua ronde yang benar-benar sama.</p>
-<p><strong>4. Bisa dimainkan sendiri atau rame-rame</strong></p>
-<p>Cocok untuk mengisi waktu luang sendirian, atau dijadikan kompetisi seru bareng teman untuk lihat siapa yang paling jago.</p>
-
-<h2>Bagaimana Cara Bermain di WikiRace Indonesia?</h2>
-<p>Di WikiRace Indonesia, kamu bisa langsung mencoba permainan ini dengan antarmuka berbahasa Indonesia, tanpa perlu ribet buka banyak tab manual. Sistem akan memberikan artikel awal dan tujuan secara acak (atau sesuai tantangan tertentu), lalu mencatat waktu dan jumlah langkahmu secara otomatis.</p>
-<p>Untuk panduan langkah demi langkah cara bermain, kamu bisa cek <a href="/guide">halaman panduan lengkap kami</a>.</p>
-
-<h2>Tips Singkat Sebelum Mulai</h2>
+<h2>Apa Itu WikiRace? (Definisi & Aturan Main)</h2>
+<p>Secara sederhana, <strong>WikiRace</strong> (juga sering disebut WikiWars atau Wikipedia Maze) adalah permainan perlombaan berpindah dari satu artikel Wikipedia ke artikel Wikipedia lainnya yang sama sekali tidak berhubungan, hanya dengan menggunakan tautan (hyperlink) biru yang ada di dalam teks.</p>
+<p>Pemain akan diberikan dua titik: <strong>Titik Awal (Start)</strong> dan <strong>Titik Tujuan (Finish)</strong>. Aturan emas dalam permainan ini sangat ketat namun simpel:</p>
 <ul>
-<li>Baca judul dan paragraf pembuka artikel dengan cepat — biasanya tautan-tautan penting ada di sana.</li>
-<li>Artikel dengan topik luas (negara, tahun, konsep umum) sering jadi "jalan pintas" karena punya banyak tautan keluar.</li>
-<li>Jangan panik kalau nyasar — kembali (back) masih dihitung sebagai bagian dari strategi, bukan kegagalan.</li>
+  <li>Kamu hanya boleh mengklik tautan internal berwarna biru di dalam artikel.</li>
+  <li><strong>DILARANG KERAS</strong> menggunakan fitur pencarian (Search bar) bawaan Wikipedia.</li>
+  <li><strong>DILARANG</strong> mengetik URL langsung di address bar browser.</li>
+  <li><strong>DILARANG</strong> menggunakan tombol <em>Back</em> di browser (meski beberapa variasi game mengizinkannya sebagai hukuman penalti waktu).</li>
 </ul>
-<p>Penasaran ingin coba? Langsung mainkan <a href="/">WikiRace Indonesia</a> dan rasakan sendiri serunya balapan Wikipedia ala Indonesia.</p>
+<p>Pemenangnya adalah pemain yang berhasil mencapai artikel tujuan dengan waktu tercepat (Speedrun) atau jumlah klik paling sedikit (Least Clicks).</p>
+
+<h2>Contoh Rute Ekstrem: Dari "Kucing" ke "Perang Dunia II"</h2>
+<p>Kedengarannya mudah? Coba kita buat simulasi. Bayangkan titik awalmu adalah artikel tentang <strong>"Kucing"</strong> dan tujuanmu adalah <strong>"Perang Dunia II"</strong>. Bagaimana cara menghubungkan hewan peliharaan berbulu dengan konflik militer global?</p>
+<p>Seorang pemain pemula mungkin akan tersesat ke artikel tentang <em>Ras Kucing</em>, lalu ke <em>Makanan Kucing</em>, dan berputar-putar di topik biologi. Namun, pemain WikiRace yang cerdik akan menggunakan logika "berpikir mundur" dan mencari jalur penghubung (hub):</p>
+<ol>
+  <li>Dari artikel <strong>Kucing</strong>, mereka mencari tautan sejarah, misalnya "Mesir Kuno" (karena kucing dipuja di sana).</li>
+  <li>Dari <strong>Mesir Kuno</strong>, mereka mengklik tautan ke wilayah "Eropa" atau "Kekaisaran Romawi".</li>
+  <li>Dari artikel sejarah Eropa, sangat mudah menemukan tautan yang menuju ke "Abad ke-20" atau langsung ke <strong>"Perang Dunia II"</strong>.</li>
+</ol>
+<p>Hanya dalam 3 atau 4 klik, dua topik yang tampak tak memiliki benang merah berhasil dihubungkan! Di sinilah letak ledakan adrenalin dari permainan ini.</p>
+
+<h2>Teori "Enam Derajat Pemisahan" (Six Degrees of Separation)</h2>
+<p>Mengapa permainan ini selalu bisa diselesaikan? Jawabannya ada pada teori jaringan. Ada sebuah konsep terkenal bernama <em>Six Degrees of Separation</em> (Enam Derajat Pemisahan) yang menyatakan bahwa semua orang di dunia ini terhubung satu sama lain melalui maksimal enam perantara. </p>
+<p>Wikipedia, dengan miliaran tautannya, adalah perwujudan digital paling sempurna dari teori ini. Hampir tidak ada artikel di Wikipedia yang benar-benar terisolasi. Melalui tautan-tautan negara, tahun, tokoh sejarah, atau bidang ilmu yang sangat luas, kamu bisa menghubungkan artikel tentang <em>SpongeBob SquarePants</em> dengan artikel tentang <em>Fisika Kuantum</em> dalam kurang dari 6 klik jika kamu tahu jalurnya.</p>
+
+<h2>Mengapa Game Balapan Wikipedia Ini Sangat Adiktif?</h2>
+<p>Tidak ada grafis 3D mewah, tidak ada sistem <em>leveling</em> karakter, tidak ada <em>gacha</em>. Lalu kenapa WikiRace sangat digemari?</p>
+
+<h3>1. Menguji Pengetahuan Umum Secara Organik</h3>
+<p>WikiRace tidak menyuguhkan soal pilihan ganda seperti game trivia biasa. Pengetahuanmu diuji melalui seberapa baik kamu memahami kategorisasi dunia. Jika kamu tahu bahwa <em>Padi</em> adalah tanaman yang berasal dari <em>Asia</em>, kamu bisa menggunakan benua Asia sebagai batu loncatan menuju artikel lain. Ini adalah bentuk tes pengetahuan umum yang jauh lebih natural.</p>
+
+<h3>2. Melatih Kecepatan Membaca (Skimming) & Fokus</h3>
+<p>Dalam balapan, kamu tidak punya waktu membaca detail sejarah seorang tokoh. Matamu dipaksa memindai paragraf (skimming) hanya untuk mencari kata dengan warna biru. Otak akan berlatih menyaring informasi yang tidak relevan dengan kecepatan tinggi.</p>
+
+<h3>3. Sensasi Kemenangan yang Murni</h3>
+<p>Menemukan tautan ke artikel tujuan yang tersembunyi di paragraf ketiga setelah kebingungan selama dua menit memberikan kepuasan yang luar biasa. Rasanya seperti memecahkan teka-teki labirin, namun labirin ini terbuat dari sejarah umat manusia.</p>
+
+<h2>Cara Bermain di WikiRace Indonesia</h2>
+<p>Kini, kamu tidak perlu repot-repot membuka dua tab Wikipedia secara manual. Di platform <strong>WikiRace Indonesia</strong>, kami telah merancang sistem otomatis yang akan memberimu artikel awal dan akhir berbahasa Indonesia, menghitung waktu, serta melacak setiap klikmu.</p>
+<p>Kamu bisa menantang diri sendiri dalam mode Solo, atau membuat <em>Room Private</em> untuk balapan langsung melawan teman-temanmu. Sistem kami menggunakan antarmuka yang sangat bersih dan berfokus pada konten Wikipedia itu sendiri, sehingga kamu bisa sepenuhnya berkonsentrasi pada strategi memenangkan balapan.</p>
+
+<blockquote>
+<p><strong>Tips Ekstra:</strong> Sebelum mulai, pastikan kamu selalu membaca paragraf pertama artikel dengan teliti. Paragraf pembuka Wikipedia adalah tempat berkumpulnya tautan-tautan "super" yang bisa membawamu ke topik-topik raksasa!</p>
+</blockquote>
+
+<p>Apakah kamu siap menguji seberapa luas wawasanmu? Jangan cuma membaca artikel ini, buktikan kecepatanmu sekarang juga di <a href="/">WikiRace Indonesia</a>. Selamat tersesat di labirin pengetahuan!</p>
     `.trim(),
   },
   {
@@ -72,35 +91,44 @@ const articles: BlogArticle[] = [
     author: "Tim WikiRace Indonesia",
     publishedAt: "2026-07-02",
     updatedAt: "2026-07-02",
-    readingTime: "6 menit",
+    readingTime: "8 menit",
     language: "id",
     content: `
-<p>Kalau kamu sudah beberapa kali main WikiRace dan merasa masih sering nyasar atau kelamaan menyelesaikan ronde, tenang — ini bukan soal keberuntungan semata. Ada pola pikir dan strategi tertentu yang dipakai pemain berpengalaman untuk konsisten menang cepat. Berikut lima di antaranya.</p>
+<p>Apakah kamu sudah mencoba bermain WikiRace namun sering frustrasi karena menghabiskan puluhan klik dan waktu berlarut-larut tanpa pernah menemukan artikel tujuan? Atau mungkin kamu sering kalah telak saat balapan melawan temanmu di mode multiplayer?</p>
 
-<h2>1. Kenali "Halaman Hub" — Jalan Pintas Tersembunyi</h2>
-<p>Beberapa artikel Wikipedia punya jauh lebih banyak tautan keluar dibanding artikel lain. Artikel tentang <strong>negara</strong>, <strong>tahun tertentu</strong>, <strong>konsep sains dasar</strong>, atau <strong>tokoh sejarah besar</strong> biasanya punya puluhan hingga ratusan tautan ke topik lain.</p>
-<p>Kalau kamu merasa buntu di sebuah artikel yang tautannya terbatas, coba cari tautan menuju salah satu "halaman hub" ini dulu. Dari sana, peluangmu untuk menemukan jalan ke tujuan akan jauh lebih besar.</p>
+<p>Tenang saja, memenangkan WikiRace bukanlah masalah IQ atau seberapa banyak kamu menghafal isi ensiklopedia. Ini murni soal <strong>metode, observasi, dan kemampuan mengenali pola</strong>. Para pemain WikiRace veteran (pro) tidak membaca artikel—mereka memindai struktur jaringan informasi. Jika kamu ingin memangkas waktu penyelesaianmu secara drastis, terapkan 5 strategi jitu berikut ini.</p>
 
-<h2>2. Baca Paragraf Pembuka Lebih Dulu</h2>
-<p>Paragraf pertama sebuah artikel Wikipedia biasanya berisi ringkasan paling penting — termasuk kategori besar, konteks waktu, dan hubungan utama topik tersebut dengan hal lain. Alih-alih scroll panjang mencari tautan secara acak, biasakan memindai paragraf pembuka dulu. Sering kali, jalan tercepat sudah ada di sana.</p>
-
-<h2>3. Berpikir Mundur dari Tujuan</h2>
-<p>Salah satu trik yang jarang disadari pemula: jangan cuma berpikir "dari sini saya bisa ke mana", tapi juga "menuju tujuan saya, kira-kira topik apa yang biasanya terhubung ke sana?"</p>
-<p>Misalnya kalau tujuanmu adalah artikel tentang sebuah negara, kamu tahu bahwa hampir semua topik geografi, sejarah perang, atau tokoh terkenal biasanya punya tautan balik ke artikel negara. Ini membantumu mengarahkan langkah lebih strategis, bukan cuma asal klik maju.</p>
-
-<h2>4. Jangan Takut "Mundur"</h2>
-<p>Banyak pemain baru merasa harus terus maju meski sudah salah arah. Padahal, menyadari kesalahan lebih cepat dan kembali ke halaman sebelumnya jauh lebih efisien dibanding memaksakan diri dari jalur yang salah. Pemain berpengalaman biasanya punya "batas toleransi" — kalau dalam 2-3 klik tidak ada progres, mereka langsung mundur dan coba jalur lain.</p>
-
-<h2>5. Latihan Bikin Insting Makin Tajam</h2>
-<p>Ini mungkin terdengar klise, tapi memang terbukti — semakin sering main, semakin cepat otakmu mengenali pola. Kamu akan mulai hafal artikel-artikel mana yang sering jadi jalan pintas, kategori topik mana yang biasanya saling terhubung, dan bagaimana Wikipedia "berpikir" dalam menyusun tautan antar-artikel.</p>
-
-<h2>Bonus: Kesalahan yang Sering Bikin Kalah</h2>
+<h2>1. Kuasai Seni Mengenali "Halaman Hub" (Jalan Tol Wikipedia)</h2>
+<p>Kesalahan terbesar pemula adalah mengklik tautan yang membawa mereka ke topik yang lebih spesifik. Jika kamu ingin pergi dari "Kopi" ke "Teleskop", jangan mengklik "Biji Kopi" atau "Kafein". Kamu akan terjebak di <em>rabbit hole</em> botani dan kimia.</p>
+<p>Pemain pro selalu mengincar <strong>Halaman Hub</strong>. Ini adalah artikel raksasa yang memiliki ribuan tautan keluar ke berbagai disiplin ilmu. Beberapa contoh Halaman Hub paling kuat di Wikipedia adalah:</p>
 <ul>
-<li><strong>Terlalu lama membaca detail</strong> — ingat, kamu tidak sedang belajar untuk ujian, kamu sedang mencari jalan tercepat.</li>
-<li><strong>Mengabaikan tautan di infobox</strong> — kotak informasi di sisi kanan artikel sering menyimpan tautan penting yang terlewat kalau kamu hanya fokus ke isi paragraf.</li>
-<li><strong>Panik saat waktu menipis</strong> — justru saat itulah penting untuk tetap tenang dan berpikir sistematis, bukan asal klik.</li>
+  <li><strong>Nama Negara Besar:</strong> Amerika Serikat, Indonesia, Inggris, Tiongkok. Negara-negara ini memiliki tautan ke sejarah, geografi, politik, tokoh terkenal, teknologi, hingga budaya pop.</li>
+  <li><strong>Artikel Tahun/Abad:</strong> "Abad ke-20", "1995", "Perang Dingin". Tahun dan era bersejarah menghubungkan penemuan fiksi, perang, ilmuwan, dan lahirnya selebriti.</li>
+  <li><strong>Disiplin Ilmu Utama:</strong> Fisika, Biologi, Sejarah, atau Ekonomi.</li>
 </ul>
-<p>Siap mempraktikkan strategi ini? Coba langsung di <a href="/">WikiRace Indonesia</a> dan lihat seberapa banyak waktu penyelesaianmu bisa dipangkas.</p>
+<p><strong>Aturan Emas:</strong> Jika kamu merasa buntu, selalu cari jalan keluar menuju salah satu Halaman Hub ini terlebih dahulu. Dari sana, seluruh penjuru Wikipedia terbuka lebar.</p>
+
+<h2>2. Selalu Berpikir Mundur (Reverse Engineering)</h2>
+<p>Jangan hanya bertanya, <em>"Dari artikel saat ini, saya bisa mengklik apa?"</em>. Pemain pro yang cerdas selalu memulai ronde dengan bertanya, <em>"Kira-kira, artikel apa saja yang biasanya menyertakan tautan menuju artikel tujuan saya?"</em></p>
+<p>Sebagai contoh, jika artikel tujuanmu adalah <strong>Albert Einstein</strong>, kamu harus berpikir mundur. Artikel apa yang memiliki link ke Einstein? Mungkin artikel tentang <em>Fisika, Relativitas, Pemenang Hadiah Nobel, Jerman,</em> atau <em>Amerika Serikat</em>.</p>
+<p>Dengan menetapkan target-target antara (milestones) ini di kepalamu, kamu tidak akan asal klik. Kamu akan memandu navigasimu dari artikel acak mana pun, menuju "Jerman" atau "Fisika", karena kamu tahu kedua artikel itu pasti memiliki jalan masuk langsung ke Einstein.</p>
+
+<h2>3. Prioritaskan Membaca Paragraf Pembuka dan Infobox</h2>
+<p>Ketika halaman Wikipedia baru saja dimuat, jangan langsung men-scroll ke bawah secara membabi buta. Mengapa? Karena standar penulisan ensiklopedia mengharuskan <strong>paragraf pembuka (lead paragraph)</strong> berisi ringkasan paling padat tentang subjek tersebut.</p>
+<p>Paragraf pertama pasti mengandung definisi, klasifikasi luas, sejarah pembentukan, dan geografi. Ini adalah tempat di mana tautan Halaman Hub paling banyak berkumpul.</p>
+<p>Selain paragraf pembuka, perhatikan <strong>Infobox</strong> (kotak informasi di sisi kanan desktop, atau di bagian atas pada tampilan mobile). Infobox berisi tautan terstruktur seperti nama negara asal, genre, atau afiliasi. Seringkali, jalan pintas terbaik bersembunyi rapi di dalam tabel Infobox tersebut.</p>
+
+<h2>4. Latih Mata untuk "Skimming" Berbasis Warna</h2>
+<p>Kamu tidak sedang membaca novel. Di WikiRace, kamu sedang memindai layar untuk mencari teks berwarna biru. Latih matamu untuk melompat dari satu tautan biru ke tautan biru lainnya, mengabaikan teks hitam sama sekali.</p>
+<p>Jika dalam 5 detik pertama pemindaian kamu tidak menemukan kata kunci yang mengarah ke tujuanmu, segera scroll ke bagian lain yang padat tautan, seperti bagian <em>"Lihat Pula" (See Also)</em> di bagian paling bawah artikel. Bagian ini sering menyimpan koneksi ke topik-topik paralel yang sangat berguna.</p>
+
+<h2>5. Jangan Ragu Menggunakan Tombol "Kembali" (Jika Diizinkan)</h2>
+<p>Terkadang, insting kita salah. Kita mengira sebuah tautan akan membawa kita ke jalan yang benar, namun ternyata halaman tersebut sangat pendek dan hampir tidak memiliki tautan keluar (sering disebut sebagai artikel buntu atau <em>Dead End</em>).</p>
+<p>Pemain pemula sering memaksakan diri mencari jalan keluar dari artikel buntu tersebut, yang akhirnya memakan belasan klik. Pemain pro memiliki <strong>batas toleransi</strong>. Jika setelah 2 klik mereka merasa semakin menjauh dari tujuan, mereka tidak ragu untuk segera kembali (menggunakan sejarah navigasi dalam game atau tombol <em>back</em> browser, tergantung aturan platform) ke artikel yang sebelumnya lebih menjanjikan.</p>
+
+<h2>Kesimpulan</h2>
+<p>Menang di WikiRace bukanlah soal keberuntungan, melainkan eksekusi dari taktik navigasi yang solid. Mulailah dengan mengenali Halaman Hub, pikirkan rute secara terbalik, manfaatkan paragraf pembuka, dan jangan membuang waktu membaca teks hitam.</p>
+<p>Semakin sering kamu bermain, insting asosiatifmu akan semakin tajam. Teori sudah di tangan, sekarang waktunya pembuktian! Ajak temanmu dan buktikan siapa yang lebih menguasai labirin ensiklopedia ini di <a href="/">WikiRace Indonesia</a>.</p>
     `.trim(),
   },
   {
@@ -116,27 +144,37 @@ const articles: BlogArticle[] = [
     readingTime: "5 menit",
     language: "id",
     content: `
-<p>Setiap permainan besar biasanya punya cerita asal-usul yang sederhana, dan WikiRace tidak terkecuali. Yuk kita telusuri bagaimana permainan yang cuma bermodalkan dua tab browser ini bisa berkembang jadi genre tersendiri.</p>
+<p>Bagi generasi yang tumbuh dengan internet di era 2000-an, Wikipedia adalah keajaiban modern. Ribuan hingga jutaan artikel terhubung satu sama lain dalam satu klik. Dari sinilah lahir sebuah permainan organik yang tidak diciptakan oleh perusahaan game raksasa mana pun, melainkan oleh keisengan para mahasiswa yang bosan di ruang kuliah: <strong>WikiRace</strong>.</p>
 
-<h2>Awal Mula: Keisengan di Ruang Kuliah</h2>
-<p>Sejak Wikipedia mulai populer di pertengahan 2000-an sebagai sumber referensi cepat, pengguna internet — terutama mahasiswa yang sering membuka Wikipedia untuk tugas — mulai menyadari sesuatu yang menarik: hampir semua artikel, sekilas terlihat tidak berhubungan, ternyata bisa saling terhubung lewat beberapa klik tautan saja.</p>
-<p>Dari situ, muncul tantangan iseng: "coba deh, dari artikel ini, bisa nggak sampai ke artikel itu cuma pakai tautan?" Tantangan sederhana ini menyebar dari circle pertemanan ke forum-forum online, dan pelan-pelan berkembang jadi permainan dengan aturan yang lebih terstruktur.</p>
+<p>Mari kita menelusuri lorong waktu dan melihat bagaimana permainan sederhana bermodalkan dua tab browser ini berkembang menjadi genre permainan internet kompetitif yang memiliki platform dan komunitasnya sendiri di seluruh dunia.</p>
 
-<h2>Dari Forum ke Platform Khusus</h2>
-<p>Seiring makin banyak orang memainkannya, muncul kebutuhan untuk membuat pengalaman ini lebih terorganisir — tidak lagi harus manual membuka dua tab dan menghitung sendiri, tapi ada sistem yang mencatat waktu, jumlah klik, dan bisa dimainkan melawan pemain lain secara real-time.</p>
-<p>Dari sinilah bermunculan berbagai platform WikiRace di seluruh dunia, masing-masing dengan variasi aturan dan fitur sendiri — ada yang fokus ke mode kompetitif satu lawan satu, ada yang menekankan tantangan harian, dan ada yang lebih santai untuk dimainkan sendiri.</p>
+<h2>Awal Mula: Keisengan di Era Web 2.0 (Pertengahan 2000-an)</h2>
+<p>Sekitar tahun 2005 hingga 2007, Wikipedia mulai mengukuhkan dirinya sebagai sumber referensi utama di internet. Di masa-masa ini, pelajar dan mahasiswa sering menggunakan Wikipedia untuk mencari bahan tugas. Saat berselancar dari satu halaman ke halaman lain, seseorang menyadari pola unik: <em>hampir semua artikel, seberapa pun jauh topiknya, selalu bisa dihubungkan hanya dengan beberapa klik tautan (hyperlink).</em></p>
 
-<h2>Kenapa Permainan Ini Bertahan Lama?</h2>
-<p>Menariknya, WikiRace tidak pernah benar-benar menjadi tren viral raksasa, tapi juga tidak pernah hilang. Ada beberapa alasan permainan ini tetap punya penggemar setia dari generasi ke generasi:</p>
+<p>Fenomena ini melahirkan tantangan informal di asrama-asrama kampus. <em>"Coba buktikan kamu bisa pergi dari halaman 'Sepeda' ke 'Marilyn Monroe' cuma pakai link biru!"</em>. Tidak ada antarmuka khusus, tidak ada penghitung waktu otomatis. Permainan ini murni dilakukan dengan modal kejujuran, membuka dua jendela browser secara bersebelahan, dan menghitung jumlah klik secara manual.</p>
+
+<h2>Evolusi Menjadi Permainan Terstruktur</h2>
+<p>Seiring berjalannya waktu, aturan-aturan dasar mulai terbentuk secara alami di dalam komunitas forum internet seperti Reddit dan 4chan. Aturan klasik <strong>"Tidak Boleh Pakai Search Bar"</strong> dan <strong>"Tidak Boleh Pencet Back"</strong> menjadi standar kompetisi.</p>
+
+<p>Pada awal dekade 2010-an, para developer independen mulai membangun platform khusus untuk memfasilitasi balapan ini. Situs web pertama bermunculan dengan fitur otomatisasi: memberikan dua kata acak kepada pemain, melacak waktu, dan menghitung klik (Clicks) secara presisi. Dari sinilah WikiRace berubah dari sekadar <em>"permainan anak kuliahan"</em> menjadi kompetisi speedrun berskala global.</p>
+
+<h2>Munculnya Varian dan Gaya Bermain Baru</h2>
+<p>Seiring bertumbuhnya komunitas, WikiRace melahirkan beberapa varian gaya bermain yang lebih menantang:</p>
 <ul>
-<li><strong>Sangat mudah dipahami</strong> — tidak butuh tutorial panjang, cukup jelaskan aturannya dalam satu kalimat.</li>
-<li><strong>Selalu relevan</strong> — karena berbasis Wikipedia, kontennya otomatis mengikuti perkembangan pengetahuan dunia.</li>
-<li><strong>Menggabungkan edukasi dan hiburan</strong> — jarang ada permainan yang membuat orang belajar sesuatu yang baru justru saat sedang having fun.</li>
+  <li><strong>Speedrun (Waktu Tercepat):</strong> Pemain berlomba mencapai tujuan secepat mungkin, tidak peduli berapa ratus klik yang mereka habiskan.</li>
+  <li><strong>Least Clicks (Klik Sedikit):</strong> Waktu tidak menjadi masalah. Pemain yang bisa merencanakan rute paling efisien (misalnya hanya 3 atau 4 klik) adalah pemenangnya. Ini sangat menguras otak karena menuntut pemahaman mendalam tentang teori jaringan <em>Halaman Hub</em>.</li>
+  <li><strong>5 Clicks to Jesus:</strong> Varian klasik di mana pemain ditantang untuk memulai dari artikel acak apa pun, dan harus mencapai artikel "Jesus" dalam maksimal lima langkah.</li>
 </ul>
 
-<h2>WikiRace di Indonesia</h2>
-<p>Meski konsepnya sudah lama ada secara global, versi yang benar-benar dibangun untuk komunitas Indonesia — dengan bahasa Indonesia dan fokus pada artikel Wikipedia berbahasa Indonesia — masih terbilang baru. <a href="/">WikiRace Indonesia</a> hadir untuk mengisi ruang itu, memberikan pengalaman yang lebih relevan dan mudah diakses bagi pemain lokal, tanpa kendala bahasa yang sering jadi penghalang di platform-platform luar negeri.</p>
-<p>Permainan yang dulunya cuma iseng-iseng di kalangan kecil kini terus berkembang, dan siapa tahu, kamu adalah bagian dari babak berikutnya dari cerita ini.</p>
+<h2>WikiRace di Indonesia: Melokalkan Keseruan</h2>
+<p>Meskipun WikiRace sudah populer secara global, bermain menggunakan Wikipedia berbahasa Inggris seringkali menjadi kendala bagi pemain di Indonesia. Struktur tautan (link density) antara Wikipedia Inggris dan Wikipedia Indonesia sangat berbeda. Wikipedia Inggris memiliki lebih dari 6 juta artikel, sementara versi Indonesia berada di kisaran ratusan ribu artikel dengan tata letak tautan yang lebih spesifik pada konteks lokal.</p>
+
+<p>Inilah yang mendasari lahirnya <strong>WikiRace Indonesia</strong>. Platform ini didedikasikan untuk membawa keseruan balapan Wikipedia dengan menggunakan artikel dan bahasa ibu kita sendiri. Dengan platform ini, pemain lokal tidak lagi harus kesulitan menerjemahkan istilah sains dalam bahasa asing, melainkan bisa mengandalkan pengetahuan umum mereka tentang sejarah, tokoh, dan budaya pop Indonesia.</p>
+
+<h2>Warisan yang Terus Bertahan</h2>
+<p>Alasan mengapa WikiRace tidak pernah mati, meskipun banyak game online canggih terus bermunculan, adalah karena sifatnya yang <em>timeless</em> (tak lekang oleh waktu). Selama Wikipedia terus diperbarui dengan tokoh baru, kejadian terkini, dan sejarah yang terus ditulis, "peta" permainan WikiRace akan terus berubah dan tidak akan pernah tamat.</p>
+
+<p>Siap untuk menjadi bagian dari sejarah permainan legendaris ini? Uji kemampuanmu dan rasakan sensasi balapannya langsung di <a href="/">WikiRace Indonesia</a>. Jadilah pelari tercepat di labirin pengetahuan terbesar di dunia!</p>
     `.trim(),
   },
   {
@@ -148,30 +186,45 @@ const articles: BlogArticle[] = [
     author: "Tim WikiRace Indonesia",
     publishedAt: "2026-07-02",
     updatedAt: "2026-07-02",
-    readingTime: "4 menit",
+    readingTime: "6 menit",
     language: "id",
     content: `
-<p>Sebelum kamu balapan antar-artikel di WikiRace Indonesia, ada baiknya kenalan dulu sedikit lebih dalam dengan "arena" tempat kamu bermain: Wikipedia itu sendiri. Berikut beberapa fakta menarik yang mungkin belum kamu ketahui.</p>
+<p>Sebelum kamu menancap gas dan memulai balapan antar-artikel di WikiRace Indonesia, ada baiknya kamu berkenalan lebih dalam dengan "sirkuit" tempat kamu bermain: <strong>Wikipedia</strong> itu sendiri. Ensiklopedia daring ini bukan hanya gudang data raksasa, melainkan sebuah ekosistem digital yang memiliki pola dan rahasia unik.</p>
 
-<h2>1. Wikipedia Bahasa Indonesia Salah Satu yang Terbesar di Asia Tenggara</h2>
-<p>Wikipedia bahasa Indonesia adalah salah satu edisi Wikipedia dengan jumlah artikel terbanyak di kawasan Asia Tenggara, terus bertambah setiap harinya berkat kontribusi sukarelawan dari seluruh Indonesia. Setiap kali kamu bermain WikiRace Indonesia, kamu sebenarnya sedang menjelajahi hasil kerja keras ribuan kontributor sukarela ini.</p>
+<p>Berikut adalah 5 fakta unik dan mencengangkan seputar Wikipedia yang akan membuatmu melihat situs ini dari sudut pandang yang sama sekali baru.</p>
 
-<h2>2. Semua Artikel (Konon) Bisa Nyambung ke "Filosofi"</h2>
-<p>Ada fenomena menarik bernama <strong>"Wikipedia: Getting to Philosophy"</strong> — sebuah pengamatan bahwa jika kamu mengklik tautan pertama yang valid pada paragraf pertama sebuah artikel Wikipedia bahasa Inggris berulang kali, kamu pada akhirnya hampir selalu akan sampai ke artikel "Philosophy". Ini terjadi karena struktur penulisan ensiklopedis yang cenderung mendefinisikan istilah dengan kategori yang lebih luas dan mendasar.</p>
-<p>Fenomena serupa (meski tidak selalu identik) juga bisa ditemukan polanya di Wikipedia bahasa Indonesia — coba saja sendiri dan lihat ke mana klik pertamamu berulang kali membawamu!</p>
+<h2>1. Fenomena "Getting to Philosophy" (Menuju ke Filsafat)</h2>
+<p>Ini adalah salah satu misteri Wikipedia paling terkenal yang sering dijadikan permainan mandiri. Ada sebuah pengamatan tak tertulis yang menyatakan: <strong>Jika kamu mengklik tautan pertama yang valid pada paragraf pertama sebuah artikel Wikipedia berulang kali, kamu hampir selalu akan berakhir di artikel "Filsafat" (Philosophy).</strong></p>
+<p>Mengapa ini bisa terjadi? Wikipedia memiliki pedoman gaya penulisan (Manual of Style) yang mengharuskan setiap artikel mendefinisikan subjeknya dengan mengklasifikasikannya ke dalam konsep yang lebih luas. Misalnya:</p>
+<ul>
+  <li>Artikel <em>Kucing</em> adalah mamalia.</li>
+  <li><em>Mamalia</em> adalah bagian dari biologi.</li>
+  <li><em>Biologi</em> adalah cabang dari ilmu alam.</li>
+  <li><em>Ilmu alam</em> bersumber dari metode ilmiah.</li>
+  <li><em>Metode ilmiah</em> berakar pada filsafat.</li>
+</ul>
+<p>Pada akhirnya, semua pengetahuan manusia bermuara pada pertanyaan-pertanyaan dasar tentang eksistensi, alias filsafat. (Catatan: Fakta ini paling konsisten terjadi di Wikipedia bahasa Inggris, namun pola serupa sering muncul di Wikipedia bahasa Indonesia).</p>
 
-<h2>3. Wikipedia Ditulis dan Disunting Sepenuhnya oleh Sukarelawan</h2>
-<p>Tidak ada tim redaksi berbayar khusus yang menulis semua artikel Wikipedia. Semuanya dikerjakan oleh sukarelawan dari seluruh dunia, yang bisa menyunting, menambah, atau memperbaiki artikel kapan saja. Inilah kenapa kamu kadang menemukan artikel yang sangat detail untuk topik yang cukup spesifik — ada seseorang di suatu tempat yang benar-benar peduli dengan topik itu.</p>
+<h2>2. Kepadatan Tautan (Link Density) yang Luar Biasa</h2>
+<p>Tahukah kamu bahwa rata-rata satu artikel Wikipedia dapat memiliki puluhan hingga ratusan tautan keluar (outbound links)? Kepadatan inilah yang memungkinkan permainan WikiRace bisa eksis.</p>
+<p>Tanpa sistem <em>hyperlinking</em> yang masif ini, pemain akan terjebak di artikel buntu (Dead End). Kontributor Wikipedia (disebut Wikipedian) sangat didorong untuk melakukan "Wikifikasi", yaitu proses menambahkan tautan internal ke kata-kata penting dalam sebuah artikel agar pembaca dapat menjelajahi konteks yang lebih luas tanpa harus membuka mesin pencari.</p>
 
-<h2>4. Struktur Tautan Wikipedia Sangat Padat</h2>
-<p>Rata-rata, satu artikel Wikipedia bisa memiliki puluhan hingga ratusan tautan keluar ke artikel lain. Kepadatan tautan inilah yang membuat permainan seperti WikiRace bisa berjalan — hampir selalu ada jalan untuk berpindah dari satu topik ke topik lain, meski kadang butuh beberapa langkah memutar.</p>
+<h2>3. Wikipedia Ditulis Sepenuhnya oleh Sukarelawan (Tanpa Gaji)</h2>
+<p>Banyak orang mengira ada tim redaksi atau profesor bayaran yang duduk seharian di kantor untuk memvalidasi artikel Wikipedia. Kenyataannya, 100% konten Wikipedia ditulis, disunting, dan dijaga oleh komunitas sukarelawan dari seluruh dunia.</p>
+<p>Mereka meluangkan waktu berjam-jam untuk meneliti referensi, memperbaiki ejaan, hingga berdebat di halaman "Pembicaraan" (Talk Page) hanya demi memastikan netralitas sebuah informasi. Dedikasi tanpa pamrih inilah yang membuat Wikipedia bertahan sebagai salah satu situs web paling banyak dikunjungi di dunia tanpa menayangkan satu pun iklan komersial.</p>
 
-<h2>5. Wikipedia Punya "Artikel Pilihan" dengan Standar Kualitas Tinggi</h2>
-<p>Selain artikel biasa, Wikipedia punya kategori "Artikel Pilihan" — artikel yang sudah melalui proses review ketat dari komunitas dan dianggap memenuhi standar kualitas, kelengkapan, dan netralitas tertinggi. Artikel-artikel ini biasanya jadi contoh terbaik bagaimana sebuah topik seharusnya ditulis di Wikipedia.</p>
+<h2>4. Wikipedia Bahasa Indonesia Adalah Salah Satu yang Terbesar di Asia Tenggara</h2>
+<p>Wikipedia tidak hanya eksis dalam bahasa Inggris. Hingga saat ini, ada lebih dari 300 bahasa yang memiliki versi Wikipedia-nya sendiri. Kebanggaannya, <strong>Wikipedia bahasa Indonesia</strong> adalah salah satu edisi dengan pertumbuhan tercepat dan jumlah artikel terbanyak di kawasan Asia Tenggara.</p>
+<p>Setiap harinya, ratusan artikel baru dibuat dan diperbaiki oleh sukarelawan lokal. Kekayaan konten lokal inilah yang membuat pengalaman bermain WikiRace Indonesia menjadi sangat unik—kamu akan lebih sering menemukan jalur yang melibatkan sejarah Nusantara, geografi provinsi di Indonesia, hingga kebudayaan lokal yang tidak akan kamu temukan di versi bahasa Inggris.</p>
 
-<h2>Kenapa Fakta Ini Penting Buat Pemain WikiRace?</h2>
-<p>Memahami bagaimana Wikipedia "berpikir" — soal struktur tautan, cara artikel saling terhubung, dan pola penulisannya — bisa jadi keuntungan tersendiri saat bermain. Semakin kamu paham "logika" di balik ensiklopedia ini, semakin tajam pula insting navigasimu saat balapan.</p>
-<p>Sudah siap menguji pemahamanmu? Yuk main <a href="/">WikiRace Indonesia</a> sekarang.</p>
+<h2>5. Hierarki "Artikel Pilihan" (Featured Articles)</h2>
+<p>Tidak semua artikel Wikipedia diciptakan setara. Ada sebuah kasta tertinggi yang disebut <strong>Artikel Pilihan (Featured Articles)</strong>. Ini adalah artikel-artikel yang telah melewati proses ulasan sejawat (peer review) yang sangat ketat oleh para editor senior. Artikel ini dianggap memiliki kualitas penulisan sempurna, referensi yang tak terbantahkan, dan format yang rapi.</p>
+<p>Ciri khas artikel ini adalah ikon bintang kecil di sudut kanan atas judul. Jika dalam ronde WikiRace kamu "tersesat" masuk ke halaman Artikel Pilihan, bersiaplah menemukan "Jalan Tol" yang dipenuhi dengan tautan berkualitas tinggi yang bisa membawamu ke berbagai subjek besar lainnya.</p>
+
+<h2>Kesimpulan</h2>
+<p>Mengetahui bagaimana struktur "sirkuit" tempatmu membalap akan memberimu keuntungan strategis (competitive advantage). Semakin kamu memahami pola penulisan dan logika <em>hyperlink</em> Wikipedia, instingmu untuk menemukan jalur tercepat menuju tujuan akan semakin tajam.</p>
+
+<p>Sudah siap menguji teori "Menuju Filsafat" atau mencari Artikel Pilihan? Langsung saja terjun ke arena di <a href="/">WikiRace Indonesia</a> dan buktikan seberapa cepat kamu bisa memecahkan labirin pengetahuan ini!</p>
     `.trim(),
   },
   {
@@ -186,29 +239,34 @@ const articles: BlogArticle[] = [
     readingTime: "4 menit",
     language: "id",
     content: `
-<p>Sekilas, WikiRace mungkin terlihat cuma permainan iseng untuk mengisi waktu luang. Tapi kalau ditelusuri lebih dalam, ada beberapa manfaat nyata yang bisa kamu dapat dari kebiasaan bermain WikiRace secara rutin.</p>
+<p>Banyak orang menganggap video game atau permainan browser hanyalah sarana untuk membuang-buang waktu (time-killer). Sekilas, WikiRace mungkin terlihat seperti permainan iseng belaka. Namun, di balik antarmukanya yang sederhana berupa halaman Wikipedia, permainan ini diam-diam memberikan "olahraga otak" yang sangat intensif.</p>
 
-<h2>1. Melatih Kecepatan Membaca dan Memindai Informasi (Skimming)</h2>
-<p>Saat bermain WikiRace, kamu tidak sempat membaca artikel kata demi kata. Kamu dipaksa untuk memindai teks dengan cepat, menangkap poin-poin penting, dan mengenali tautan relevan dalam hitungan detik. Kebiasaan ini, kalau dilatih terus-menerus, bisa terbawa ke aktivitas lain — seperti membaca materi kuliah, dokumen kerja, atau artikel berita — dengan lebih efisien.</p>
+<p>Para peneliti kognitif dan praktisi pendidikan mulai melihat nilai tambah dari permainan berbasis ensiklopedia ini. Bermain WikiRace secara rutin ternyata memberikan dampak positif yang nyata bagi perkembangan kognitif dan keterampilan literasi digital. Inilah 5 manfaat tersembunyi yang akan kamu dapatkan jika rutin bermain WikiRace.</p>
 
-<h2>2. Memperluas Wawasan Tanpa Sadar</h2>
-<p>Karena setiap ronde membawamu melewati berbagai topik yang tidak terduga — dari sejarah, sains, tokoh, geografi, hingga budaya pop — kamu secara tidak langsung terpapar informasi baru yang mungkin tidak pernah kamu cari sendiri. Ini adalah bentuk belajar insidental yang menyenangkan, jauh dari kesan menggurui.</p>
+<h2>1. Melatih Kemampuan "Skimming" (Membaca Pindai) Tingkat Tinggi</h2>
+<p>Di era banjir informasi, kemampuan membaca setiap kata dari awal hingga akhir perlahan menjadi tidak efisien. Yang lebih dibutuhkan saat ini adalah kemampuan <strong>Skimming</strong>—memindai teks dengan cepat untuk menemukan informasi spesifik.</p>
+<p>Saat berpacu dengan waktu di WikiRace, kamu tidak memiliki kemewahan untuk membaca sejarah lengkap Kekaisaran Ottoman. Matamu akan dilatih untuk melompat dari satu paragraf ke paragraf lain, mengabaikan kata penghubung, dan langsung mengunci target pada teks berwarna biru (tautan) yang relevan. Kemampuan <em>skimming</em> ini akan sangat terasa manfaatnya saat kamu harus meninjau dokumen kerja yang panjang, mencari poin utama dalam jurnal akademik, atau memilah berita di internet.</p>
 
-<h2>3. Mengasah Kemampuan Berpikir Asosiatif</h2>
-<p>WikiRace pada dasarnya melatih otak untuk melihat hubungan antar-konsep yang kelihatannya tidak berkaitan. Kemampuan ini — yang dalam psikologi kognitif sering disebut <em>associative thinking</em> — sangat berguna dalam banyak konteks, mulai dari brainstorming kreatif, problem-solving, hingga membuat koneksi antar-ide dalam pekerjaan maupun studi.</p>
+<h2>2. Mengasah Berpikir Asosiatif (Associative Thinking)</h2>
+<p>Bagaimana cara menghubungkan "Bulan" dengan "Cokelat"? Otak manusia yang tidak terlatih mungkin akan menyerah. Namun, pemain WikiRace akan langsung mengaktifkan <strong>Berpikir Asosiatif</strong>. Mereka akan mencari batu loncatan: <em>Bulan &rarr; Neil Armstrong &rarr; Amerika Serikat &rarr; Hari Valentine &rarr; Cokelat.</em></p>
+<p>Kemampuan untuk melihat benang merah antara dua hal yang tampak sama sekali tidak berhubungan ini adalah inti dari kreativitas dan <em>problem-solving</em> (pemecahan masalah). Dalam dunia profesional, individu yang mampu melakukan <em>associative thinking</em> seringkali menjadi inovator yang bisa menggabungkan ide dari berbagai disiplin ilmu menjadi satu solusi brilian.</p>
 
-<h2>4. Melatih Pengambilan Keputusan di Bawah Tekanan</h2>
-<p>Setiap detik di WikiRace berarti kamu harus terus mengambil keputusan cepat — tautan mana yang diklik, kapan harus mundur, kapan harus mencoba jalur berbeda. Ini adalah simulasi ringan dari pengambilan keputusan di bawah tekanan waktu, sebuah skill yang berguna jauh di luar konteks permainan.</p>
+<h2>3. Belajar Tanpa Sadar (Incidental Learning)</h2>
+<p>Tahukah kamu dari mana asal usul kata "Robot"? Atau kapan tepatnya perang dingin berakhir? Kamu mungkin tidak pernah secara sengaja mencari informasi tersebut di Google. Namun, karena kamu harus melewati halaman-halaman tersebut untuk memenangkan ronde WikiRace, informasi itu tanpa sadar terekam di memorimu.</p>
+<p>Dalam psikologi, ini disebut <em>Incidental Learning</em> (pembelajaran insidental). Kamu memperoleh pengetahuan baru secara organik dan menyenangkan, tanpa merasa sedang digurui atau sedang menghafal buku pelajaran. Semakin sering kamu bermain, semakin luas pula wawasan triviamu.</p>
 
-<h2>5. Hiburan yang Sekaligus Produktif</h2>
-<p>Berbeda dengan banyak game kasual yang cenderung pasif secara kognitif, WikiRace membuat otakmu tetap aktif bekerja selama bermain. Kalau kamu mencari cara mengisi waktu senggang yang tetap terasa "bermanfaat", ini salah satu pilihan yang pas.</p>
+<h2>4. Melatih Pengambilan Keputusan di Bawah Tekanan (Decision Making)</h2>
+<p>Di mode <em>Speedrun</em> atau saat kamu bertanding langsung dengan teman di mode Multiplayer, setiap detik sangat berharga. Kamu dihadapkan pada puluhan tautan dalam satu halaman. Apakah kamu harus mengklik tautan "Amerika Serikat" yang aman tapi panjang jalurnya, atau mengambil risiko mengklik "Revolusi Industri" yang mungkin lebih pendek tapi belum pasti?</p>
+<p>Kamu dipaksa untuk terus-menerus mengambil keputusan secara cepat dan rasional di bawah tekanan waktu. Simulasi ringan ini akan membantu melatih mentalmu agar tidak mudah panik saat dihadapkan pada tenggat waktu (deadline) di dunia nyata.</p>
 
-<h2>6. Cocok untuk Melatih Kerja Sama dan Kompetisi Sehat</h2>
-<p>Dalam mode multiplayer, WikiRace juga jadi sarana seru untuk kompetisi sehat bersama teman — melihat siapa yang paling cepat berpikir, sambil tetap santai karena sifatnya yang casual dan tidak terlalu serius.</p>
+<h2>5. Detoksifikasi dari Algoritma Media Sosial (Mindful Scrolling)</h2>
+<p>Kita sering menghabiskan waktu berjam-jam melakukan <em>doom-scrolling</em> di media sosial, mengonsumsi konten pendek yang didikte oleh algoritma, yang akhirnya membuat otak merasa lelah namun kosong.</p>
+<p>WikiRace menawarkan alternatif <strong>Mindful Scrolling</strong>. Kamu masih menatap layar dan menggulir halaman, namun dengan tujuan yang jelas dan kontrol penuh atas ke mana arah klikmu. Ini adalah bentuk hiburan aktif yang menstimulasi rasa penasaran (curiosity) secara positif, menjauhkanmu dari efek pasif media sosial.</p>
 
-<h2>Kesimpulan</h2>
-<p>Di balik kesederhanaannya, WikiRace menyimpan banyak manfaat kognitif yang sering tidak disadari pemainnya. Jadi, lain kali kamu main <a href="/">WikiRace Indonesia</a>, anggap saja itu bukan cuma buang-buang waktu — tapi juga latihan ringan untuk otakmu.</p>
-<p>Yuk coba sendiri dan rasakan manfaatnya di <a href="/">WikiRace Indonesia</a>.</p>
+<h2>Kesimpulan: Senam Otak yang Menyenangkan</h2>
+<p>Mulai sekarang, jangan merasa bersalah jika kamu menghabiskan waktu 30 menit untuk melompat dari satu artikel ke artikel lain. Anggap saja kamu sedang melakukan senam otak (brain gym).</p>
+
+<p>WikiRace membuktikan bahwa belajar dan bermain bisa melebur menjadi satu kesatuan yang adiktif. Yuk, latih insting dan wawasanmu sekarang juga di <a href="/">WikiRace Indonesia</a>. Siapa tahu, kamu adalah pemegang rekor waktu tercepat berikutnya!</p>
     `.trim(),
   },
 ];
