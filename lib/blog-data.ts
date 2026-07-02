@@ -207,9 +207,22 @@ const articles: BlogArticle[] = [
   },
 ];
 
+import { artikelStrategi } from "./articles-strategi";
+import { artikelTrivia } from "./articles-trivia";
+import { artikelKomunitas } from "./articles-komunitas";
+import { artikelUmum } from "./articles-umum";
+
+const allArticlesData: BlogArticle[] = [
+  ...articles,
+  ...artikelStrategi,
+  ...artikelTrivia,
+  ...artikelKomunitas,
+  ...artikelUmum,
+];
+
 /** Ambil semua artikel, diurutkan berdasarkan tanggal publish terbaru. */
 export function getAllArticles(): BlogArticle[] {
-  return [...articles].sort(
+  return [...allArticlesData].sort(
     (a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
@@ -217,22 +230,22 @@ export function getAllArticles(): BlogArticle[] {
 
 /** Ambil satu artikel berdasarkan slug. */
 export function getArticleBySlug(slug: string): BlogArticle | undefined {
-  return articles.find((a) => a.slug === slug);
+  return allArticlesData.find((a) => a.slug === slug);
 }
 
 /** Ambil semua slug (untuk generateStaticParams). */
 export function getArticleSlugs(): string[] {
-  return articles.map((a) => a.slug);
+  return allArticlesData.map((a) => a.slug);
 }
 
 /** Ambil artikel berdasarkan kategori. */
 export function getArticlesByCategory(category: string): BlogArticle[] {
-  return articles.filter(
+  return allArticlesData.filter(
     (a) => a.category.toLowerCase() === category.toLowerCase()
   );
 }
 
 /** Ambil semua kategori unik. */
 export function getCategories(): string[] {
-  return [...new Set(articles.map((a) => a.category))];
+  return [...new Set(allArticlesData.map((a) => a.category))];
 }
