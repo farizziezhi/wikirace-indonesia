@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { getAllArticles, getCategories } from "@/lib/blog-data";
 import {
@@ -7,15 +9,12 @@ import {
   Clock,
   Tag,
   ArrowRight,
-} from "@phosphor-icons/react/dist/ssr";
+} from "@phosphor-icons/react";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
-export default function BlogPage({
-  searchParams,
-}: {
-  searchParams: { lang?: string };
-}) {
-  const isEn = searchParams.lang === "en";
-  const activeLang = isEn ? "en" : "id";
+export default function BlogPage() {
+  const { isEn, lang: activeLang, mounted } = useUiLanguage();
   
   const allArticles = getAllArticles();
   const articles = allArticles.filter((a) => (a.language || "id") === activeLang);
@@ -26,26 +25,12 @@ export default function BlogPage({
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id";
 
-  const collectionSchema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    name: isEn ? "WikiRace Indonesia Blog (EN)" : "Blog WikiRace Indonesia",
-    description: isEn
-      ? "Tips, strategies, trivia, and complete guides about WikiRace and Wikipedia."
-      : "Tips, strategi, trivia, dan panduan lengkap seputar WikiRace dan Wikipedia.",
-    url: `${siteUrl}/blog${isEn ? "?lang=en" : ""}`,
-    mainEntity: {
-      "@type": "ItemList",
-      itemListElement: articles.map((article, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        url: `${siteUrl}/blog/${article.slug}`,
-        name: article.title,
-      })),
-    },
-  };
-
-  const categoryColors: Record<string, string> = {
+    // Since we are now a Client Component, we can rely on a basic layout
+    // We remove the JSON-LD from here and let a separate Server Component handle metadata if needed,
+    // or just render it if mounted (though SEO bots won't execute JS localStorage).
+    // For now, we will render it dynamically.
+  
+    const categoryColors: Record<string, string> = {
     Panduan: "bg-lime-accent text-charcoal-text",
     Guide: "bg-lime-accent text-charcoal-text",
     Strategi: "bg-playdate-yellow text-charcoal-text",
@@ -61,11 +46,6 @@ export default function BlogPage({
   return (
     <main className="dot-bg flex min-h-screen flex-col items-center bg-warm-cream px-6 py-12">
       <div className="w-full max-w-[800px]">
-        {/* JSON-LD */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
-        />
 
         {/* Back Button */}
         <header className="mb-6 flex justify-between items-center">
@@ -74,32 +54,10 @@ export default function BlogPage({
             className="flex items-center gap-2 text-charcoal-text/75 hover:text-charcoal-text font-bold transition text-xs bg-light-beige border border-warm-gray/60 px-4 py-2 rounded-full shadow-[2px_2px_0px_#000] z-10 hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000] active:translate-y-0 active:shadow-[1px_1px_0px_#000]"
           >
             <House size={14} />
-            <span>{isEn ? "Back to Home" : "Kembali ke Beranda"}</span>
+            <span>{mounted && isEn ? "Back to Home" : "Kembali ke Beranda"}</span>
           </Link>
 
-          {/* Language Toggle */}
-          <div className="flex bg-light-beige border border-warm-gray/60 rounded-full p-1 shadow-[2px_2px_0px_#000]">
-            <Link
-              href="/blog"
-              className={`px-3 py-1 rounded-full text-xs font-bold transition ${
-                !isEn
-                  ? "bg-charcoal-text text-warm-cream"
-                  : "text-charcoal-text/60 hover:text-charcoal-text"
-              }`}
-            >
-              ID
-            </Link>
-            <Link
-              href="/blog?lang=en"
-              className={`px-3 py-1 rounded-full text-xs font-bold transition ${
-                isEn
-                  ? "bg-charcoal-text text-warm-cream"
-                  : "text-charcoal-text/60 hover:text-charcoal-text"
-              }`}
-            >
-              EN
-            </Link>
-          </div>
+          <LanguageToggle />
         </header>
 
         {/* Header */}
@@ -119,7 +77,7 @@ export default function BlogPage({
                 Blog
               </h1>
               <p className="text-xs text-charcoal-text/50 font-mono uppercase tracking-wider mt-0.5">
-                {isEn ? "Tips, strategies & trivia" : "Tips, strategi & trivia WikiRace"}
+                {mounted && isEn ? "Tips, strategies & trivia" : "Tips, strategi & trivia WikiRace"}
               </p>
             </div>
           </div>
@@ -165,7 +123,7 @@ export default function BlogPage({
                   <span className="flex items-center gap-1 text-[10px] text-warm-cream/40 font-mono">
                     <Calendar size={10} />
                     {new Date(article.publishedAt).toLocaleDateString(
-                      isEn ? "en-US" : "id-ID",
+                      mounted && isEn ? "en-US" : "id-ID",
                       {
                         day: "numeric",
                         month: "long",
@@ -191,7 +149,7 @@ export default function BlogPage({
 
                 {/* Read More */}
                 <div className="flex items-center gap-1.5 text-xs font-black text-lime-accent/70 group-hover:text-lime-accent transition uppercase tracking-wider mt-1">
-                  {isEn ? "Read More" : "Baca Selengkapnya"}
+                  {mounted && isEn ? "Read More" : "Baca Selengkapnya"}
                   <ArrowRight
                     size={12}
                     weight="bold"
@@ -206,14 +164,14 @@ export default function BlogPage({
         {/* CTA */}
         <div className="mt-10 text-center">
           <p className="text-sm text-charcoal-text/60 mb-3 font-bold">
-            {isEn ? "Done reading? Time to practice!" : "Sudah baca semuanya? Saatnya praktek!"}
+            {mounted && isEn ? "Done reading? Time to practice!" : "Sudah baca semuanya? Saatnya praktek!"}
           </p>
           <Link
             href="/"
             className="chunky-press btn-primary py-3 px-6 text-sm font-extrabold border-2 border-charcoal-text inline-flex items-center gap-2"
             style={{ borderRadius: "var(--radius-button)" }}
           >
-            🎮 {isEn ? "Play WikiRace Now" : "Main WikiRace Sekarang"}
+            🎮 {mounted && isEn ? "Play WikiRace Now" : "Main WikiRace Sekarang"}
           </Link>
         </div>
       </div>

@@ -61,13 +61,15 @@ export default async function BlogArticlePage({ params }: PageProps) {
   const article = getArticleBySlug(slug);
   if (!article) notFound();
 
+  const isEn = article.language === "en";
+
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id";
 
   // Get other articles for "Read Next" section
   const allArticles = getAllArticles();
   const otherArticles = allArticles
-    .filter((a) => a.slug !== slug)
+    .filter((a) => a.slug !== slug && (a.language || "id") === (article.language || "id"))
     .slice(0, 3);
 
   const articleSchema = {
@@ -150,10 +152,10 @@ export default async function BlogArticlePage({ params }: PageProps) {
             className="flex items-center gap-2 text-charcoal-text/75 hover:text-charcoal-text font-bold transition text-xs bg-light-beige border border-warm-gray/60 px-4 py-2 rounded-full shadow-[2px_2px_0px_#000] w-fit hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000] active:translate-y-0 active:shadow-[1px_1px_0px_#000]"
           >
             <House size={14} />
-            <span>Beranda</span>
+            <span>{isEn ? "Home" : "Beranda"}</span>
           </Link>
           <Link
-            href="/blog"
+            href={`/blog${isEn ? "?lang=en" : ""}`}
             className="flex items-center gap-2 text-charcoal-text/75 hover:text-charcoal-text font-bold transition text-xs bg-light-beige border border-warm-gray/60 px-4 py-2 rounded-full shadow-[2px_2px_0px_#000] w-fit hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000] active:translate-y-0 active:shadow-[1px_1px_0px_#000]"
           >
             <ArrowLeft size={12} />
@@ -195,7 +197,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
               </span>
               <span className="flex items-center gap-1.5">
                 <Calendar size={12} />
-                {new Date(article.publishedAt).toLocaleDateString("id-ID", {
+                {new Date(article.publishedAt).toLocaleDateString(isEn ? "en-US" : "id-ID", {
                   day: "numeric",
                   month: "long",
                   year: "numeric",
@@ -227,7 +229,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
                 {article.author}
               </p>
               <p className="text-[11px] text-warm-cream/50 mt-0.5">
-                Platform balapan Wikipedia online pertama berbahasa Indonesia.
+                {isEn ? "The first Indonesian Wikipedia racing platform." : "Platform balapan Wikipedia online pertama berbahasa Indonesia."}
               </p>
             </div>
           </div>
@@ -245,7 +247,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
               className="text-playdate-yellow shrink-0"
             />
             <p className="text-sm font-bold">
-              Siap praktek? Main WikiRace sekarang!
+              {isEn ? "Ready to practice? Play WikiRace now!" : "Siap praktek? Main WikiRace sekarang!"}
             </p>
           </div>
           <Link
@@ -253,7 +255,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
             className="chunky-press btn-primary py-2.5 px-5 text-xs font-extrabold border-2 border-charcoal-text whitespace-nowrap"
             style={{ borderRadius: "var(--radius-button)" }}
           >
-            Main Sekarang →
+            {isEn ? "Play Now →" : "Main Sekarang →"}
           </Link>
         </div>
 
@@ -262,7 +264,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
           <div className="mt-8">
             <h2 className="font-black text-lg text-charcoal-text uppercase mb-4 flex items-center gap-2">
               <ArrowRight size={18} weight="bold" />
-              Baca Juga
+              {isEn ? "Read Next" : "Baca Juga"}
             </h2>
             <div className="flex flex-col gap-3">
               {otherArticles.map((other) => (

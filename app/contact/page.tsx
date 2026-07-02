@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import {
   House,
@@ -13,8 +13,11 @@ import {
   CheckCircle,
   Spinner,
 } from "@phosphor-icons/react";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
-export default function ContactPage() {
+function ContactContent() {
+  const { isEn, mounted } = useUiLanguage();
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://wikiraceid.web.id";
 
@@ -30,9 +33,10 @@ export default function ContactPage() {
   const contactSchema = {
     "@context": "https://schema.org",
     "@type": "ContactPage",
-    name: "Hubungi WikiRace Indonesia",
-    description:
-      "Laporkan bug, beri masukan, atau ajukan ide fitur baru untuk WikiRace Indonesia.",
+    name: isEn ? "Contact WikiRace Indonesia" : "Hubungi WikiRace Indonesia",
+    description: isEn
+      ? "Report bugs, give feedback, or submit new feature ideas for WikiRace Indonesia."
+      : "Laporkan bug, beri masukan, atau ajukan ide fitur baru untuk WikiRace Indonesia.",
     url: `${siteUrl}/contact`,
     mainEntity: {
       "@type": "Organization",
@@ -67,7 +71,7 @@ export default function ContactPage() {
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (err: unknown) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Terjadi kesalahan.");
+      setErrorMsg(err instanceof Error ? err.message : (isEn ? "An error occurred." : "Terjadi kesalahan."));
     }
   }
 
@@ -75,14 +79,17 @@ export default function ContactPage() {
     <main className="dot-bg flex min-h-screen flex-col items-center justify-center bg-warm-cream px-6 py-12">
       <div className="w-full max-w-[750px]">
         {/* Back Button */}
-        <header className="mb-6">
+        {/* Back Button and Language Toggle */}
+        <header className="mb-6 flex justify-between items-center">
           <Link
             href="/"
             className="flex items-center gap-2 text-charcoal-text/75 hover:text-charcoal-text font-bold transition text-xs bg-light-beige border border-warm-gray/60 px-4 py-2 rounded-full self-start shadow-[2px_2px_0px_#000] z-10 w-fit hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000] active:translate-y-0 active:shadow-[1px_1px_0px_#000]"
           >
             <House size={14} />
-            <span>Kembali ke Beranda</span>
+            <span>{mounted && isEn ? "Back to Home" : "Kembali ke Beranda"}</span>
           </Link>
+
+          <LanguageToggle />
         </header>
 
         {/* Content Card */}
@@ -112,7 +119,7 @@ export default function ContactPage() {
                   lineHeight: 1.1,
                 }}
               >
-                Hubungi Kami
+                {mounted && isEn ? "Contact Us" : "Hubungi Kami"}
               </h1>
               <p className="text-xs text-warm-cream/60 font-mono uppercase tracking-wider">
                 Contact Us
@@ -122,10 +129,17 @@ export default function ContactPage() {
 
           {/* Intro */}
           <div className="text-sm sm:text-base leading-relaxed text-warm-cream/90">
-            <p>
-              Punya pertanyaan, menemukan bug, atau ingin memberi masukan soal
-              WikiRace Indonesia? Kami senang mendengarnya.
-            </p>
+            {mounted && isEn ? (
+              <p>
+                Have a question, found a bug, or want to share feedback about
+                WikiRace Indonesia? We'd love to hear from you.
+              </p>
+            ) : (
+              <p>
+                Punya pertanyaan, menemukan bug, atau ingin memberi masukan soal
+                WikiRace Indonesia? Kami senang mendengarnya.
+              </p>
+            )}
           </div>
 
           {/* What You Can Report */}
@@ -133,29 +147,29 @@ export default function ContactPage() {
             {[
               {
                 icon: <Bug size={18} weight="fill" />,
-                title: "Bug atau Error",
-                desc: "Sertakan screenshot dan langkah untuk mereproduksi.",
+                title: mounted && isEn ? "Bug or Error" : "Bug atau Error",
+                desc: mounted && isEn ? "Include a screenshot and steps to reproduce." : "Sertakan screenshot dan langkah untuk mereproduksi.",
                 color: "text-burnt-orange",
                 bg: "bg-burnt-orange/15 border-burnt-orange/30",
               },
               {
                 icon: <Lightbulb size={18} weight="fill" />,
-                title: "Saran Fitur",
-                desc: "Ide mode permainan baru, perbaikan UI, atau apa pun.",
+                title: mounted && isEn ? "Feature Request" : "Saran Fitur",
+                desc: mounted && isEn ? "Ideas for new game modes, UI tweaks, or anything else." : "Ide mode permainan baru, perbaikan UI, atau apa pun.",
                 color: "text-playdate-yellow",
                 bg: "bg-playdate-yellow/15 border-playdate-yellow/30",
               },
               {
                 icon: <WarningCircle size={18} weight="fill" />,
-                title: "Konten Bermasalah",
-                desc: "Artikel Wikipedia bermasalah atau penyalahgunaan platform.",
+                title: mounted && isEn ? "Problematic Content" : "Konten Bermasalah",
+                desc: mounted && isEn ? "Problematic Wikipedia articles or platform abuse." : "Artikel Wikipedia bermasalah atau penyalahgunaan platform.",
                 color: "text-warm-cream/80",
                 bg: "bg-warm-cream/10 border-warm-cream/20",
               },
               {
                 icon: <Handshake size={18} weight="fill" />,
-                title: "Kerja Sama",
-                desc: "Kolaborasi komunitas, sponsorship, atau publikasi.",
+                title: mounted && isEn ? "Partnership" : "Kerja Sama",
+                desc: mounted && isEn ? "Community collaborations, sponsorship, or publication." : "Kolaborasi komunitas, sponsorship, atau publikasi.",
                 color: "text-lime-accent",
                 bg: "bg-lime-accent/15 border-lime-accent/30",
               },
@@ -184,7 +198,7 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div className="border-t border-warm-cream/15 pt-5">
             <h2 className="font-black text-lg text-lime-accent uppercase mb-4">
-              Form Kontak
+              {mounted && isEn ? "Contact Form" : "Form Kontak"}
             </h2>
 
             {status === "success" ? (
@@ -195,18 +209,17 @@ export default function ContactPage() {
                   className="text-lime-accent"
                 />
                 <p className="font-black text-lime-accent text-lg">
-                  Pesan Terkirim!
+                  {mounted && isEn ? "Message Sent!" : "Pesan Terkirim!"}
                 </p>
                 <p className="text-sm text-warm-cream/70 max-w-sm">
-                  Terima kasih sudah menghubungi kami. Kami akan membaca setiap
-                  pesan yang masuk.
+                  {mounted && isEn ? "Thank you for reaching out. We will read every message we receive." : "Terima kasih sudah menghubungi kami. Kami akan membaca setiap pesan yang masuk."}
                 </p>
                 <button
                   onClick={() => setStatus("idle")}
                   className="chunky-press btn-white py-2 px-5 text-xs font-extrabold border-2 border-charcoal-text mt-2"
                   style={{ borderRadius: "var(--radius-button)" }}
                 >
-                  Kirim Pesan Lagi
+                  {mounted && isEn ? "Send Another Message" : "Kirim Pesan Lagi"}
                 </button>
               </div>
             ) : (
@@ -217,7 +230,7 @@ export default function ContactPage() {
                       htmlFor="contact-name"
                       className="text-xs font-black uppercase text-warm-cream/60"
                     >
-                      Nama
+                      {mounted && isEn ? "Name" : "Nama"}
                     </label>
                     <input
                       id="contact-name"
@@ -229,7 +242,7 @@ export default function ContactPage() {
                       }
                       className="bg-charcoal-text/30 border-2 border-warm-cream/20 text-warm-cream px-3 py-2.5 text-sm font-bold focus:border-lime-accent focus:outline-none transition"
                       style={{ borderRadius: "var(--radius-subtle)" }}
-                      placeholder="Nama kamu"
+                      placeholder={mounted && isEn ? "Your name" : "Nama kamu"}
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -259,7 +272,7 @@ export default function ContactPage() {
                     htmlFor="contact-subject"
                     className="text-xs font-black uppercase text-warm-cream/60"
                   >
-                    Subjek
+                    {mounted && isEn ? "Subject" : "Subjek"}
                   </label>
                   <input
                     id="contact-subject"
@@ -271,7 +284,7 @@ export default function ContactPage() {
                     }
                     className="bg-charcoal-text/30 border-2 border-warm-cream/20 text-warm-cream px-3 py-2.5 text-sm font-bold focus:border-lime-accent focus:outline-none transition"
                     style={{ borderRadius: "var(--radius-subtle)" }}
-                    placeholder="Laporan Bug / Saran Fitur / Lainnya"
+                    placeholder={mounted && isEn ? "Bug Report / Feature Suggestion / Others" : "Laporan Bug / Saran Fitur / Lainnya"}
                   />
                 </div>
 
@@ -280,7 +293,7 @@ export default function ContactPage() {
                     htmlFor="contact-message"
                     className="text-xs font-black uppercase text-warm-cream/60"
                   >
-                    Pesan
+                    {mounted && isEn ? "Message" : "Pesan"}
                   </label>
                   <textarea
                     id="contact-message"
@@ -292,7 +305,7 @@ export default function ContactPage() {
                     }
                     className="bg-charcoal-text/30 border-2 border-warm-cream/20 text-warm-cream px-3 py-2.5 text-sm font-bold focus:border-lime-accent focus:outline-none transition resize-none"
                     style={{ borderRadius: "var(--radius-subtle)" }}
-                    placeholder="Tulis pesan kamu di sini..."
+                    placeholder={mounted && isEn ? "Write your message here..." : "Tulis pesan kamu di sini..."}
                   />
                 </div>
 
@@ -314,12 +327,12 @@ export default function ContactPage() {
                   {status === "loading" ? (
                     <>
                       <Spinner size={16} className="animate-spin" />
-                      Mengirim...
+                      {mounted && isEn ? "Sending..." : "Mengirim..."}
                     </>
                   ) : (
                     <>
                       <PaperPlaneRight size={16} weight="fill" />
-                      Kirim Pesan
+                      {mounted && isEn ? "Send Message" : "Kirim Pesan"}
                     </>
                   )}
                 </button>
@@ -329,13 +342,21 @@ export default function ContactPage() {
 
           {/* Response Time Note */}
           <div className="bg-charcoal-text/20 border border-warm-cream/10 p-4 text-xs text-warm-cream/60 leading-relaxed" style={{ borderRadius: "var(--radius-subtle)" }}>
-            <strong className="text-warm-cream/80">Waktu Respons:</strong> Kami
-            adalah tim kecil yang mengembangkan platform ini secara mandiri, jadi
-            mohon bersabar jika respons tidak instan. Namun setiap pesan pasti
-            kami baca.
+            <strong className="text-warm-cream/80">{mounted && isEn ? "Response Time:" : "Waktu Respons:"}</strong>{" "}
+            {mounted && isEn
+              ? "We are a small team developing this platform independently, so please bear with us if the response is not instant. However, we will read every message we receive."
+              : "Kami adalah tim kecil yang mengembangkan platform ini secara mandiri, jadi mohon bersabar jika respons tidak instan. Namun setiap pesan pasti kami baca."}
           </div>
         </section>
       </div>
     </main>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense>
+      <ContactContent />
+    </Suspense>
   );
 }
