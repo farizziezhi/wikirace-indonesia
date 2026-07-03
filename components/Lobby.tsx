@@ -101,7 +101,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
     }
   }, [room.players, currentClientId, room.status, router, uiLanguage]);
 
-  // Efek untuk memicu bot join jika pemain sendirian di Ranked matchmaking > 60 detik (1 menit)
+  // Efek untuk memicu bot join jika pemain sendirian di Ranked matchmaking > 20 detik
   useEffect(() => {
     if (!room.isMatchmaking || room.status !== "lobby" || room.players.length !== 1) {
       return;
@@ -111,7 +111,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
 
     const checkTimeout = () => {
       const elapsed = (Date.now() + clockOffset) - room.createdAt;
-      if (elapsed >= 60000 && !botJoinCalled) {
+      if (elapsed >= 20000 && !botJoinCalled) {
         botJoinCalled = true;
         // Panggil API bot-join untuk mengundang bot masuk ke Ranked match
         void fetch("/api/room/bot-join", {
