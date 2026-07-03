@@ -18,5 +18,11 @@ export function useUiLanguage() {
     return () => window.removeEventListener("uiLanguageChanged", handler);
   }, []);
 
+  useEffect(() => {
+    if (mounted) {
+      document.documentElement.lang = lang;
+    }
+  }, [lang, mounted]);
+
   return { lang, isEn: lang === "en", mounted };
 }

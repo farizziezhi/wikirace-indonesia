@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useUiLang } from "@/lib/use-ui-lang";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
+import LanguageToggle from "@/components/LanguageToggle";
 
 interface Donator {
   id: number;
@@ -13,8 +14,7 @@ interface Donator {
 }
 
 export default function DonatorsPage() {
-  const uiLang = useUiLang();
-  const language = uiLang;
+  const { isEn, mounted } = useUiLanguage();
   const [topDonators, setTopDonators] = useState<Donator[]>([]);
   const [recentDonators, setRecentDonators] = useState<Donator[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,7 @@ export default function DonatorsPage() {
   };
 
   const formatDate = (epochSecs: number) => {
-    return new Date(epochSecs * 1000).toLocaleDateString(language === "en" ? "en-US" : "id-ID", {
+    return new Date(epochSecs * 1000).toLocaleDateString(mounted && isEn ? "en-US" : "id-ID", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -64,13 +64,14 @@ export default function DonatorsPage() {
       <div className="w-full max-w-[850px] flex flex-col gap-6">
         
         {/* Header */}
-        <header className="flex justify-between items-center">
+        <header className="flex justify-between items-center mb-2">
           <Link
             href="/"
-            className="flex items-center gap-2 text-charcoal-text/75 hover:text-charcoal-text font-bold transition text-xs bg-light-beige border-2 border-charcoal-text px-3.5 py-1.5 rounded-xl shadow-[1.5px_1.5px_0px_#000]"
+            className="flex items-center gap-2 text-charcoal-text/75 hover:text-charcoal-text font-bold transition text-xs bg-light-beige border-2 border-charcoal-text px-3.5 py-1.5 rounded-xl shadow-[1.5px_1.5px_0px_#000] hover:translate-y-[-1px] hover:shadow-[2.5px_2.5px_0px_#000] active:translate-y-0 active:shadow-[1px_1px_0px_#000]"
           >
-            {language === "en" ? "← Back to Home" : "← Kembali ke Beranda"}
+            {mounted && isEn ? "← Back to Home" : "← Kembali ke Beranda"}
           </Link>
+          <LanguageToggle />
         </header>
 
         {/* Hero Banner */}
@@ -83,10 +84,10 @@ export default function DonatorsPage() {
               className="font-black text-lime-accent tracking-tight uppercase"
               style={{ fontSize: "clamp(26px, 4vw, 36px)", lineHeight: 1.1 }}
             >
-              {language === "en" ? "Sponsors & Supporters" : "Donatur & Pendukung"}
+              {mounted && isEn ? "Sponsors & Supporters" : "Donatur & Pendukung"}
             </h1>
             <p className="text-sm sm:text-base text-warm-cream/80 leading-relaxed font-medium">
-              {language === "en"
+              {mounted && isEn
                 ? "WikiRace Indonesia is completely free to play, ad-free, and does not sell user data. Your support helps cover server and operational costs."
                 : "WikiRace Indonesia sepenuhnya gratis dimainkan, bebas iklan, serta tidak menjual data pengguna. Dukungan Anda membantu kami membiayai server dan biaya operasional."}
             </p>
@@ -102,9 +103,9 @@ export default function DonatorsPage() {
                 boxShadow: "4px 4px 0px #000"
               }}
             >
-              <span className="text-sm uppercase tracking-wider">{language === "en" ? "Support via Saweria" : "Dukung via Saweria"}</span>
+              <span className="text-sm uppercase tracking-wider">{mounted && isEn ? "Support via Saweria" : "Dukung via Saweria"}</span>
               <span className="text-[10px] font-bold opacity-80 mt-1">
-                {language === "en" ? "Starts at Rp 10,000" : "Mulai Rp 10.000"}
+                {mounted && isEn ? "Starts at Rp 10,000" : "Mulai Rp 10.000"}
               </span>
             </a>
           </div>
@@ -113,13 +114,13 @@ export default function DonatorsPage() {
         {/* Top Donators */}
         <section className="flex flex-col gap-4">
           <h2 className="font-black text-xl text-charcoal-text flex items-center gap-2 uppercase">
-            {language === "en" ? "Top Donators" : "Donatur Teratas"}
+            {mounted && isEn ? "Top Donators" : "Donatur Teratas"}
           </h2>
 
           {loading ? (
             <div className="flex justify-center items-center py-20 bg-light-beige border-3 border-charcoal-text rounded-xl shadow-[6px_6px_0px_#000] text-charcoal-text">
               <span className="font-bold text-sm animate-pulse uppercase tracking-wider">
-                {language === "en" ? "Loading..." : "Memuat data..."}
+                {mounted && isEn ? "Loading..." : "Memuat data..."}
               </span>
             </div>
           ) : !gold && !silver && !bronze ? (
@@ -131,10 +132,10 @@ export default function DonatorsPage() {
               }}
             >
               <h3 className="font-black text-charcoal-text text-base uppercase">
-                {language === "en" ? "No Donators Yet" : "Belum Ada Donatur"}
+                {mounted && isEn ? "No Donators Yet" : "Belum Ada Donatur"}
               </h3>
               <p className="text-xs text-charcoal-text/70 max-w-[340px] leading-relaxed font-semibold">
-                {language === "en"
+                {mounted && isEn
                   ? "Be the first supporter! Click the Saweria button above to get your name on the board."
                   : "Jadilah pendukung pertama! Klik tombol Saweria di atas untuk mendaftarkan nama Anda."}
               </p>
@@ -176,7 +177,7 @@ export default function DonatorsPage() {
                     style={{ minHeight: "190px" }}
                   >
                     <span className="text-xs font-bold text-charcoal-text/60 mt-1 uppercase">
-                      {language === "en" ? "Vacant" : "Kosong"}
+                      {mounted && isEn ? "Vacant" : "Kosong"}
                     </span>
                   </div>
                 )}
@@ -199,7 +200,7 @@ export default function DonatorsPage() {
                     
                     <div className="mt-2">
                       <span className="text-[9px] font-black uppercase tracking-wider block bg-charcoal-text text-lime-accent px-1.5 py-0.5 rounded text-center self-start inline-block">
-                        {language === "en" ? "Top Donator" : "Donatur Utama"}
+                        {mounted && isEn ? "Top Donator" : "Donatur Utama"}
                       </span>
                       <h3 className="font-black text-charcoal-text text-2xl truncate mt-1">{gold.name}</h3>
                       <span className="inline-block bg-charcoal-text text-lime-accent text-xs font-black px-2.5 py-1 rounded-md mt-1.5 shadow-[2px_2px_0px_#000]">
@@ -221,7 +222,7 @@ export default function DonatorsPage() {
                     style={{ minHeight: "230px" }}
                   >
                     <span className="text-xs font-bold text-charcoal-text/60 mt-1 uppercase">
-                      {language === "en" ? "Vacant" : "Kosong"}
+                      {mounted && isEn ? "Vacant" : "Kosong"}
                     </span>
                   </div>
                 )}
@@ -262,7 +263,7 @@ export default function DonatorsPage() {
                     style={{ minHeight: "190px" }}
                   >
                     <span className="text-xs font-bold text-charcoal-text/60 mt-1 uppercase">
-                      {language === "en" ? "Vacant" : "Kosong"}
+                      {mounted && isEn ? "Vacant" : "Kosong"}
                     </span>
                   </div>
                 )}
@@ -279,10 +280,10 @@ export default function DonatorsPage() {
           >
             <div>
               <h2 className="font-black text-lg text-lime-accent uppercase flex items-center gap-2">
-                {language === "en" ? "Donor Messages" : "Pesan Donatur"}
+                {mounted && isEn ? "Donor Messages" : "Pesan Donatur"}
               </h2>
               <p className="text-xs text-warm-cream/70 font-semibold mt-0.5 uppercase tracking-wide">
-                {language === "en"
+                {mounted && isEn
                   ? "Messages and support from our donors."
                   : "Pesan dan dukungan dari para donatur."}
               </p>
