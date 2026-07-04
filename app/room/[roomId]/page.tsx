@@ -611,6 +611,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           room={room}
           currentClientId={identity.clientId}
           clockOffset={clockOffset}
+          ablyChannel={ablyChannel}
         />
       )}
       {showChatAndEmoji && (

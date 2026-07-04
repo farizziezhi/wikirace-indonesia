@@ -806,7 +806,10 @@ export default function Game({
 
     // Simpan daftar emoji yang sudah dipicu untuk menghindari duplikasi
     const triggeredEmojis = new Set<string>();
-    let resolveBotCalled = false;
+    // Simpan daftar chat yang sudah dipicu untuk menghindari duplikasi
+    const triggeredChats = new Set<string>();
+    // Track resolved bots individually supaya multi-bot bisa selesai masing-masing
+    const resolvedBots = new Set<string>();
 
     const checkBotTimeline = () => {
       const elapsed = Math.floor((Date.now() + clockOffset - normalizedStartTime) / 1000);
@@ -830,10 +833,27 @@ export default function Game({
           }
         }
 
+        // 1.5 Kirim chat terjadwal via Ably
+        if (bot.botChats) {
+          for (const item of bot.botChats) {
+            const key = `${bot.clientId}-${item.timestamp}-${item.text}`;
+            if (elapsed >= item.timestamp && !triggeredChats.has(key)) {
+              triggeredChats.add(key);
+              void ablyChannel.publish("chat_message", {
+                id: `bot-game-msg-${Math.random().toString(36).substring(2, 11)}`,
+                clientId: bot.clientId,
+                username: bot.username,
+                text: item.text,
+                timestamp: Date.now(),
+              }).catch(() => {});
+            }
+          }
+        }
+
         // 2. Cek apakah bot sudah mencapai finish untuk memicu resolve-bot di server
         const lastStep = bot.botTimeline[bot.botTimeline.length - 1];
-        if (elapsed >= lastStep.timestamp && !resolveBotCalled) {
-          resolveBotCalled = true;
+        if (elapsed >= lastStep.timestamp && !resolvedBots.has(bot.clientId)) {
+          resolvedBots.add(bot.clientId);
           void fetch("/api/room/resolve-bot", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

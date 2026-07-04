@@ -154,14 +154,10 @@ export async function POST(request: NextRequest) {
         const botFinishTime = elapsed;
         
         player.botTimeline = timeline;
-        player.botEmojis = [
-          { emoji: ["👏", "🔥", "😤"][Math.floor(Math.random() * 3)], timestamp: Math.floor(botFinishTime / 3) },
-          { emoji: ["😂", "🎉"][Math.floor(Math.random() * 2)], timestamp: Math.max(5, botFinishTime - 5) }
-        ];
-        player.botChats = [
-          { text: "GLHF!", timestamp: 3 },
-          { text: updatedRoom.language === "en" ? "GGwp!" : "GGwp", timestamp: botFinishTime + 1 }
-        ];
+        const { generateBotReactions } = require("@/lib/bot-names");
+        const { botEmojis, botChats } = generateBotReactions(botFinishTime, updatedRoom.language ?? "id");
+        player.botEmojis = botEmojis;
+        player.botChats = botChats;
       }
     }
 

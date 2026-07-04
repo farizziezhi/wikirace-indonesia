@@ -15,17 +15,20 @@ import { getPlayerToken } from "@/lib/client-id";
 import { useUiLang } from "@/lib/use-ui-lang";
 import { Sword, Target, Book, Gear } from "@phosphor-icons/react";
 
+import { BOT_LOBBY_CHAT_ID, BOT_LOBBY_CHAT_EN, BOT_EMOJIS } from "@/lib/bot-names";
+
 interface LobbyProps {
   room: Room;
   currentClientId: string;
   clockOffset?: number;
+  ablyChannel?: any;
 }
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 8;
 const SAVE_DEBOUNCE_MS = 600;
 
-export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyProps) {
+export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChannel }: LobbyProps) {
   const uiLanguage = useUiLang();
   const t = translations[uiLanguage];
   const router = useRouter();
@@ -113,11 +116,17 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
       const elapsed = (Date.now() + clockOffset) - room.createdAt;
       if (elapsed >= 20000 && !botJoinCalled) {
         botJoinCalled = true;
+
+        // Jumlah bot acak (1-3) dengan distribusi berbobot:
+        // 40% = 1 bot, 35% = 2 bot, 25% = 3 bot
+        const roll = Math.random();
+        const botCount = roll < 0.40 ? 1 : roll < 0.75 ? 2 : 3;
+
         // Panggil API bot-join untuk mengundang bot masuk ke Ranked match
         void fetch("/api/room/bot-join", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomId: room.id, clientId: currentClientId }),
+          body: JSON.stringify({ roomId: room.id, clientId: currentClientId, botCount }),
         }).catch((err) => {
           console.warn("Gagal mengundang bot matchmaking:", err);
         });
@@ -160,6 +169,46 @@ export default function Lobby({ room, currentClientId, clockOffset = 0 }: LobbyP
       timers.forEach((t) => clearTimeout(t));
     };
   }, [room.players, room.isMatchmaking, room.status, isHost, room.id, currentClientId]);
+
+  // Efek chat & emoji random untuk bot di lobi agar terasa "hidup"
+  useEffect(() => {
+    if (!room.isMatchmaking || room.status !== "lobby" || !ablyChannel) return;
+
+    const bots = room.players.filter((p) => p.isBot);
+    if (bots.length === 0) return;
+
+    // Setiap 4-8 detik, coba picu aksi acak dari salah satu bot
+    const interval = setInterval(() => {
+      const activeBot = bots[Math.floor(Math.random() * bots.length)];
+      const actionRoll = Math.random();
+
+      if (actionRoll < 0.35) {
+        // Aksi A: Chat di lobi
+        const isEn = room.language === "en";
+        const pool = isEn ? BOT_LOBBY_CHAT_EN : BOT_LOBBY_CHAT_ID;
+        const text = pool[Math.floor(Math.random() * pool.length)];
+
+        void ablyChannel.publish("chat_message", {
+          id: `bot-lobby-msg-${Math.random().toString(36).substring(2, 11)}`,
+          clientId: activeBot.clientId,
+          username: activeBot.username,
+          text,
+          timestamp: Date.now(),
+        }).catch(() => {});
+      } else if (actionRoll < 0.70) {
+        // Aksi B: Kirim Emoji Reaction
+        const emoji = BOT_EMOJIS[Math.floor(Math.random() * BOT_EMOJIS.length)];
+
+        void ablyChannel.publish("emoji_reaction", {
+          clientId: activeBot.clientId,
+          username: activeBot.username,
+          emojis: [emoji],
+        }).catch(() => {});
+      }
+    }, 4000 + Math.random() * 4000);
+
+    return () => clearInterval(interval);
+  }, [room.players, room.isMatchmaking, room.status, room.language, ablyChannel]);
 
   // Efek hitung mundur 30 detik bersiap & kick unready
   useEffect(() => {
