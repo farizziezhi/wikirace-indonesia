@@ -310,8 +310,21 @@ function WikiArticle({
       onNavigate(articleTitle);
     }
 
+    function handleContextMenu(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      if (anchor) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }
+
     node.addEventListener("click", handleClick);
-    return () => node.removeEventListener("click", handleClick);
+    node.addEventListener("contextmenu", handleContextMenu);
+    return () => {
+      node.removeEventListener("click", handleClick);
+      node.removeEventListener("contextmenu", handleContextMenu);
+    };
   }, [onNavigate, language, bannedArticles, activePowerUp]);
 
   // Saat first load (belum ada konten apa pun), tampilkan spinner besar.

@@ -8,6 +8,7 @@ import {
   getRoom,
   removeMatchmakingRoom,
   setRoom,
+  updatePlayerStats,
 } from "@/lib/redis";
 import { errorResponse, MAX_PLAYERS, sanitizeRoom } from "@/lib/room";
 
@@ -60,6 +61,37 @@ export async function POST(request: NextRequest) {
 
   const isMatchmaking = !!room.isMatchmaking;
   const language = room.language ?? "id";
+
+  // --- PENALTI RAGE QUIT (MATCHMAKING/RANKED SAJA) ---
+  if (room.status === "playing" && isMatchmaking) {
+    if (player && player.status !== "finished" && player.status !== "surrendered") {
+      player.status = "surrendered";
+      // Terapkan penalti ELO -15 dan kekalahan ke database Turso
+      await updatePlayerStats(player.username, -15, false);
+      player.elo = Math.max(100, (player.elo ?? 1200) - 15);
+      player.eloChange = -15;
+    }
+
+    if (clientId === room.hostClientId) {
+      const otherHumans = room.players.filter((p) => !p.isBot && p.clientId !== clientId);
+      if (otherHumans.length === 0) {
+        // Tidak ada manusia lain tersisa, batalkan game & hapus room
+        await publishRoomEvent(roomId, "game_cancelled", { reason: "host_left" });
+        await removeMatchmakingRoom(language, roomId);
+        await deleteRoom(roomId);
+        return Response.json({ ok: true, roomDeleted: true });
+      } else {
+        // Promosikan manusia lain menjadi host
+        const newHost = otherHumans[0];
+        newHost.isHost = true;
+        room.hostClientId = newHost.clientId;
+      }
+    }
+
+    await setRoom(room);
+    await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(room) });
+    return Response.json({ ok: true, room: sanitizeRoom(room) });
+  }
 
   if (clientId === room.hostClientId) {
     const otherPlayers = room.players.filter((p) => p.clientId !== clientId);

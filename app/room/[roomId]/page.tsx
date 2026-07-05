@@ -442,12 +442,34 @@ export default function RoomPage({ params }: RoomPageProps) {
 
     function handlePresenceLeave(member: Ably.PresenceMessage) {
       const currentRoom = roomRef.current;
-      if (!currentRoom) return;
+      if (!currentRoom || !ablyChannel) return;
 
+      const activeChannel = ablyChannel;
       const isHost = member.clientId === currentRoom.hostClientId;
-      const isMatchmakingLobby = !!currentRoom.isMatchmaking && currentRoom.status === "lobby";
+      const isMatchmaking = !!currentRoom.isMatchmaking;
 
-      if (isHost || isMatchmakingLobby) {
+      if (isMatchmaking) {
+        // Grace period 8 detik untuk mencegah kick langsung saat refresh / putus koneksi sesaat
+        setTimeout(async () => {
+          try {
+            const members = await activeChannel.presence.get();
+            const isBack = members.some((m) => m.clientId === member.clientId);
+            if (isBack) return; // Pemain sudah kembali, batalkan leave
+
+            void fetch("/api/room/leave", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                roomId: normalizedRoomId,
+                clientId: member.clientId,
+              }),
+            });
+          } catch {
+            // ignore
+          }
+        }, 8000);
+      } else if (isHost) {
+        // Room kustom: langsung kick jika host keluar
         void fetch("/api/room/leave", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -468,35 +490,42 @@ export default function RoomPage({ params }: RoomPageProps) {
     };
   }, [ablyChannel, normalizedRoomId]);
 
-  // Step 4: beforeunload → sendBeacon ke /api/room/leave (best-effort).
+  // Step 4: beforeunload → konfirmasi jika game aktif + sendBeacon ke /api/room/leave (best-effort).
   useEffect(() => {
-    if (!identity || !room) return;
+    if (!identity) return;
 
-    // Host jangan send leave beacon biar kalau refresh room tidak hancur.
-    const isHost = identity.clientId === room.hostClientId;
-    if (isHost) return;
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      const currentRoom = roomRef.current;
+      if (!currentRoom) return;
 
-    // Hanya kirim leave beacon kalau masih di lobby.
-    // Kalau sudah main, refresh harus tetap diizinkan tanpa terkeluar.
-    if (room.status !== "lobby") return;
+      // Jika game sedang aktif, tampilkan dialog konfirmasi keluar halaman
+      if (currentRoom.status === "playing" && currentRoom.isMatchmaking) {
+        e.preventDefault();
+        e.returnValue = ""; // Pemicu dialog konfirmasi browser
+      }
 
-    function handleBeforeUnload() {
-      try {
-        const payload = JSON.stringify({
-          roomId: normalizedRoomId,
-          clientId: identity!.clientId,
-          playerToken: getPlayerToken(normalizedRoomId),
-        });
-        const blob = new Blob([payload], { type: "application/json" });
-        navigator.sendBeacon("/api/room/leave", blob);
-      } catch {
-        // ignore — best effort
+      // Hanya kirim leave beacon jika di lobby
+      if (currentRoom.status === "lobby") {
+        const isHost = identity!.clientId === currentRoom.hostClientId;
+        if (isHost) return;
+
+        try {
+          const payload = JSON.stringify({
+            roomId: normalizedRoomId,
+            clientId: identity!.clientId,
+            playerToken: getPlayerToken(normalizedRoomId),
+          });
+          const blob = new Blob([payload], { type: "application/json" });
+          navigator.sendBeacon("/api/room/leave", blob);
+        } catch {
+          // ignore — best effort
+        }
       }
     }
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [identity, normalizedRoomId, room]);
+  }, [identity, normalizedRoomId]);
 
   // Callback untuk Results: setelah host call play-again, server akan publish
   // room_reset. Kita juga set state lokal langsung biar UX instant.
