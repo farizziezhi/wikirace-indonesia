@@ -257,6 +257,8 @@ export default function RoomPage({ params }: RoomPageProps) {
         startArticle: string;
         endArticle: string;
         startTime: number;
+        players?: Player[];
+        checkpoints?: string[];
       };
       setStartTime(data.startTime);
       setGameState("playing");
@@ -268,7 +270,8 @@ export default function RoomPage({ params }: RoomPageProps) {
               startArticle: data.startArticle,
               endArticle: data.endArticle,
               startTime: data.startTime,
-              players: prev.players.map((p) => ({
+              checkpoints: data.checkpoints ?? prev.checkpoints,
+              players: data.players ?? prev.players.map((p) => ({
                 ...p,
                 status: "playing",
                 currentArticle: data.startArticle,

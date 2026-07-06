@@ -1017,6 +1017,7 @@ function buildLeaderboard(
 
   const groupRank: Record<Player["status"], number> = {
     finished: 0,
+    finished_leg: 1,
     waiting: 1,
     playing: 1,
     surrendered: 2,

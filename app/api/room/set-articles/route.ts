@@ -137,7 +137,9 @@ export async function POST(request: NextRequest) {
           ? "casual"
           : body.gameMode === "competitive"
             ? "competitive"
-            : undefined;
+            : body.gameMode === "relay"
+              ? "relay"
+              : undefined;
 
       if (packId) {
         const pack = getChallengePackById(packId);

@@ -37,7 +37,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
   const [startArticle, setStartArticle] = useState(room.startArticle);
   const [endArticle, setEndArticle] = useState(room.endArticle);
   const [language, setLanguage] = useState<WikiLanguage>(room.language ?? "id");
-  const [gameMode, setGameMode] = useState<"competitive" | "casual">(room.gameMode ?? "competitive");
+  const [gameMode, setGameMode] = useState<"competitive" | "casual" | "relay">(room.gameMode ?? "competitive");
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "shared" | "copied">(
     "idle",
@@ -315,7 +315,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
       start: string,
       end: string,
       lang: WikiLanguage,
-      mode: "competitive" | "casual",
+      mode: "competitive" | "casual" | "relay",
       rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] }
     ) => {
       if (!isHost) return;
@@ -384,7 +384,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
     start: string,
     end: string,
     lang: WikiLanguage,
-    mode: "competitive" | "casual",
+    mode: "competitive" | "casual" | "relay",
     rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] }
   ) {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
@@ -611,6 +611,30 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
       setToggleReadyLoading(false);
     }
   }
+
+  async function handleChangeTeam(clientId: string, team: "A" | "B") {
+    if (!isHost) return;
+    try {
+      const res = await fetch("/api/room/update-team", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": getPlayerToken(room.id),
+        },
+        body: JSON.stringify({
+          roomId: room.id,
+          clientId,
+          team,
+        }),
+      });
+      if (!res.ok) {
+        console.error("Gagal mengubah tim pemain.");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   const handleClickLimitChange = (val: number) => {
     setClickLimit(val);
     scheduleSave(startArticle, endArticle, language, gameMode, {
@@ -1435,6 +1459,11 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
                 ready={p.ready}
                 isMatchmaking={room.isMatchmaking}
                 uiLanguage={uiLanguage}
+                gameMode={room.gameMode}
+                team={p.team}
+                clientId={p.clientId}
+                onChangeTeam={handleChangeTeam}
+                isRoomHost={isHost}
               />
             ))}
             {/* Empty slots */}
@@ -1614,8 +1643,8 @@ function GameModeToggle({
   disabled,
   uiLanguage,
 }: {
-  value: "competitive" | "casual";
-  onChange: (next: "competitive" | "casual") => void;
+  value: "competitive" | "casual" | "relay";
+  onChange: (next: "competitive" | "casual" | "relay") => void;
   disabled?: boolean;
   uiLanguage: "id" | "en";
 }) {
@@ -1629,7 +1658,7 @@ function GameModeToggle({
         {t.gameMode}
       </span>
       <div
-        className="grid grid-cols-2 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
+        className="grid grid-cols-3 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
         style={{ borderRadius: "var(--radius-input)" }}
         role="radiogroup"
         aria-label={t.gameMode}
@@ -1680,12 +1709,35 @@ function GameModeToggle({
           <span aria-hidden style={{ fontSize: 18 }}>☕</span>
           <span>{t.casual}</span>
         </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={value === "relay"}
+          onClick={() => onChange("relay")}
+          disabled={disabled}
+          className="flex items-center justify-center gap-2 transition disabled:opacity-60 cursor-pointer"
+          style={{
+            padding: "10px 14px",
+            borderRadius: "var(--radius-button)",
+            background: value === "relay"
+              ? "var(--color-charcoal-text)"
+              : "transparent",
+            color: value === "relay"
+              ? "var(--color-pure-white)"
+              : "var(--color-charcoal-text)",
+            fontWeight: 700,
+            fontSize: "14px",
+          }}
+        >
+          <span aria-hidden style={{ fontSize: 18 }}>🏃</span>
+          <span>{uiLanguage === "en" ? "Relay" : "Estafet"}</span>
+        </button>
       </div>
     </div>
   );
 }
 
-function GameModePill({ gameMode, uiLanguage }: { gameMode: "competitive" | "casual"; uiLanguage: "id" | "en" }) {
+function GameModePill({ gameMode, uiLanguage }: { gameMode: "competitive" | "casual" | "relay"; uiLanguage: "id" | "en" }) {
   const isCompetitive = gameMode === "competitive";
   const t = translations[uiLanguage];
   return (
@@ -1704,9 +1756,9 @@ function GameModePill({ gameMode, uiLanguage }: { gameMode: "competitive" | "cas
         }}
       >
         <span aria-hidden style={{ marginRight: 4 }}>
-          {isCompetitive ? "🏆" : "☕"}
+          {isCompetitive ? "🏆" : gameMode === "relay" ? "🏃" : "☕"}
         </span>
-        {isCompetitive ? t.competitive : t.casual}
+        {isCompetitive ? t.competitive : gameMode === "relay" ? (uiLanguage === "en" ? "Relay" : "Estafet") : t.casual}
       </span>
     </div>
   );
@@ -1720,6 +1772,11 @@ function PlayerSlot({
   ready,
   isMatchmaking,
   uiLanguage,
+  gameMode,
+  team,
+  onChangeTeam,
+  clientId,
+  isRoomHost,
 }: {
   username: string;
   isMe: boolean;
@@ -1728,6 +1785,11 @@ function PlayerSlot({
   ready?: boolean;
   isMatchmaking?: boolean;
   uiLanguage: "id" | "en";
+  gameMode?: "competitive" | "casual" | "relay";
+  team?: "A" | "B";
+  onChangeTeam?: (clientId: string, team: "A" | "B") => void;
+  clientId: string;
+  isRoomHost?: boolean;
 }) {
   const color = avatarColor(username);
 
@@ -1817,6 +1879,40 @@ function PlayerSlot({
                 ? (uiLanguage === "en" ? "READY" : "SIAP") 
                 : (uiLanguage === "en" ? "PREPARING" : "BERSIAP")}
             </span>
+          )}
+
+          {gameMode === "relay" && (
+            <div className="flex items-center gap-1 ml-1">
+              <span className="font-bold text-[9px] uppercase">
+                {uiLanguage === "en" ? "Team:" : "Tim:"}
+              </span>
+              {isRoomHost ? (
+                <div className="flex border border-charcoal-text rounded overflow-hidden shadow-[1px_1px_0px_#000]">
+                  <button
+                    onClick={() => onChangeTeam?.(clientId, "A")}
+                    className={`px-2 py-0.5 text-[9px] font-black cursor-pointer transition-colors ${
+                      team === "A" || !team ? "bg-burnt-orange text-warm-cream" : "bg-paper-white text-charcoal-text hover:bg-parchment"
+                    }`}
+                  >
+                    A
+                  </button>
+                  <button
+                    onClick={() => onChangeTeam?.(clientId, "B")}
+                    className={`px-2 py-0.5 text-[9px] font-black cursor-pointer border-l border-charcoal-text transition-colors ${
+                      team === "B" ? "bg-crank-violet text-pure-white" : "bg-paper-white text-charcoal-text hover:bg-parchment"
+                    }`}
+                  >
+                    B
+                  </button>
+                </div>
+              ) : (
+                <span className={`font-black px-1.5 py-0.5 rounded text-[9px] border border-charcoal-text shadow-[1px_1px_0px_#000] ${
+                  team === "B" ? "bg-crank-violet text-pure-white" : "bg-burnt-orange text-warm-cream"
+                }`}>
+                  {team || "A"}
+                </span>
+              )}
+            </div>
           )}
 
           {elo !== undefined && (

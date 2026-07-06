@@ -1,7 +1,7 @@
 export interface PlayerEloData {
   username: string;
   elo: number;
-  status: "finished" | "surrendered" | "playing" | "waiting";
+  status: "finished" | "surrendered" | "playing" | "waiting" | "finished_leg";
   finishedAt?: number; // timestamp ms
 }
 

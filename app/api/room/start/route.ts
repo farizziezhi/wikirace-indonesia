@@ -3,8 +3,9 @@ import type { NextRequest } from "next/server";
 import { publishRoomEvent } from "@/lib/ably";
 import { getRoom, removeMatchmakingRoom, setRoom, updateRoomAtomically } from "@/lib/redis";
 import { errorResponse, sanitizeRoom } from "@/lib/room";
-import type { Room } from "@/lib/types";
+import type { Room, Player } from "@/lib/types";
 import { generateLogicalBotRoute } from "@/lib/wikipedia-server";
+import { fetchRandomArticle } from "@/lib/wikipedia";
 
 /**
  * POST /api/room/start
@@ -94,11 +95,55 @@ export async function POST(request: NextRequest) {
       currentRoom.status = "playing";
       currentRoom.startTime = startTime;
 
-      for (const player of currentRoom.players) {
-        player.status = "playing";
-        player.currentArticle = currentRoom.startArticle;
-        player.route = [{ article: currentRoom.startArticle, timestamp: 0 }];
-        player.finishedAt = undefined;
+      if (currentRoom.gameMode === "relay") {
+        // Validation: Teams must have at least 1 player
+        const teamA = currentRoom.players.filter(p => p.team === "A");
+        const teamB = currentRoom.players.filter(p => p.team === "B");
+        if (teamA.length === 0 || teamB.length === 0) {
+          throw new Error("VAL_ERR:Kedua tim harus memiliki minimal 1 pemain.");
+        }
+
+        const maxPlayers = Math.max(teamA.length, teamB.length);
+        const checkpointCount = maxPlayers - 1;
+        const checkpoints: string[] = [];
+
+        // Generate Checkpoints (if more than 1 player per team)
+        const targetLang = currentRoom.language ?? "id";
+        for (let i = 0; i < checkpointCount; i++) {
+          const article = await fetchRandomArticle(targetLang);
+          if (article) {
+            checkpoints.push(article);
+          }
+        }
+        currentRoom.checkpoints = checkpoints;
+
+        // Assign Relay Order
+        let aIndex = 1;
+        let bIndex = 1;
+        for (const player of currentRoom.players) {
+          player.currentArticle = currentRoom.startArticle;
+          player.route = [{ article: currentRoom.startArticle, timestamp: 0 }];
+          player.finishedAt = undefined;
+          
+          if (player.team === "A") {
+            player.relayOrder = aIndex++;
+          } else {
+            player.relayOrder = bIndex++;
+          }
+          
+          if (player.relayOrder === 1) {
+            player.status = "playing";
+          } else {
+            player.status = "waiting";
+          }
+        }
+      } else {
+        for (const player of currentRoom.players) {
+          player.status = "playing";
+          player.currentArticle = currentRoom.startArticle;
+          player.route = [{ article: currentRoom.startArticle, timestamp: 0 }];
+          player.finishedAt = undefined;
+        }
       }
 
       return currentRoom;
@@ -169,6 +214,8 @@ export async function POST(request: NextRequest) {
     startArticle: updatedRoom.startArticle,
     endArticle: updatedRoom.endArticle,
     startTime: updatedRoom.startTime,
+    players: sanitizeRoom(updatedRoom).players,
+    checkpoints: updatedRoom.checkpoints,
   });
 
   return Response.json({ room: sanitizeRoom(updatedRoom) });

@@ -10,7 +10,7 @@ export interface RouteStep {
   timestamp: number;
 }
 
-export type PlayerStatus = "waiting" | "playing" | "finished" | "surrendered";
+export type PlayerStatus = "waiting" | "playing" | "finished" | "surrendered" | "finished_leg";
 
 export interface Player {
   /** Ably clientId (unique per koneksi) */
@@ -36,6 +36,9 @@ export interface Player {
   botEmojis?: Array<{ emoji: string; timestamp: number }>;
   botChats?: Array<{ text: string; timestamp: number }>;
   token?: string;
+  /** Relay Mode Data */
+  team?: "A" | "B";
+  relayOrder?: number;
 }
 
 export type RoomStatus = "lobby" | "playing" | "finished";
@@ -83,7 +86,7 @@ export interface Room {
    * sebelum field ini ada akan diperlakukan sebagai "id".
    */
   language?: WikiLanguage;
-  gameMode?: "competitive" | "casual";
+  gameMode?: "competitive" | "casual" | "relay";
   /** Judul artikel Wikipedia awal */
   startArticle: string;
   /** Judul artikel Wikipedia tujuan */
@@ -99,4 +102,6 @@ export interface Room {
   averageElo?: number;
   solutionRoute?: string[];
   customRules?: CustomRules;
+  /** Relay Mode Data (Array of intermediate targets) */
+  checkpoints?: string[];
 }

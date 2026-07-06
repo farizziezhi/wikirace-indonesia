@@ -135,14 +135,35 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Determine the player's target for this leg
+      let targetArticle = currentRoom.endArticle;
+      let teamSize = 1;
+      if (currentRoom.gameMode === "relay" && player.team) {
+        teamSize = currentRoom.players.filter(p => p.team === player.team).length;
+        if (player.relayOrder && player.relayOrder < teamSize) {
+          targetArticle = currentRoom.checkpoints?.[player.relayOrder - 1] || currentRoom.endArticle;
+        }
+      }
+
       // --- DUPLICATE CLICK PROTECTION ---
       if (player.currentArticle === resolvedArticle) {
         // Just return currentRoom, no click recorded, but check victory condition
-        if (resolvedArticle === currentRoom.endArticle) {
-          player.status = "finished";
-          player.finishedAt = Date.now();
-          currentRoom.status = "finished";
-          isWon = true;
+        if (resolvedArticle === targetArticle) {
+          if (currentRoom.gameMode === "relay" && player.relayOrder && player.relayOrder < teamSize) {
+            player.status = "finished_leg";
+            player.finishedAt = Date.now();
+            const nextPlayer = currentRoom.players.find(p => p.team === player.team && p.relayOrder === player.relayOrder! + 1);
+            if (nextPlayer) {
+              nextPlayer.status = "playing";
+              nextPlayer.currentArticle = targetArticle;
+              nextPlayer.route = [{ article: targetArticle, timestamp: Date.now() - currentRoom.startTime! }];
+            }
+          } else {
+            player.status = "finished";
+            player.finishedAt = Date.now();
+            currentRoom.status = "finished";
+            isWon = true;
+          }
         }
         return currentRoom;
       }
@@ -179,17 +200,28 @@ export async function POST(request: NextRequest) {
       // --- CUSTOM RULES: Post-move Click Expiry Check ---
       const clicksAfter = player.route.length - 1;
       if (currentRoom.customRules?.clickLimit && currentRoom.customRules.clickLimit > 0) {
-        if (clicksAfter >= currentRoom.customRules.clickLimit && resolvedArticle !== currentRoom.endArticle) {
+        if (clicksAfter >= currentRoom.customRules.clickLimit && resolvedArticle !== targetArticle) {
           player.status = "surrendered";
         }
       }
 
-      // Jika pemain mencapai artikel akhir -> MENANG!
-      if (resolvedArticle === currentRoom.endArticle) {
-        player.status = "finished";
-        player.finishedAt = Date.now();
-        currentRoom.status = "finished";
-        isWon = true;
+      // Jika pemain mencapai artikel target -> MENANG (atau lanjut pelari estafet)!
+      if (resolvedArticle === targetArticle) {
+        if (currentRoom.gameMode === "relay" && player.relayOrder && player.relayOrder < teamSize) {
+          player.status = "finished_leg";
+          player.finishedAt = Date.now();
+          const nextPlayer = currentRoom.players.find(p => p.team === player.team && p.relayOrder === player.relayOrder! + 1);
+          if (nextPlayer) {
+            nextPlayer.status = "playing";
+            nextPlayer.currentArticle = targetArticle;
+            nextPlayer.route = [{ article: targetArticle, timestamp: Date.now() - currentRoom.startTime! }];
+          }
+        } else {
+          player.status = "finished";
+          player.finishedAt = Date.now();
+          currentRoom.status = "finished";
+          isWon = true;
+        }
 
         // Hitung perubahan ELO jika ini room Ranked Matchmaking
         if (currentRoom.isMatchmaking) {

@@ -691,20 +691,33 @@ export default function Game({
     };
   }, [ablyChannel, me?.suspendedUntil, room.id, currentClientId, clockOffset]);
 
-  // ------- Current article (saya) — optimistic -------
+  const activeTeammate = useMemo(() => {
+    if (room.gameMode === "relay" && me && me.team) {
+      if (me.status === "waiting" || me.status === "finished_leg") {
+        return room.players.find(p => p.team === me.team && p.status === "playing") || 
+               room.players.filter(p => p.team === me.team).sort((a,b) => (b.relayOrder||0) - (a.relayOrder||0))[0];
+      }
+    }
+    return null;
+  }, [room.gameMode, room.players, me]);
+
+  const targetPlayer = activeTeammate || me;
+  const isSpectating = !!activeTeammate;
+
+  // ------- Current article (saya/spectate) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
-    me?.currentArticle || room.startArticle,
+    targetPlayer?.currentArticle || room.startArticle,
   );
 
   // Re-sync kalau server kasih artikel baru (mis. setelah re-fetch).
-  const lastServerArticleRef = useRef<string>(me?.currentArticle ?? "");
+  const lastServerArticleRef = useRef<string>(targetPlayer?.currentArticle ?? "");
   useEffect(() => {
-    const serverArticle = me?.currentArticle ?? "";
+    const serverArticle = targetPlayer?.currentArticle ?? "";
     if (serverArticle && serverArticle !== lastServerArticleRef.current) {
       lastServerArticleRef.current = serverArticle;
       setMyArticle(serverArticle);
     }
-  }, [me?.currentArticle]);
+  }, [targetPlayer?.currentArticle]);
 
   const normalizedStartTime = normalizeStartTime(startTime);
   const [isTimeout, setIsTimeout] = useState(false);
@@ -881,6 +894,7 @@ export default function Game({
     async (article: string) => {
       if (navigatingRef.current) return;
       if (hasSurrendered) return;
+      if (isSpectating) return;
       if (Date.now() + clockOffset < normalizedStartTime) return;
       if (article === myArticle) return;
 
@@ -912,7 +926,7 @@ export default function Game({
         navigatingRef.current = false;
       }
     },
-    [hasSurrendered, normalizedStartTime, myArticle, room.id, currentClientId, clockOffset],
+    [hasSurrendered, isSpectating, normalizedStartTime, myArticle, room.id, currentClientId, clockOffset],
   );
 
   const handleRedirectResolved = useCallback(
@@ -1154,6 +1168,13 @@ export default function Game({
                   {uiLang === "en" ? "Wait until penalty expires" : "Tunggu hingga hukuman selesai"}
                 </span>
               </div>
+            </div>
+          )}
+
+          {isSpectating && activeTeammate && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-charcoal-text text-warm-cream px-6 py-3 font-bold shadow-[4px_4px_0px_#000] animate-pulse flex items-center gap-2 border-2 border-lime-accent whitespace-nowrap" style={{ borderRadius: "var(--radius-button)" }}>
+              <span className="text-lime-accent">👀</span>
+              <span>{uiLang === "en" ? `Spectating ${activeTeammate.username}...` : `Menonton ${activeTeammate.username}...`}</span>
             </div>
           )}
 
