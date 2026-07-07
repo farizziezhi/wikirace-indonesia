@@ -1658,7 +1658,7 @@ function GameModeToggle({
         {t.gameMode}
       </span>
       <div
-        className="grid grid-cols-3 gap-2 border-2 border-charcoal-text bg-paper-white p-1"
+        className={`grid ${process.env.NODE_ENV === "production" ? "grid-cols-2" : "grid-cols-3"} gap-2 border-2 border-charcoal-text bg-paper-white p-1`}
         style={{ borderRadius: "var(--radius-input)" }}
         role="radiogroup"
         aria-label={t.gameMode}
