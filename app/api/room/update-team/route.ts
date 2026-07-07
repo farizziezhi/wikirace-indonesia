@@ -13,12 +13,26 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    const playerToken = request.headers.get("x-player-token");
+    if (!playerToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     const updatedRoom = await updateRoomAtomically(roomId, async (room) => {
+      const caller = room.players.find((p) => p.token === playerToken);
+      if (!caller) {
+        throw new Error("VAL_ERR:Unauthorized caller");
+      }
+      
       const player = room.players.find((p) => p.clientId === clientId);
       if (!player) {
         throw new Error("VAL_ERR:Player not found");
       }
+
+      if (caller.clientId !== clientId && !caller.isHost) {
+        throw new Error("VAL_ERR:Hanya host yang bisa mengubah tim pemain lain.");
+      }
+
       player.team = team;
       return room;
     });

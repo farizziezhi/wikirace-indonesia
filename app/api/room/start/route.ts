@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { publishRoomEvent } from "@/lib/ably";
-import { getRoom, removeMatchmakingRoom, setRoom, updateRoomAtomically } from "@/lib/redis";
+import { getRoom, removeMatchmakingRoom, setRoom, updateRoomAtomically, resolveWikipediaRedirect } from "@/lib/redis";
 import { errorResponse, sanitizeRoom } from "@/lib/room";
 import type { Room, Player } from "@/lib/types";
 import { generateLogicalBotRoute } from "@/lib/wikipedia-server";
@@ -96,6 +96,11 @@ export async function POST(request: NextRequest) {
       currentRoom.startTime = startTime;
 
       if (currentRoom.gameMode === "relay") {
+        // Coerce undefined teams to "A" for safety
+        for (const player of currentRoom.players) {
+          if (!player.team) player.team = "A";
+        }
+
         // Validation: Teams must have at least 1 player
         const teamA = currentRoom.players.filter(p => p.team === "A");
         const teamB = currentRoom.players.filter(p => p.team === "B");
@@ -112,7 +117,8 @@ export async function POST(request: NextRequest) {
         for (let i = 0; i < checkpointCount; i++) {
           const article = await fetchRandomArticle(targetLang);
           if (article) {
-            checkpoints.push(article);
+            const resolved = await resolveWikipediaRedirect(article, targetLang);
+            checkpoints.push(resolved);
           }
         }
         currentRoom.checkpoints = checkpoints;

@@ -278,6 +278,7 @@ const GameHeader = memo(
     onTimeout,
     clockOffset = 0,
     uiLang,
+    targetArticle,
   }: {
     room: Room;
     clicksCount: number;
@@ -296,6 +297,7 @@ const GameHeader = memo(
     onTimeout?: () => void;
     clockOffset?: number;
     uiLang: "id" | "en";
+    targetArticle: string;
   }) => {
     const isMatchmaking = !!room.isMatchmaking;
     const clickLimit = room.customRules?.clickLimit ?? 0;
@@ -329,9 +331,9 @@ const GameHeader = memo(
                   fontSize: "var(--text-subheading)",
                   lineHeight: 1.1,
                 }}
-                title={room.endArticle}
+                title={targetArticle}
               >
-                {room.endArticle}
+                {targetArticle}
               </span>
             </div>
           </div>
@@ -703,6 +705,14 @@ export default function Game({
 
   const targetPlayer = activeTeammate || me;
   const isSpectating = !!activeTeammate;
+
+  let targetArticleDisplay = room.endArticle;
+  if (room.gameMode === "relay" && targetPlayer?.team) {
+    const teamSize = room.players.filter(p => p.team === targetPlayer.team).length;
+    if (targetPlayer.relayOrder && targetPlayer.relayOrder < teamSize) {
+      targetArticleDisplay = room.checkpoints?.[targetPlayer.relayOrder - 1] || room.endArticle;
+    }
+  }
 
   // ------- Current article (saya/spectate) — optimistic -------
   const [myArticle, setMyArticle] = useState<string>(
@@ -1130,6 +1140,7 @@ export default function Game({
         handlePitStopClick={handlePitStopClick}
         clockOffset={clockOffset}
         uiLang={uiLang}
+        targetArticle={targetArticleDisplay}
       />
 
       {/* ============================================================ */}
@@ -1258,7 +1269,7 @@ export default function Game({
           <div className={(suspensionTimeLeft > 0 || oilSplat) ? "blur-md pointer-events-none select-none" : ""}>
             <WikiArticle
               currentArticle={myArticle}
-              endArticle={room.endArticle}
+              endArticle={targetArticleDisplay}
               language={room.language ?? "id"}
               onNavigate={handleNavigate}
               uiLanguage={uiLang}

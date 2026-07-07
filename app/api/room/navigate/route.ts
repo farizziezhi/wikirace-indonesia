@@ -361,6 +361,18 @@ export async function POST(request: NextRequest) {
     return Response.json({ room: sanitizeRoom(updatedRoom), won: true });
   }
 
+  if (finalPlayer.status === "finished_leg") {
+    const nextPlayer = updatedRoom.players.find(p => p.team === finalPlayer.team && p.relayOrder === finalPlayer.relayOrder! + 1);
+    if (nextPlayer) {
+      await publishRoomEvent(roomId, "player_moved", {
+        clientId: nextPlayer.clientId,
+        article: nextPlayer.currentArticle,
+        route: nextPlayer.route,
+        status: nextPlayer.status,
+      });
+    }
+  }
+
   await publishRoomEvent(roomId, "player_moved", {
     clientId,
     article,

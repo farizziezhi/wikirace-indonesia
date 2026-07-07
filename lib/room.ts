@@ -53,6 +53,7 @@ export function createPlayer(
     helpUsed: false,
     ready: false,
     token,
+    team: "A",
   };
 }
 

@@ -612,8 +612,8 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
     }
   }
 
-  async function handleChangeTeam(clientId: string, team: "A" | "B") {
-    if (!isHost) return;
+  async function handleChangeTeam(targetClientId: string, team: "A" | "B") {
+    if (!isHost && targetClientId !== currentClientId) return;
     try {
       const res = await fetch("/api/room/update-team", {
         method: "POST",
@@ -623,7 +623,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
         },
         body: JSON.stringify({
           roomId: room.id,
-          clientId,
+          clientId: targetClientId,
           team,
         }),
       });
@@ -1709,29 +1709,31 @@ function GameModeToggle({
           <span aria-hidden style={{ fontSize: 18 }}>☕</span>
           <span>{t.casual}</span>
         </button>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={value === "relay"}
-          onClick={() => onChange("relay")}
-          disabled={disabled}
-          className="flex items-center justify-center gap-2 transition disabled:opacity-60 cursor-pointer"
-          style={{
-            padding: "10px 14px",
-            borderRadius: "var(--radius-button)",
-            background: value === "relay"
-              ? "var(--color-charcoal-text)"
-              : "transparent",
-            color: value === "relay"
-              ? "var(--color-pure-white)"
-              : "var(--color-charcoal-text)",
-            fontWeight: 700,
-            fontSize: "14px",
-          }}
-        >
-          <span aria-hidden style={{ fontSize: 18 }}>🏃</span>
-          <span>{uiLanguage === "en" ? "Relay" : "Estafet"}</span>
-        </button>
+        {process.env.NODE_ENV !== "production" && (
+          <button
+            type="button"
+            role="radio"
+            aria-checked={value === "relay"}
+            onClick={() => onChange("relay")}
+            disabled={disabled}
+            className="flex items-center justify-center gap-2 transition disabled:opacity-60 cursor-pointer"
+            style={{
+              padding: "10px 14px",
+              borderRadius: "var(--radius-button)",
+              background: value === "relay"
+                ? "var(--color-charcoal-text)"
+                : "transparent",
+              color: value === "relay"
+                ? "var(--color-pure-white)"
+                : "var(--color-charcoal-text)",
+              fontWeight: 700,
+              fontSize: "14px",
+            }}
+          >
+            <span aria-hidden style={{ fontSize: 18 }}>🏃</span>
+            <span>{uiLanguage === "en" ? "Relay" : "Estafet"}</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1886,7 +1888,7 @@ function PlayerSlot({
               <span className="font-bold text-[9px] uppercase">
                 {uiLanguage === "en" ? "Team:" : "Tim:"}
               </span>
-              {isRoomHost ? (
+              {isRoomHost || isMe ? (
                 <div className="flex border border-charcoal-text rounded overflow-hidden shadow-[1px_1px_0px_#000]">
                   <button
                     onClick={() => onChangeTeam?.(clientId, "A")}

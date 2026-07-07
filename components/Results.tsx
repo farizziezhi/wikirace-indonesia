@@ -37,12 +37,16 @@ export default function Results({
   const isHost = currentClientId === room.hostClientId;
 
   const ranked = useMemo(
-    () => buildLeaderboard(room.players, allRoutes),
-    [room.players, allRoutes],
+    () => buildLeaderboard(room, allRoutes),
+    [room, allRoutes],
   );
 
-  const winner = winnerId
-    ? ranked.find((r) => r.player.clientId === winnerId)
+  const parsedWinnerId = room.gameMode === "relay" && winnerId
+    ? room.players.find(p => p.clientId === winnerId)?.team || winnerId
+    : winnerId;
+
+  const winner = parsedWinnerId
+    ? ranked.find((r) => r.player.clientId === parsedWinnerId)
     : null;
 
   // Top 3 untuk podium (kalau jumlahnya cukup).
@@ -239,7 +243,7 @@ export default function Results({
 
         {/* ====== Podium top-3 ====== */}
         {podium.length >= 2 && winner && (
-          <Podium podium={podium} currentClientId={currentClientId} language={language} />
+          <Podium podium={podium} currentClientId={currentClientId} language={language} room={room} />
         )}
 
         {/* ====== Leaderboard penuh ====== */}
@@ -270,8 +274,8 @@ export default function Results({
                 position={index + 1}
                 row={row}
                 isMe={row.player.clientId === currentClientId}
-                isWinner={winnerId === row.player.clientId}
-                winnerId={winnerId}
+                isWinner={parsedWinnerId === row.player.clientId}
+                winnerId={parsedWinnerId}
                 language={language}
               />
             ))}
@@ -314,9 +318,9 @@ export default function Results({
               <RouteAccordion
                 key={row.player.clientId}
                 row={row}
-                openByDefault={winnerId === row.player.clientId}
+                openByDefault={parsedWinnerId === row.player.clientId}
                 isMe={row.player.clientId === currentClientId}
-                winnerId={winnerId}
+                winnerId={parsedWinnerId}
                 language={language}
               />
             ))}
@@ -433,7 +437,7 @@ export default function Results({
       {showReplay && (
         <RouteReplay
           rows={ranked}
-          winnerId={winnerId}
+          winnerId={parsedWinnerId}
           onClose={() => setShowReplay(false)}
           language={language}
         />
@@ -492,10 +496,12 @@ function Podium({
   podium,
   currentClientId,
   language,
+  room,
 }: {
   podium: RankedPlayer[];
   currentClientId: string;
   language: "id" | "en";
+  room: Room;
 }) {
   // Tampilkan urutan: 2 - 1 - 3 supaya juara di tengah.
   const arranged = [podium[1] ?? null, podium[0] ?? null, podium[2] ?? null];
@@ -522,7 +528,9 @@ function Podium({
           3: "text-burnt-orange",
         } as const;
 
-        const isMe = row.player.clientId === currentClientId;
+        const isMe = room.gameMode === "relay"
+          ? room.players.find(p => p.clientId === currentClientId)?.team === row.player.clientId
+          : row.player.clientId === currentClientId;
         const color = avatarColor(row.player.username);
 
         return (
@@ -530,20 +538,16 @@ function Podium({
             key={row.player.clientId}
             className="flex flex-1 flex-col items-center gap-2"
           >
-            <span
-              className="chunky-sm flex items-center justify-center font-extrabold uppercase text-pure-white"
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-black text-warm-cream sm:h-12 sm:w-12 sm:text-base"
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: "9999px",
-                background: color,
-                fontSize: 13,
-                border: "2px solid var(--color-charcoal-text)"
+                backgroundColor: avatarColor(row.player.username),
+                border: "2px solid var(--color-charcoal-text)",
               }}
               aria-hidden="true"
             >
-              {initials(row.player.username)}
-            </span>
+              {room.gameMode === "relay" ? "TM" : initials(row.player.username)}
+            </div>
             <div
               className="text-center font-extrabold text-warm-cream"
               style={{ fontSize: "12px", lineHeight: 1.1 }}
@@ -630,6 +634,7 @@ interface LeaderboardRowProps {
   position: number;
   row: RankedPlayer;
   isMe: boolean;
+  gameMode?: "solo" | "relay";
   isWinner: boolean;
   winnerId: string | null;
   language: "id" | "en";
@@ -639,6 +644,7 @@ function LeaderboardRow({
   position,
   row,
   isMe,
+  gameMode,
   isWinner,
   winnerId,
   language,
@@ -730,6 +736,12 @@ function LeaderboardRow({
             </span>
           )}
         </div>
+        {row.teamMembers && (
+          <div className="text-[10.5px] text-charcoal-text/70 mt-0.5 font-bold uppercase tracking-tight truncate">
+            {language === "en" ? "Players: " : "Pemain: "}
+            {row.teamMembers.map(m => m.username).join(", ")}
+          </div>
+        )}
         <div className="text-charcoal-text/80 flex flex-wrap items-center gap-x-2 font-mono text-xs mt-0.5">
           <span className="tabular-nums font-bold">{steps} {language === "en" ? "clicks" : "klik"}</span>
           {finishTimeSec !== undefined && (
@@ -791,6 +803,7 @@ interface RouteAccordionProps {
   row: RankedPlayer;
   openByDefault: boolean;
   isMe: boolean;
+  gameMode?: "solo" | "relay";
   winnerId: string | null;
   language: "id" | "en";
 }
@@ -799,6 +812,7 @@ function RouteAccordion({
   row,
   openByDefault,
   isMe,
+  gameMode,
   winnerId,
   language,
 }: RouteAccordionProps) {
@@ -996,23 +1010,82 @@ function AchievementBadgePill({ badge }: { badge: AchievementBadge }) {
 
 export interface RankedPlayer {
   player: Player;
+  teamMembers?: Player[];
   route: RouteStep[];
   steps: number;
   finishTimeSec?: number;
 }
 
 function buildLeaderboard(
-  players: Player[],
+  room: Room,
   allRoutes: Record<string, RouteStep[]>,
 ): RankedPlayer[] {
-  const rows: RankedPlayer[] = players.map((p) => {
-    const route = allRoutes[p.clientId] ?? p.route ?? [];
+  let playersToRank = room.players;
+  let groupedRoutes = allRoutes;
+  const teamMembersMap = new Map<string, Player[]>();
+
+  if (room.gameMode === "relay") {
+    const teams = new Map<string, Player[]>();
+    for (const p of room.players) {
+      if (!p.team) continue;
+      const teamList = teams.get(p.team) || [];
+      teamList.push(p);
+      teams.set(p.team, teamList);
+    }
+    
+    playersToRank = [];
+    groupedRoutes = {};
+
+    for (const [teamName, teamPlayers] of Array.from(teams.entries())) {
+      teamPlayers.sort((a, b) => (a.relayOrder ?? 0) - (b.relayOrder ?? 0));
+      const lastPlayer = teamPlayers[teamPlayers.length - 1];
+      const anyFinished = teamPlayers.some(p => p.status === "finished");
+      
+      let teamStatus = "waiting" as Player["status"];
+      if (anyFinished) teamStatus = "finished";
+      else if (teamPlayers.some(p => p.status === "playing")) teamStatus = "playing";
+      else if (teamPlayers.some(p => p.status === "finished_leg")) teamStatus = "playing";
+      else if (teamPlayers.some(p => p.status === "surrendered")) teamStatus = "surrendered";
+
+      const compositeRoute: RouteStep[] = [];
+      for (const p of teamPlayers) {
+        const pRoute = allRoutes[p.clientId] ?? p.route ?? [];
+        if (pRoute.length > 0) {
+          if (compositeRoute.length > 0 && compositeRoute[compositeRoute.length - 1].article === pRoute[0].article) {
+             compositeRoute.push(...pRoute.slice(1));
+          } else {
+             compositeRoute.push(...pRoute);
+          }
+        }
+      }
+
+      playersToRank.push({
+        ...lastPlayer,
+        clientId: teamName,
+        username: `Tim ${teamName}`,
+        status: teamStatus,
+        route: compositeRoute,
+        isBot: false,
+      });
+      groupedRoutes[teamName] = compositeRoute;
+      teamMembersMap.set(teamName, teamPlayers);
+    }
+  }
+
+  const rows: RankedPlayer[] = playersToRank.map((p) => {
+    const route = groupedRoutes[p.clientId] ?? p.route ?? [];
     const steps = Math.max(0, route.length - 1);
     let finishTimeSec: number | undefined;
     if (p.status === "finished" && route.length > 0) {
       finishTimeSec = route[route.length - 1].timestamp;
     }
-    return { player: p, route, steps, finishTimeSec };
+    return { 
+      player: p, 
+      route, 
+      steps, 
+      finishTimeSec,
+      ...(teamMembersMap.has(p.clientId) ? { teamMembers: teamMembersMap.get(p.clientId) } : {})
+    };
   });
 
   const groupRank: Record<Player["status"], number> = {
