@@ -109,19 +109,15 @@ export async function POST(request: NextRequest) {
         }
 
         const maxPlayers = Math.max(teamA.length, teamB.length);
-        const checkpointCount = maxPlayers - 1;
-        const checkpoints: string[] = [];
+        const checkpointCount = Math.max(0, maxPlayers - 1);
 
-        // Generate Checkpoints (if more than 1 player per team)
-        const targetLang = currentRoom.language ?? "id";
-        for (let i = 0; i < checkpointCount; i++) {
-          const article = await fetchRandomArticle(targetLang);
-          if (article) {
-            const resolved = await resolveWikipediaRedirect(article, targetLang);
-            checkpoints.push(resolved);
+        if (checkpointCount > 0) {
+          if (!currentRoom.checkpoints || currentRoom.checkpoints.length !== checkpointCount || currentRoom.checkpoints.some(c => !c.trim())) {
+            throw new Error("VAL_ERR:Masih ada checkpoint yang kosong. Silakan isi terlebih dahulu.");
           }
+        } else {
+          currentRoom.checkpoints = [];
         }
-        currentRoom.checkpoints = checkpoints;
 
         // Assign Relay Order
         let aIndex = 1;

@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     clientId?: unknown;
     startArticle?: unknown;
     endArticle?: unknown;
+    checkpoints?: unknown;
     language?: unknown;
     gameMode?: unknown;
     random?: unknown;
@@ -58,6 +59,15 @@ export async function POST(request: NextRequest) {
   let startArticle = "";
   let endArticle = "";
   let targetLanguage: WikiLanguage = "id";
+  let resolvedCheckpoints: string[] = [];
+
+  const effectiveGameMode = body.gameMode === "relay" ? "relay" : (body.gameMode ? body.gameMode : room.gameMode);
+  let checkpointCount = 0;
+  if (effectiveGameMode === "relay") {
+    const teamA = room.players.filter(p => p.team === "A");
+    const teamB = room.players.filter(p => p.team === "B");
+    checkpointCount = Math.max(0, Math.max(teamA.length, teamB.length) - 1);
+  }
 
   if (packId) {
     const pack = getChallengePackById(packId);
@@ -70,6 +80,8 @@ export async function POST(request: NextRequest) {
       body.language === "en" || body.language === "id"
         ? (body.language as WikiLanguage)
         : (room.language ?? "id");
+    
+    // Generate Start and End
     const s = await fetchRandomArticle(targetLang);
     const e = await fetchRandomArticle(targetLang);
     if (!s || !e || s === e) {
@@ -77,12 +89,22 @@ export async function POST(request: NextRequest) {
     }
     startArticle = await resolveWikipediaRedirect(s, targetLang);
     endArticle = await resolveWikipediaRedirect(e, targetLang);
+    
+    // Generate Checkpoints
+    for (let i = 0; i < checkpointCount; i++) {
+      const cp = await fetchRandomArticle(targetLang);
+      if (cp) {
+        resolvedCheckpoints.push(await resolveWikipediaRedirect(cp, targetLang));
+      }
+    }
+    
     targetLanguage = targetLang;
   } else {
     const targetLang =
       body.language === "en" || body.language === "id"
         ? (body.language as WikiLanguage)
         : (room.language ?? "id");
+        
     if (typeof body.startArticle === "string") {
       const s = body.startArticle.trim();
       if (s.length > MAX_ARTICLE_TITLE_LENGTH) {
@@ -97,6 +119,19 @@ export async function POST(request: NextRequest) {
       }
       endArticle = await resolveWikipediaRedirect(e, targetLang);
     }
+    
+    if (Array.isArray(body.checkpoints)) {
+      const cps = body.checkpoints.map(String).slice(0, checkpointCount);
+      resolvedCheckpoints = await Promise.all(
+        cps.map(async (cp) => {
+          const trimmed = cp.trim();
+          if (!trimmed) return "";
+          if (trimmed.length > MAX_ARTICLE_TITLE_LENGTH) return trimmed; // Let it fail later or keep it as is
+          return await resolveWikipediaRedirect(trimmed, targetLang);
+        })
+      );
+    }
+    
     targetLanguage = targetLang;
   }
 
@@ -161,6 +196,12 @@ export async function POST(request: NextRequest) {
         if (currentRoom.startArticle && currentRoom.endArticle && currentRoom.startArticle === currentRoom.endArticle) {
           throw new Error("VAL_ERR:Artikel awal dan tujuan tidak boleh sama.");
         }
+      }
+
+      if (effectiveGameMode === "relay") {
+        currentRoom.checkpoints = resolvedCheckpoints;
+      } else {
+        delete currentRoom.checkpoints;
       }
 
       if (language !== undefined) {

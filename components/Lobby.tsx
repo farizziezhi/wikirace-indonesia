@@ -36,6 +36,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
 
   const [startArticle, setStartArticle] = useState(room.startArticle);
   const [endArticle, setEndArticle] = useState(room.endArticle);
+  const [checkpoints, setCheckpoints] = useState<string[]>(room.checkpoints || []);
   const [language, setLanguage] = useState<WikiLanguage>(room.language ?? "id");
   const [gameMode, setGameMode] = useState<"competitive" | "casual" | "relay">(room.gameMode ?? "competitive");
   const [copied, setCopied] = useState(false);
@@ -258,8 +259,9 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
   const lastSyncedRef = useRef({
     start: room.startArticle,
     end: room.endArticle,
-    language: room.language ?? ("id" as WikiLanguage),
+    language: room.language ?? "id",
     gameMode: room.gameMode ?? "competitive",
+    checkpoints: room.checkpoints || [],
     clickLimit: room.customRules?.clickLimit ?? 0,
     timeLimit: room.customRules?.timeLimit ?? 0,
     bannedArticles: room.customRules?.bannedArticles ?? [],
@@ -278,6 +280,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
     const clickLimitChanged = serverClickLimit !== lastSyncedRef.current.clickLimit;
     const timeLimitChanged = serverTimeLimit !== lastSyncedRef.current.timeLimit;
     const bannedArticlesChanged = JSON.stringify(serverBannedArticles) !== JSON.stringify(lastSyncedRef.current.bannedArticles);
+    const checkpointsChanged = JSON.stringify(room.checkpoints || []) !== JSON.stringify(lastSyncedRef.current.checkpoints || []);
 
     if (
       startChanged ||
@@ -286,7 +289,8 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
       modeChanged ||
       clickLimitChanged ||
       timeLimitChanged ||
-      bannedArticlesChanged
+      bannedArticlesChanged ||
+      checkpointsChanged
     ) {
       setStartArticle(room.startArticle);
       setEndArticle(room.endArticle);
@@ -295,17 +299,19 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
       setClickLimit(serverClickLimit);
       setTimeLimit(serverTimeLimit);
       setBannedArticles(serverBannedArticles);
+      setCheckpoints(room.checkpoints || []);
       lastSyncedRef.current = {
         start: room.startArticle,
         end: room.endArticle,
         language: serverLang,
         gameMode: serverMode,
+        checkpoints: room.checkpoints || [],
         clickLimit: serverClickLimit,
         timeLimit: serverTimeLimit,
         bannedArticles: serverBannedArticles,
       };
     }
-  }, [room.startArticle, room.endArticle, room.language, room.gameMode, room.customRules]);
+  }, [room.startArticle, room.endArticle, room.language, room.gameMode, room.customRules, room.checkpoints]);
 
   // ------- Save articles (host only) — debounced -------
   const saveTimer = useRef<number | null>(null);
@@ -316,7 +322,8 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
       end: string,
       lang: WikiLanguage,
       mode: "competitive" | "casual" | "relay",
-      rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] }
+      rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] },
+      cps?: string[]
     ) => {
       if (!isHost) return;
       const s = start.trim();
@@ -334,10 +341,11 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
       const clickLimitChanged = targetRules.clickLimit !== lastSyncedRef.current.clickLimit;
       const timeLimitChanged = targetRules.timeLimit !== lastSyncedRef.current.timeLimit;
       const bannedArticlesChanged = JSON.stringify(targetRules.bannedArticles) !== JSON.stringify(lastSyncedRef.current.bannedArticles);
+      const checkpointsChanged = JSON.stringify(cps || []) !== JSON.stringify(lastSyncedRef.current.checkpoints || []);
 
       const rulesChanged = clickLimitChanged || timeLimitChanged || bannedArticlesChanged;
 
-      if (!articlesValid && !langChanged && !modeChanged && !rulesChanged) return;
+      if (!articlesValid && !langChanged && !modeChanged && !rulesChanged && !checkpointsChanged) return;
 
       try {
         const res = await fetch("/api/room/set-articles", {
@@ -351,6 +359,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
             clientId: currentClientId,
             startArticle: s,
             endArticle: e,
+            checkpoints: cps,
             language: lang,
             gameMode: mode,
             customRules: targetRules,
@@ -368,6 +377,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
             end: e,
             language: lang,
             gameMode: mode,
+            checkpoints: cps || [],
             clickLimit: targetRules.clickLimit,
             timeLimit: targetRules.timeLimit,
             bannedArticles: targetRules.bannedArticles,
@@ -385,11 +395,12 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
     end: string,
     lang: WikiLanguage,
     mode: "competitive" | "casual" | "relay",
-    rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] }
+    rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] },
+    cps?: string[]
   ) {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      void saveArticles(start, end, lang, mode, rules);
+      void saveArticles(start, end, lang, mode, rules, cps);
     }, SAVE_DEBOUNCE_MS);
   }
 
@@ -408,7 +419,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
       saveTimer.current = null;
-      await saveArticles(startArticle, endArticle, language, gameMode);
+      await saveArticles(startArticle, endArticle, language, gameMode, { clickLimit, timeLimit, bannedArticles }, checkpoints);
     }
 
     try {
@@ -1000,6 +1011,12 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
     );
   }
 
+  const maxTeamSize = Math.max(
+    room.players.filter((p) => p.team === "A").length,
+    room.players.filter((p) => p.team === "B").length
+  );
+  const expectedCheckpoints = gameMode === "relay" ? Math.max(0, maxTeamSize - 1) : 0;
+
   return (
     <main className="dot-bg flex flex-1 items-start justify-center bg-warm-cream px-4 pt-8 pb-32 sm:px-6 sm:pt-10 sm:pb-36">
       <div className="flex w-full max-w-[820px] flex-col gap-6">
@@ -1174,11 +1191,35 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
                 language={language}
                 onChange={(next) => {
                   setStartArticle(next);
-                  scheduleSave(next, endArticle, language, gameMode);
+                  scheduleSave(next, endArticle, language, gameMode, undefined, checkpoints);
                 }}
                 disabled={starting}
                 uiLanguage={uiLanguage}
               />
+              
+              {expectedCheckpoints > 0 && Array.from({ length: expectedCheckpoints }).map((_, index) => (
+                <ArticleAutocomplete
+                  key={`cp-${index}`}
+                  id={`checkpoint-${index}`}
+                  label={`Checkpoint ${index + 1}`}
+                  placeholder={
+                    language === "en" ? "e.g. Jakarta" : "Contoh: Jakarta"
+                  }
+                  value={checkpoints[index] || ""}
+                  language={language}
+                  onChange={(next) => {
+                    const newCps = [...checkpoints];
+                    newCps[index] = next;
+                    // Ensure the array has the correct length
+                    while (newCps.length < expectedCheckpoints) newCps.push("");
+                    setCheckpoints(newCps);
+                    scheduleSave(startArticle, endArticle, language, gameMode, undefined, newCps);
+                  }}
+                  disabled={starting}
+                  uiLanguage={uiLanguage}
+                />
+              ))}
+
               <ArticleAutocomplete
                 id="end-article"
                 label={t.destinationArticle}
@@ -1189,7 +1230,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
                 language={language}
                 onChange={(next) => {
                   setEndArticle(next);
-                  scheduleSave(startArticle, next, language, gameMode);
+                  scheduleSave(startArticle, next, language, gameMode, undefined, checkpoints);
                 }}
                 disabled={starting}
                 uiLanguage={uiLanguage}
@@ -1464,6 +1505,9 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
                 clientId={p.clientId}
                 onChangeTeam={handleChangeTeam}
                 isRoomHost={isHost}
+                startArticle={startArticle}
+                endArticle={endArticle}
+                checkpoints={checkpoints}
               />
             ))}
             {/* Empty slots */}
@@ -1779,6 +1823,9 @@ function PlayerSlot({
   onChangeTeam,
   clientId,
   isRoomHost,
+  startArticle,
+  endArticle,
+  checkpoints,
 }: {
   username: string;
   isMe: boolean;
@@ -1792,6 +1839,9 @@ function PlayerSlot({
   onChangeTeam?: (clientId: string, team: "A" | "B") => void;
   clientId: string;
   isRoomHost?: boolean;
+  startArticle?: string;
+  endArticle?: string;
+  checkpoints?: string[];
 }) {
   const color = avatarColor(username);
 
@@ -1932,6 +1982,20 @@ function PlayerSlot({
             </span>
           )}
         </div>
+        {gameMode === "relay" && startArticle && endArticle && (
+          <div className="mt-2 text-[10px] text-charcoal-text/80 font-medium bg-parchment p-1.5 rounded border border-charcoal-text/20 flex flex-wrap gap-1 items-center">
+            <span className="font-bold text-[9px] uppercase tracking-wider px-1 bg-lime-accent text-charcoal-text border border-charcoal-text rounded-sm">Rute:</span>
+            <span>{startArticle.replace(/_/g, ' ')}</span>
+            {checkpoints && checkpoints.length > 0 && checkpoints.map((cp, idx) => (
+              <span key={`route-cp-${idx}`} className="flex items-center gap-1">
+                <span className="text-charcoal-text/40">➔</span>
+                <span className={cp ? "" : "italic text-charcoal-text/50"}>{cp ? cp.replace(/_/g, ' ') : `Checkpoint ${idx + 1}`}</span>
+              </span>
+            ))}
+            <span className="text-charcoal-text/40">➔</span>
+            <span>{endArticle.replace(/_/g, ' ')}</span>
+          </div>
+        )}
       </div>
     </li>
   );
