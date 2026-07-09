@@ -1245,6 +1245,13 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
               {articlesValid && (
                 <ArticlePreview start={trimmedStart} end={trimmedEnd} uiLanguage={uiLanguage} />
               )}
+              {gameMode === "relay" && expectedCheckpoints > 0 && (
+                <p className="text-[11px] text-charcoal-text/70 italic font-medium leading-tight mt-1 border-l-2 border-lime-accent pl-2">
+                  {uiLanguage === "en" 
+                    ? "In relay mode, each player must reach their checkpoint to pass the baton to the next teammate." 
+                    : "Dalam mode estafet, pemain harus mencapai checkpoint untuk memberikan giliran ke rekan setim berikutnya."}
+                </p>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
