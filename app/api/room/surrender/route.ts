@@ -63,8 +63,12 @@ export async function POST(request: NextRequest) {
       if (!player) {
         throw new Error("VAL_ERR:Pemain tidak ada di room ini.");
       }
-      if (player.status !== "playing") {
+      if (player.status === "finished" || player.status === "surrendered") {
         throw new Error("VAL_ERR:Pemain sudah finished/surrendered.");
+      }
+      // Relay mode: pemain 'waiting' atau 'finished_leg' juga boleh menyerah
+      if (player.status !== "playing" && player.status !== "waiting" && player.status !== "finished_leg") {
+        throw new Error("VAL_ERR:Pemain tidak dalam status yang bisa menyerah.");
       }
 
       // --- SECURITY: Token Verification (Casual Room) ---
@@ -79,8 +83,10 @@ export async function POST(request: NextRequest) {
 
       player.status = "surrendered";
 
-      const stillPlaying = currentRoom.players.some((p) => !p.isBot && p.status === "playing");
-      allDone = !stillPlaying;
+      const stillActive = currentRoom.players.some(
+        (p) => !p.isBot && (p.status === "playing" || p.status === "waiting" || p.status === "finished_leg")
+      );
+      allDone = !stillActive;
 
       if (allDone) {
         currentRoom.status = "finished";

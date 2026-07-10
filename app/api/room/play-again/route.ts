@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         player.currentArticle = "";
         player.route = [];
         player.finishedAt = undefined;
+        player.relayOrder = undefined;
       }
 
       return currentRoom;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { updateRoomAtomically } from "@/lib/redis";
 import { publishRoomEvent } from "@/lib/ably";
+import { sanitizeRoom } from "@/lib/room";
 
 export async function POST(request: Request) {
   try {
@@ -37,9 +38,9 @@ export async function POST(request: Request) {
       return room;
     });
 
-    await publishRoomEvent(roomId, "room_updated", { room: updatedRoom });
+    await publishRoomEvent(roomId, "room_updated", { room: sanitizeRoom(updatedRoom) });
 
-    return NextResponse.json({ success: true, room: updatedRoom });
+    return NextResponse.json({ success: true, room: sanitizeRoom(updatedRoom) });
   } catch (error: any) {
     const errMsg = error.message || "";
     if (errMsg.startsWith("VAL_ERR:")) {
