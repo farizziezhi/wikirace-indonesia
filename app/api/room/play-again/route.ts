@@ -69,6 +69,14 @@ export async function POST(request: NextRequest) {
         player.route = [];
         player.finishedAt = undefined;
         player.relayOrder = undefined;
+        // Reset per-game state
+        player.helpUsed = false;
+        player.pitStopUsed = false;
+        player.activePowerUp = undefined;
+        player.powerUpExpiresAt = undefined;
+        player.suspendedUntil = undefined;
+        player.eloChange = undefined;
+        player.ready = false;
       }
 
       return currentRoom;
