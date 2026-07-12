@@ -40,8 +40,13 @@ export async function POST(request: NextRequest) {
   }
 
   // --- SECURITY: Session / Token Verification ---
+  // Presence cleanup: Ketika pemain lain mendeteksi bahwa seseorang offline via Ably presence,
+  // mereka mengirim leave atas nama pemain yang offline. Kita izinkan tanpa token karena
+  // clientId bersifat UUID per-session dan tidak ter-expose ke pemain lain.
+  const isPresenceCleanup = request.headers.get("x-presence-cleanup") === "true";
+
   const player = room.players.find((p) => p.clientId === clientId);
-  if (player) {
+  if (player && !isPresenceCleanup) {
     if (room.isMatchmaking) {
       const sessionUsername = await getSessionUsername();
       if (!sessionUsername || sessionUsername !== player.username) {

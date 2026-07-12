@@ -192,7 +192,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           if (!presentClientIds.has(initialRoom.hostClientId)) {
             void fetch("/api/room/leave", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", "X-Presence-Cleanup": "true" },
               body: JSON.stringify({
                 roomId: normalizedRoomId,
                 clientId: initialRoom.hostClientId,
@@ -205,7 +205,7 @@ export default function RoomPage({ params }: RoomPageProps) {
               if (p.clientId !== identity!.clientId && !presentClientIds.has(p.clientId)) {
                 void fetch("/api/room/leave", {
                   method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                  headers: { "Content-Type": "application/json", "X-Presence-Cleanup": "true" },
                   body: JSON.stringify({
                     roomId: normalizedRoomId,
                     clientId: p.clientId,
@@ -273,7 +273,6 @@ export default function RoomPage({ params }: RoomPageProps) {
               checkpoints: data.checkpoints ?? prev.checkpoints,
               players: data.players ?? prev.players.map((p) => ({
                 ...p,
-                status: "playing",
                 currentArticle: data.startArticle,
                 route: [{ article: data.startArticle, timestamp: 0 }],
                 finishedAt: undefined,
@@ -461,7 +460,7 @@ export default function RoomPage({ params }: RoomPageProps) {
 
             void fetch("/api/room/leave", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", "X-Presence-Cleanup": "true" },
               body: JSON.stringify({
                 roomId: normalizedRoomId,
                 clientId: member.clientId,
@@ -475,7 +474,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         // Room kustom: langsung kick jika host keluar
         void fetch("/api/room/leave", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-Presence-Cleanup": "true" },
           body: JSON.stringify({
             roomId: normalizedRoomId,
             clientId: member.clientId,
