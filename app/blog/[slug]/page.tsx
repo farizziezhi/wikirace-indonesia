@@ -80,8 +80,8 @@ export default async function BlogArticlePage({ params }: PageProps) {
     datePublished: article.publishedAt,
     dateModified: article.updatedAt || article.publishedAt,
     author: {
-      "@type": "Organization",
-      name: "WikiRace Indonesia",
+      "@type": article.author.includes("Tim") ? "Organization" : "Person",
+      name: article.author,
       url: siteUrl,
     },
     publisher: {

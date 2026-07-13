@@ -707,6 +707,102 @@ function SoloPageContent() {
             )}
           </section>
         )}
+
+        {/* ====== Rich Bilingual SEO Content for Solo Page ====== */}
+        <section
+          className="mt-6 flex flex-col gap-6 text-charcoal-text bg-pure-white p-6 sm:p-8"
+          style={{
+            border: "2px solid var(--color-charcoal-text)",
+            borderRadius: "var(--radius-input)",
+            boxShadow: "var(--shadow-lifted)"
+          }}
+        >
+          {/* Indonesian Content */}
+          <div className={language === "id" ? "flex flex-col gap-6" : "hidden"}>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
+                Panduan Latihan Solo WikiRace
+              </h2>
+              <p className="text-sm text-charcoal-text/85 leading-relaxed font-medium">
+                Mode Latihan Solo dirancang bagi Anda yang ingin mengasah keterampilan menjelajahi Wikipedia tanpa tekanan waktu dari pemain lain. Di sini, Anda bisa mempelajari rute-rute pintas, memahami keterkaitan antar artikel, dan berlatih strategi navigasi yang solid.
+              </p>
+            </div>
+            
+            <div className="h-px bg-warm-gray/30 w-full" />
+            
+            <div>
+              <h3 className="font-extrabold text-base text-charcoal-text mb-2">Mode Bermain Solo</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm text-charcoal-text/80 leading-relaxed">
+                <div>
+                  <h4 className="font-black text-charcoal-text">1. Time Attack (Batas Waktu)</h4>
+                  <p className="mt-1">
+                    Pacu adrenalin Anda dengan mencoba menyelesaikan rute sebelum batas waktu yang ditentukan habis. Sangat cocok untuk menguji kecepatan membaca pindai (skimming) Anda di bawah tekanan.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-black text-charcoal-text">2. Free Roam (Eksplorasi Bebas)</h4>
+                  <p className="mt-1">
+                    Santai dan eksplorasi labirin Wikipedia tanpa batas waktu. Mode ini berfokus pada efisiensi rute (mencari jumlah klik paling sedikit) untuk menghubungkan dua artikel acak.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-warm-gray/30 w-full" />
+
+            <div>
+              <h3 className="font-extrabold text-base text-charcoal-text mb-2">Tips untuk Latihan Solo</h3>
+              <ul className="list-disc pl-5 text-xs sm:text-sm text-charcoal-text/85 flex flex-col gap-1.5 leading-relaxed">
+                <li>Gunakan <strong>Pilihan Tema Terkurasi</strong> untuk berlatih rute yang dikelompokkan berdasarkan kategori pengetahuan yang spesifik.</li>
+                <li>Mulailah dengan kesulitan <strong>Mudah</strong> untuk rute dengan kedalaman (depth) yang lebih pendek sebelum beralih ke rute <strong>Sulit</strong>.</li>
+                <li>Gunakan fitur <strong>Generasi Rute Acak</strong> untuk menguji wawasan umum Anda terhadap subjek yang tidak terduga.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* English Content */}
+          <div className={language === "en" ? "flex flex-col gap-6" : "hidden"}>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
+                Solo Practice Game Guide
+              </h2>
+              <p className="text-sm text-charcoal-text/85 leading-relaxed font-medium">
+                Solo Practice Mode is designed for players who want to sharpen their Wikipedia navigation skills without the stress of competing against others. You can use this mode to study shortcuts, understand connections between topics, and develop solid navigation strategies.
+              </p>
+            </div>
+            
+            <div className="h-px bg-warm-gray/30 w-full" />
+            
+            <div>
+              <h3 className="font-extrabold text-base text-charcoal-text mb-2">Available Solo Modes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm text-charcoal-text/80 leading-relaxed">
+                <div>
+                  <h4 className="font-black text-charcoal-text">1. Time Attack</h4>
+                  <p className="mt-1">
+                    Race against the clock and reach the target before time runs out. Great for testing your skimming speed and pattern recognition under time constraints.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-black text-charcoal-text">2. Free Roam</h4>
+                  <p className="mt-1">
+                    Relax and take your time to explore the Wikipedia maze. The game will only track your click count, allowing you to focus on finding the shortest route possible.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-warm-gray/30 w-full" />
+
+            <div>
+              <h3 className="font-extrabold text-base text-charcoal-text mb-2">Practice Tips</h3>
+              <ul className="list-disc pl-5 text-xs sm:text-sm text-charcoal-text/85 flex flex-col gap-1.5 leading-relaxed">
+                <li>Utilize <strong>Curated Themes</strong> to practice with routes grouped around specific domains of knowledge.</li>
+                <li>Start with <strong>Easy difficulty</strong> for shorter estimated depths before attempting the <strong>Hard routes</strong>.</li>
+                <li>Generate <strong>Wild Random Routes</strong> to test your association skills on unexpected and unrelated subjects.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );

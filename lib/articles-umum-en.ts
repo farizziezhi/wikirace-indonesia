@@ -6,9 +6,9 @@ export const artikelUmumEn: BlogArticle[] = [
     title: "Complete FAQ: All Your Questions About WikiRace Indonesia Answered",
     summary: "A compilation of answers to the most frequently asked questions by both new players and veterans.",
     category: "Guide",
-    author: "WikiRace Indonesia Team",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Indra Wijaya",
+    publishedAt: "2026-06-03",
+    updatedAt: "2026-06-03",
     readingTime: "5 min",
     language: "en",
     content: `

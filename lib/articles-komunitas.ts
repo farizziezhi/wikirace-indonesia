@@ -6,9 +6,9 @@ export const artikelKomunitas: BlogArticle[] = [
     title: "Rute Tercepat Minggu Ini: Dari Artikel A ke Artikel B",
     summary: "Analisis rute-rute paling mindblowing yang berhasil ditemukan pemain komunitas minggu ini.",
     category: "Komunitas",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Siti Rahma",
+    publishedAt: "2026-06-25",
+    updatedAt: "2026-06-25",
     readingTime: "4 menit",
     content: `
 <p>Selamat datang di rubrik mingguan Komunitas WikiRace Indonesia! Setiap pekannya, ribuan pertandingan dimainkan di server kami. Ada yang berputar-putar tanpa arah, namun ada juga yang menemukan "jalan tol" yang sama sekali tidak terpikirkan oleh pemain biasa.</p>
@@ -43,9 +43,9 @@ export const artikelKomunitas: BlogArticle[] = [
     title: "Leaderboard Bulanan: Siapa Raja WikiRace Indonesia Bulan Ini?",
     summary: "Pengumuman pemenang dan pemain paling aktif dalam mode Solo dan Multiplayer di bulan ini.",
     category: "Komunitas",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Rian Hidayat",
+    publishedAt: "2026-06-01",
+    updatedAt: "2026-06-01",
     readingTime: "3 menit",
     content: `
 <p>Bulan yang luar biasa untuk komunitas WikiRace Indonesia! Kami telah merekap ratusan ribu klik dari ribuan pertandingan yang terjadi secara <em>live</em> selama 30 hari terakhir. Kompetisi di bulan ini terbukti sangat ketat, dengan beberapa rekor lama yang akhirnya tumbang.</p>
@@ -80,9 +80,9 @@ export const artikelKomunitas: BlogArticle[] = [
     title: "Cerita di Balik Layar: Membangun WikiRace Indonesia dari Nol",
     summary: "Sejarah singkat dan proses development platform WikiRace pertama yang dikhususkan untuk bahasa Indonesia.",
     category: "Edukasi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Novi Arisanti",
+    publishedAt: "2026-06-14",
+    updatedAt: "2026-06-16",
     readingTime: "5 menit",
     content: `
 <p>Pernahkah kamu saat sedang asyik bermain tiba-tiba bertanya-tanya: <em>"Siapa sih yang bikin website ini? Dan bagaimana cara website ini bisa ngambil artikel Wikipedia secara langsung?"</em></p>
@@ -111,9 +111,9 @@ export const artikelKomunitas: BlogArticle[] = [
     title: "Update Fitur Baru di WikiRace Indonesia — Apa yang Berubah?",
     summary: "Catatan rilis (patch notes) terbaru: mode baru, perbaikan bug, dan optimasi performa UI.",
     category: "Komunitas",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Ahmad Zaki",
+    publishedAt: "2026-06-11",
+    updatedAt: "2026-06-11",
     readingTime: "4 menit",
     content: `
 <p>Halo para pembalap Wikipedia! Kami di tim developer <a href="/">WikiRace Indonesia</a> selalu mendengarkan keluh kesah, laporan <em>bug</em>, dan masukan brilian dari komunitas, baik melalui Discord, form kontak, maupun komentar sosial media.</p>
@@ -144,9 +144,9 @@ export const artikelKomunitas: BlogArticle[] = [
     title: "Highlight Match Paling Epik dari Komunitas Minggu Ini",
     summary: "Ulasan pertandingan multiplayer paling dramatis dan *comeback* tak terduga.",
     category: "Komunitas",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Novi Arisanti",
+    publishedAt: "2026-06-25",
+    updatedAt: "2026-06-26",
     readingTime: "4 menit",
     content: `
 <p>Mode <em>Multiplayer</em> (Bermain Bersama) di WikiRace selalu menghadirkan cerita-cerita menegangkan yang tidak bisa diprediksi. Berbeda dengan bermain Solo di mana musuh terbesarmu adalah dirimu sendiri dan jam pasir, di mode <em>Multiplayer</em>, tekanan psikologis melihat indikator lawan yang sudah semakin dekat dengan tujuan bisa membuat pemain terpanik dan melakukan kesalahan fatal.</p>

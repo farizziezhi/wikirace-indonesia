@@ -6,9 +6,9 @@ export const artikelStrategi: BlogArticle[] = [
     title: "Kenapa Link 'Negara' dan 'Tahun' Sering Jadi Jalan Pintas di WikiRace",
     summary: "Rahasia mengapa mengklik tautan negara atau tahun tertentu bisa secara drastis mempercepat rute kamu menuju artikel tujuan di WikiRace.",
     category: "Strategi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Ahmad Zaki",
+    publishedAt: "2026-06-20",
+    updatedAt: "2026-06-23",
     readingTime: "4 menit",
     content: `
 <h2>Mengapa Link Negara dan Tahun Begitu Penting?</h2>
@@ -40,9 +40,9 @@ export const artikelStrategi: BlogArticle[] = [
     title: "Kesalahan Pemula yang Bikin Kalah Cepat di WikiRace",
     summary: "Jangan lakukan ini! Hindari jebakan-jebakan umum yang sering membuat pemain baru berputar-putar tanpa arah di Wikipedia.",
     category: "Strategi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Rian Hidayat",
+    publishedAt: "2026-06-17",
+    updatedAt: "2026-06-17",
     readingTime: "5 menit",
     content: `
 <h2>Hindari Jebakan Umum di WikiRace</h2>
@@ -79,9 +79,9 @@ export const artikelStrategi: BlogArticle[] = [
     title: "Cara Melatih Insting Navigasi Wikipedia dalam 30 Hari",
     summary: "Tips dan latihan harian untuk mempertajam intuisi kamu dalam menemukan hubungan antar topik di WikiRace.",
     category: "Panduan",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Novi Arisanti",
+    publishedAt: "2026-06-14",
+    updatedAt: "2026-06-16",
     readingTime: "4 menit",
     content: `
 <h2>Rahasia Kecepatan Pemain Top WikiRace</h2>
@@ -120,9 +120,9 @@ export const artikelStrategi: BlogArticle[] = [
     title: "Perbedaan Strategi WikiRace Solo vs Multiplayer",
     summary: "Pendekatan bermain WikiRace harus berbeda ketika kamu bermain sendirian (time attack) dibanding saat melawan pemain lain (race).",
     category: "Strategi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Ahmad Zaki",
+    publishedAt: "2026-06-08",
+    updatedAt: "2026-06-08",
     readingTime: "4 menit",
     content: `
 <h2>Dua Arena, Dua Gaya Bermain</h2>
@@ -154,9 +154,9 @@ export const artikelStrategi: BlogArticle[] = [
     title: "Cara Membuat Room Private untuk Main Bareng Teman",
     summary: "Panduan lengkap langkah demi langkah membuat dan mengatur room private di WikiRace Indonesia untuk keseruan bersama.",
     category: "Panduan",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Indra Wijaya",
+    publishedAt: "2026-06-19",
+    updatedAt: "2026-06-21",
     readingTime: "3 menit",
     content: `
 <h2>Membawa Keseruan ke Lingkaran Pertemananmu</h2>

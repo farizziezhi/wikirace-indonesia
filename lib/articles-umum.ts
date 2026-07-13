@@ -6,9 +6,9 @@ export const artikelUmum: BlogArticle[] = [
     title: "FAQ Lengkap: Semua Pertanyaan soal WikiRace Indonesia Dijawab",
     summary: "Kumpulan jawaban atas pertanyaan yang paling sering diajukan oleh pemain baru maupun veteran.",
     category: "Panduan",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Muhammad Farizzi",
+    publishedAt: "2026-06-19",
+    updatedAt: "2026-06-24",
     readingTime: "5 menit",
     content: `
 <p>Masih bingung dengan beberapa hal di WikiRace Indonesia? Jangan khawatir, kami telah mengumpulkan pertanyaan yang paling sering diajukan oleh komunitas.</p>

@@ -1437,6 +1437,23 @@ export default function HomePage() {
 
             <div>
               <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
+                Mengapa Bermain WikiRace di Sini?
+              </h2>
+              <p className="text-sm text-charcoal-text/85 leading-relaxed font-medium">
+                WikiRace Indonesia bukan hanya sekadar game edukasi biasa. Kami menawarkan beberapa fitur unggulan yang dirancang khusus untuk kenyamanan dan keseruan bermain:
+              </p>
+              <ul className="list-disc pl-5 text-xs sm:text-sm text-charcoal-text/80 mt-2 flex flex-col gap-1.5 leading-relaxed">
+                <li><strong>Teroptimasi untuk Bahasa Indonesia:</strong> Seluruh rute dan pencarian artikel menggunakan Wikipedia edisi bahasa Indonesia dengan artikel lokal yang relevan.</li>
+                <li><strong>Sistem ELO & Leaderboard Global:</strong> Tantang pemain lain, kumpulkan poin kemenangan, dan buktikan siapa ahli navigasi terbaik di papan peringkat.</li>
+                <li><strong>Mode Balapan Estafet (Relay Mode):</strong> Nikmati keseruan bermain dalam tim bersama teman-teman Anda secara beruntun.</li>
+                <li><strong>Tanpa Iklan Intrusif:</strong> Pengalaman bermain yang bersih dan fokus tanpa adanya iklan pop-up atau banner yang menghalangi konten.</li>
+              </ul>
+            </div>
+
+            <div className="h-px bg-warm-gray/30 w-full" />
+
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
                 Pertanyaan Umum (FAQ)
               </h2>
               <div className="flex flex-col gap-4">
@@ -1502,6 +1519,23 @@ export default function HomePage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="h-px bg-warm-gray/30 w-full" />
+
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black mb-3 flex items-center gap-2">
+                Why Play WikiRace Here?
+              </h2>
+              <p className="text-sm text-charcoal-text/85 leading-relaxed font-medium">
+                WikiRace Indonesia is more than just a simple browser game. We provide premium features designed for the ultimate Wikipedia racing experience:
+              </p>
+              <ul className="list-disc pl-5 text-xs sm:text-sm text-charcoal-text/80 mt-2 flex flex-col gap-1.5 leading-relaxed">
+                <li><strong>Optimized for Indonesian & English:</strong> Seamlessly switch databases depending on your preference and explore different regions of Wikipedia.</li>
+                <li><strong>Competitive ELO & Global Leaderboard:</strong> Face online players, gain ratings, and display your name on the global leaderboard.</li>
+                <li><strong>Interactive Relay Mode:</strong> Play co-op with your friends in teams and pass the baton from checkpoint to checkpoint.</li>
+                <li><strong>No Intrusive Ads:</strong> Enjoy a clean, distraction-free environment without annoying pop-ups or full-screen ads.</li>
+              </ul>
             </div>
 
             <div className="h-px bg-warm-gray/30 w-full" />
@@ -1582,6 +1616,10 @@ export default function HomePage() {
             <span className="opacity-40" aria-hidden="true">•</span>
             <Link href="/about" className="hover:text-charcoal-text hover:underline transition">
               {uiLang === "en" ? "About Us" : "Tentang Kami"}
+            </Link>
+            <span className="opacity-40" aria-hidden="true">•</span>
+            <Link href="/tim" className="hover:text-charcoal-text hover:underline transition">
+              {uiLang === "en" ? "Developer" : "Pengembang"}
             </Link>
             <span className="opacity-40" aria-hidden="true">•</span>
             <Link href="/contact" className="hover:text-charcoal-text hover:underline transition">

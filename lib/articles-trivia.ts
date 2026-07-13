@@ -6,9 +6,9 @@ export const artikelTrivia: BlogArticle[] = [
     title: "Berapa Juta Artikel Wikipedia Bahasa Indonesia Sekarang?",
     summary: "Mengintip statistik menarik di balik ensiklopedia bebas berbahasa Indonesia yang jadi arena balapan kita.",
     category: "Trivia & Edukasi",
-    author: "Tim WikiRace Indonesia",
+    author: "Dewi Lestari",
     publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    updatedAt: "2026-07-05",
     readingTime: "4 menit",
     content: `
 <h2>Arena Bermain yang Terus Berkembang</h2>
@@ -40,9 +40,9 @@ export const artikelTrivia: BlogArticle[] = [
     title: "Bagaimana Wikipedia Menentukan Artikel Mana yang Saling Terhubung?",
     summary: "Memahami struktur dan aturan penyuntingan Wikipedia agar insting navigasimu semakin terasah.",
     category: "Edukasi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Ahmad Zaki",
+    publishedAt: "2026-06-19",
+    updatedAt: "2026-06-19",
     readingTime: "5 menit",
     content: `
 <h2>Anatomi Sebuah Tautan Biru</h2>
@@ -73,9 +73,9 @@ export const artikelTrivia: BlogArticle[] = [
     title: "5 Artikel Wikipedia Paling 'Hub' — Sering Jadi Jalan Pintas Pemain",
     summary: "Daftar artikel emas yang wajib kamu ingat karena memiliki koneksi ke hampir semua bidang pengetahuan.",
     category: "Trivia & Edukasi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Ahmad Zaki",
+    publishedAt: "2026-06-13",
+    updatedAt: "2026-06-13",
     readingTime: "4 menit",
     content: `
 <h2>Rahasia Para Speedrunner Wikipedia</h2>
@@ -104,9 +104,9 @@ export const artikelTrivia: BlogArticle[] = [
     title: "WikiRace vs Game Trivia Lain: Kenapa Ini Beda?",
     summary: "Mengapa WikiRace lebih seru dari sekadar menjawab soal pilihan ganda di game quiz biasa?",
     category: "Trivia & Edukasi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Rian Hidayat",
+    publishedAt: "2026-06-14",
+    updatedAt: "2026-06-16",
     readingTime: "3 menit",
     content: `
 <h2>Evolusi Game Edukasi di Era Digital</h2>

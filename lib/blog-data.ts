@@ -24,9 +24,9 @@ const articles: BlogArticle[] = [
     summary:
       "Penjelasan lengkap tentang permainan WikiRace — aturan, cara bermain, dan kenapa game balapan Wikipedia ini bisa bikin ketagihan.",
     category: "Panduan",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Muhammad Farizzi",
+    publishedAt: "2026-06-12",
+    updatedAt: "2026-06-12",
     readingTime: "5 menit",
     language: "id",
     content: `
@@ -88,9 +88,9 @@ const articles: BlogArticle[] = [
     summary:
       "Pelajari lima strategi yang dipakai pemain berpengalaman untuk konsisten menang di WikiRace, dari mengenali halaman hub hingga berpikir mundur dari tujuan.",
     category: "Strategi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Ahmad Zaki",
+    publishedAt: "2026-06-16",
+    updatedAt: "2026-06-17",
     readingTime: "8 menit",
     language: "id",
     content: `
@@ -138,9 +138,9 @@ const articles: BlogArticle[] = [
     summary:
       "Telusuri perjalanan WikiRace dari keisengan mahasiswa di kampus hingga berkembang menjadi genre permainan browser tersendiri yang dimainkan di seluruh dunia.",
     category: "Trivia & Edukasi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Budi Hartono",
+    publishedAt: "2026-06-20",
+    updatedAt: "2026-06-20",
     readingTime: "5 menit",
     language: "id",
     content: `
@@ -183,9 +183,9 @@ const articles: BlogArticle[] = [
     summary:
       "Kenali arena WikiRace lebih dalam — dari jumlah artikel Wikipedia Indonesia, fenomena 'Getting to Philosophy', hingga kepadatan tautan yang membuat game ini bisa berjalan.",
     category: "Trivia & Edukasi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Siti Rahma",
+    publishedAt: "2026-06-24",
+    updatedAt: "2026-06-24",
     readingTime: "6 menit",
     language: "id",
     content: `
@@ -233,9 +233,9 @@ const articles: BlogArticle[] = [
     summary:
       "Ternyata main WikiRace bukan cuma seru — ada manfaat kognitif nyata seperti melatih kecepatan baca, memperluas wawasan, dan mengasah pengambilan keputusan.",
     category: "Edukasi",
-    author: "Tim WikiRace Indonesia",
-    publishedAt: "2026-07-02",
-    updatedAt: "2026-07-02",
+    author: "Muhammad Farizzi",
+    publishedAt: "2026-06-28",
+    updatedAt: "2026-06-28",
     readingTime: "4 menit",
     language: "id",
     content: `
