@@ -28,6 +28,9 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
     alternates: {
       canonical: `${baseUrl}/profile/${encodeURIComponent(username)}`,
     },
+    robots: {
+      index: false,
+    },
   };
 }
 
