@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
 import Link from "next/link";
 import {
   House,
   UsersThree,
   Rocket,
-  GameController,
   EnvelopeSimple,
   Info,
 } from "@phosphor-icons/react";

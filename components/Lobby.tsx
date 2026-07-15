@@ -389,20 +389,19 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
     },
     [isHost, room.id, currentClientId],
   );
-
-  function scheduleSave(
+  const scheduleSave = useCallback((
     start: string,
     end: string,
     lang: WikiLanguage,
     mode: "competitive" | "casual" | "relay",
     rules?: { clickLimit: number; timeLimit: number; bannedArticles: string[] },
     cps?: string[]
-  ) {
+  ) => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
       void saveArticles(start, end, lang, mode, rules, cps);
     }, SAVE_DEBOUNCE_MS);
-  }
+  }, [saveArticles]);
 
   useEffect(() => {
     return () => {
@@ -1213,6 +1212,7 @@ export default function Lobby({ room, currentClientId, clockOffset = 0, ablyChan
                     // Ensure the array has the correct length
                     while (newCps.length < expectedCheckpoints) newCps.push("");
                     setCheckpoints(newCps);
+                    // eslint-disable-next-line react-hooks/refs
                     scheduleSave(startArticle, endArticle, language, gameMode, undefined, newCps);
                   }}
                   disabled={starting}
