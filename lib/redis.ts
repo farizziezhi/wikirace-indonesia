@@ -27,10 +27,20 @@ export function getUpstashClient(): UpstashRedis | null {
 
 export function getValkeyClient(): Redis {
   if (!valkeyClient) {
-    const uri = process.env.VALKEY_URI;
-    if (!uri) {
-      throw new Error("VALKEY_URI tidak ditemukan di environment variables.");
+    let uri = process.env.VALKEY_URI;
+
+    // Auto-fallback to Upstash TCP if VALKEY_URI is missing or points to the expired Aiven instance
+    if (!uri || uri.includes("aivencloud.com")) {
+      const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
+      const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+      if (upstashUrl && upstashToken) {
+        const host = upstashUrl.replace("https://", "").replace("http://", "").replace(/\/$/, "");
+        uri = `rediss://default:${upstashToken}@${host}:6379`;
+      } else {
+        throw new Error("VALKEY_URI tidak ditemukan di environment variables dan gagal fallback ke Upstash.");
+      }
     }
+
     valkeyClient = new Redis(uri, {
       maxRetriesPerRequest: null,
     });
